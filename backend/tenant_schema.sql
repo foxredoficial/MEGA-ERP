@@ -98,22 +98,59 @@ CREATE TABLE IF NOT EXISTS product_lots (
   manufacturing_date DATE,
   expiration_date DATE,
   observations TEXT,
-  stock DECIMAL(10, 3) DEFAULT 0,
   is_active BOOLEAN DEFAULT 1,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  CONSTRAINT fk_lots_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS stock_movements (
+CREATE TABLE IF NOT EXISTS salespersons (
   id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  phone VARCHAR(20),
+  cpf VARCHAR(14),
+  commission_rate DECIMAL(5, 2),
+  status ENUM('active', 'inactive') DEFAULT 'active',
+  observations TEXT,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  parent_id CHAR(36) NULL,
+  description TEXT,
+  color VARCHAR(20),
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  CONSTRAINT fk_categories_parent FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS price_lists (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  type ENUM('percentage', 'fixed_value', 'custom') NOT NULL,
+  adjustment_type ENUM('increase', 'decrease') NULL,
+  adjustment_value DECIMAL(10, 2) NULL,
+  start_date DATETIME NULL,
+  end_date DATETIME NULL,
+  status ENUM('active', 'inactive') DEFAULT 'active',
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS price_list_items (
+  id CHAR(36) PRIMARY KEY,
+  price_list_id CHAR(36) NOT NULL,
   product_id CHAR(36) NOT NULL,
-  user_id CHAR(36) NOT NULL, -- Kept for reference
-  type ENUM('in', 'out', 'adjustment') NOT NULL,
-  quantity DECIMAL(10, 3) NOT NULL,
-  reason VARCHAR(255),
-  lot_id CHAR(36) NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  FOREIGN KEY (lot_id) REFERENCES product_lots(id) ON DELETE SET NULL
+  price DECIMAL(10, 2) NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  CONSTRAINT fk_pli_list FOREIGN KEY (price_list_id) REFERENCES price_lists(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pli_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );

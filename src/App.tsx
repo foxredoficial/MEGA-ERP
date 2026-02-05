@@ -10,6 +10,14 @@ import { ContactForm } from "@/pages/Contacts/ContactForm";
 import { ServiceList } from "@/pages/Services/ServiceList";
 import { ServiceForm } from "@/pages/Services/ServiceForm";
 import { ServiceOrderList } from "@/pages/ServiceOrders/ServiceOrderList";
+import { SalesOrderList } from "@/pages/Sales/SalesOrderList";
+import { SalesOrderForm } from "@/pages/Sales/SalesOrderForm";
+import { SalespersonList } from "@/pages/Salespersons/SalespersonList";
+import { SalespersonForm } from "@/pages/Salespersons/SalespersonForm";
+import { CategoryList } from "@/pages/Categories/CategoryList";
+import { CategoryForm } from "@/pages/Categories/CategoryForm";
+import { PriceListList } from "@/pages/PriceLists/PriceListList";
+import { PriceListForm } from "@/pages/PriceLists/PriceListForm";
 import Termos from "@/pages/Termos";
 import Privacidade from "@/pages/Privacidade";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -23,17 +31,40 @@ import { Plans as AdminPlans } from "@/pages/admin/Plans";
 import { Subscriptions as AdminSubscriptions } from "@/pages/admin/Subscriptions";
 import { Settings as AdminSettings } from "@/pages/admin/Settings";
 
+import { PublicRoute } from "@/components/PublicRoute";
+
 export default function App() {
   useAuthInit();
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/planos" element={<Planos />} />
+        <Route 
+          path="/" 
+          element={
+            <PublicRoute>
+              <Home />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/planos" 
+          element={
+            <PublicRoute>
+              <Planos />
+            </PublicRoute>
+          } 
+        />
         
         {/* Auth Routes */}
-        <Route path="/auth" element={<Auth />} />
+        <Route 
+          path="/auth" 
+          element={
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          } 
+        />
         <Route path="/login" element={<Navigate to="/auth?mode=login" replace />} />
         <Route path="/entrar" element={<Navigate to="/auth?mode=login" replace />} />
         <Route path="/register" element={<Navigate to="/auth?mode=signup" replace />} />
@@ -116,6 +147,30 @@ export default function App() {
           }
         />
         <Route
+          path="/app/vendas/pedidos"
+          element={
+            <ProtectedRoute>
+              <SalesOrderList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/vendas/pedidos/novo"
+          element={
+            <ProtectedRoute>
+              <SalesOrderForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/vendas/pedidos/:id"
+          element={
+            <ProtectedRoute>
+              <SalesOrderForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/app/ordens-servico"
           element={
             <ProtectedRoute>
@@ -124,26 +179,122 @@ export default function App() {
           }
         />
         <Route
-          path="/app/contatos"
+          path="/app/clientes"
           element={
             <ProtectedRoute>
-              <ContactList />
+              <ContactList type="client" />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/app/contatos/novo"
+          path="/app/clientes/novo"
           element={
             <ProtectedRoute>
-              <ContactForm />
+              <ContactForm type="client" />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/app/contatos/:id"
+          path="/app/clientes/:id"
           element={
             <ProtectedRoute>
-              <ContactForm />
+              <ContactForm type="client" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/fornecedores"
+          element={
+            <ProtectedRoute>
+              <ContactList type="supplier" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/fornecedores/novo"
+          element={
+            <ProtectedRoute>
+              <ContactForm type="supplier" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/fornecedores/:id"
+          element={
+            <ProtectedRoute>
+              <ContactForm type="supplier" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/vendedores"
+          element={
+            <ProtectedRoute>
+              <SalespersonList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/vendedores/novo"
+          element={
+            <ProtectedRoute>
+              <SalespersonForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/vendedores/:id"
+          element={
+            <ProtectedRoute>
+              <SalespersonForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/categorias"
+          element={
+            <ProtectedRoute>
+              <CategoryList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/categorias/nova"
+          element={
+            <ProtectedRoute>
+              <CategoryForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/categorias/:id"
+          element={
+            <ProtectedRoute>
+              <CategoryForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/listas-preco"
+          element={
+            <ProtectedRoute>
+              <PriceListList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/listas-preco/novo"
+          element={
+            <ProtectedRoute>
+              <PriceListForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/listas-preco/:id"
+          element={
+            <ProtectedRoute>
+              <PriceListForm />
             </ProtectedRoute>
           }
         />

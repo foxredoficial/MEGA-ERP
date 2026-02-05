@@ -23,6 +23,10 @@ import {
   getStockHistory, 
   type Product,
   type StockMovement,
+  getCategories,
+  type Category,
+  buildCategoryTree,
+  flattenCategoryTree
 } from "@/lib/api";
 import {
   getProductLots,
@@ -43,6 +47,7 @@ export function ProductForm() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("geral");
   const [stockHistory, setStockHistory] = useState<StockMovement[]>([]);
+  const [categories, setCategories] = useState<(Category & { level?: number })[]>([]);
   
   // Variations state
   const [variationName, setVariationName] = useState("");
@@ -84,6 +89,15 @@ export function ProductForm() {
   });
 
   useEffect(() => {
+    // Load categories
+    getCategories()
+      .then(cats => {
+        const tree = buildCategoryTree(cats);
+        const flat = flattenCategoryTree(tree);
+        setCategories(flat);
+      })
+      .catch(console.error);
+
     if (isEditing && id) {
       setLoading(true);
       getProduct(id)
@@ -256,7 +270,7 @@ export function ProductForm() {
         {/* Header */}
         <div className="flex-none px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
-            <Link to="/products" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+            <Link to="/app/produtos" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
               <ArrowLeft className="w-5 h-5 text-zinc-600" />
             </Link>
             <div>
@@ -273,7 +287,7 @@ export function ProductForm() {
           <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
-              onClick={() => navigate("/products")}
+              onClick={() => navigate("/app/produtos")}
               disabled={saving}
             >
               Cancelar
@@ -317,7 +331,7 @@ export function ProductForm() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-white">
-          <div className="max-w-6xl">
+          <div className="w-full">
             {activeTab === "geral" && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -339,6 +353,21 @@ export function ProductForm() {
                     />
                   </div>
                   
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 mb-1">Categoria</label>
+                    <Select 
+                      value={formData.category_id || ""}
+                      onChange={(e) => handleChange("category_id", e.target.value || null)}
+                    >
+                      <option value="">Sem categoria</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>
+                          {'\u00A0'.repeat((cat.level || 0) * 4)}{cat.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Venda</label>
                     <div className="relative">

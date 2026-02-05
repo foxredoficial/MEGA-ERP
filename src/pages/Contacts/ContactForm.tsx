@@ -21,13 +21,29 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { getContact, createContact, updateContact, type ContactInput } from "@/lib/api_contacts";
-import { maskCpfCnpj, maskPhone, maskZip } from "@/lib/masks";
+import { maskCpfCnpj, 
+  maskCPF,
+  maskCNPJ,
+  maskPhone, 
+  maskZip,
+  formatCurrency,
+  maskCurrency,
+  parseCurrency
+} from "@/lib/masks";
 import { cn } from "@/lib/utils";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
-export function ContactForm() {
+interface ContactFormProps {
+  type?: 'client' | 'supplier';
+}
+
+export function ContactForm({ type }: ContactFormProps) {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const isSupplier = type === 'supplier';
+  const basePath = isSupplier ? "/app/fornecedores" : "/app/clientes";
+  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -50,8 +66,27 @@ export function ContactForm() {
     status: 'ativo',
     credit_limit_type: 'limitado',
     contacts_json: [],
-    gender: null
+    gender: null,
+    contact_type: isSupplier ? 'fornecedor' : 'cliente'
   });
+
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: "danger" | "warning" | "info" | "success";
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    variant: "info"
+  });
+
+  const showAlert = (title: string, description: string, variant: "danger" | "warning" | "info" | "success" = "info", onConfirm?: () => void) => {
+    setAlertState({ isOpen: true, title, description, variant, onConfirm });
+  };
 
   const isPJ = formData.type === 'juridica';
   const isPF = formData.type === 'fisica';
@@ -78,12 +113,22 @@ export function ContactForm() {
         }
       }
       if (!Array.isArray(contacts)) contacts = [];
+
+      // Ensure parents_json is an object
+      let parents = data.parents_json;
+      if (typeof parents === 'string') {
+        try {
+          parents = JSON.parse(parents);
+        } catch (e) {
+          parents = {};
+        }
+      }
+      if (typeof parents !== 'object' || parents === null) parents = {};
       
-      setFormData({ ...data, contacts_json: contacts });
+      setFormData({ ...data, contacts_json: contacts, parents_json: parents });
     } catch (error) {
       console.error("Erro ao carregar contato:", error);
-      alert("Erro ao carregar contato");
-      navigate("/app/contatos");
+      showAlert("Erro", "Erro ao carregar contato", "danger", () => navigate(basePath));
     } finally {
       setLoading(false);
     }
@@ -127,7 +172,7 @@ export function ContactForm() {
     e.preventDefault();
     
     if (!formData.name) {
-      alert("O nome é obrigatório");
+      showAlert("Campo Obrigatório", "O nome é obrigatório", "warning");
       return;
     }
 
@@ -135,15 +180,14 @@ export function ContactForm() {
       setSaving(true);
       if (isEditing) {
         await updateContact(id!, formData);
-        alert("Contato atualizado com sucesso!");
+        showAlert("Sucesso", "Contato atualizado com sucesso!", "success", () => navigate(basePath));
       } else {
         await createContact(formData);
-        alert("Contato criado com sucesso!");
+        showAlert("Sucesso", "Contato criado com sucesso!", "success", () => navigate(basePath));
       }
-      navigate("/app/contatos");
     } catch (error: any) {
       console.error("Erro ao salvar:", error);
-      alert("Erro ao salvar: " + (error.message || "Erro desconhecido"));
+      showAlert("Erro", "Erro ao salvar: " + (error.message || "Erro desconhecido"), "danger");
     } finally {
       setSaving(false);
     }
@@ -165,28 +209,33 @@ export function ContactForm() {
         {/* Header */}
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center gap-4">
-            <Link to="/app/contatos">
+            <Link to={basePath}>
               <Button variant="ghost" size="icon" type="button" className="hover:bg-blue-50 hover:text-blue-600">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
             <div>
               <h1 className="text-xl font-bold text-zinc-800">
-                {isEditing ? "Editar Contato" : "Novo Cadastro"}
+                {isEditing ? (isSupplier ? "Editar Fornecedor" : "Editar Cliente") : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}
               </h1>
               <div className="flex items-center gap-2 text-sm text-zinc-500">
                 <Link to="/app" className="hover:underline hover:text-blue-600">Home</Link>
                 <span>{'>'}</span>
-                <Link to="/app/contatos" className="hover:underline hover:text-blue-600">Contatos</Link>
+                <Link to={basePath} className="hover:underline hover:text-blue-600">{isSupplier ? "Fornecedores" : "Clientes"}</Link>
                 <span>{'>'}</span>
-                <span className="text-blue-600 font-medium">{isEditing ? formData.name : "Novo Cadastro"}</span>
+                <span className="text-blue-600 font-medium">{isEditing ? formData.name : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/app/contatos">
-              <Button variant="outline" type="button" className="hover:bg-zinc-50 hover:text-zinc-900">Cancelar</Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              type="button" 
+              className="hover:bg-zinc-50 hover:text-zinc-900"
+              onClick={() => setCancelDialogOpen(true)}
+            >
+              Cancelar
+            </Button>
             <Button 
               type="submit" 
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shadow-lg shadow-blue-200 gap-2 font-medium"
@@ -218,19 +267,7 @@ export function ContactForm() {
             {sections.dadosCadastrais && (
               <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
                 
-                {/* Linha 1: Metadados (Estável) */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                    Código <span title="Código interno"><Info className="inline w-3.5 h-3.5 text-blue-400 ml-1 cursor-help" /></span>
-                  </label>
-                  <Input 
-                    value={formData.code || ""} 
-                    onChange={(e) => handleChange("code", e.target.value)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
-                    placeholder="Auto"
-                  />
-                </div>
-
+                {/* Linha 1: Tipo, Código, Contribuinte */}
                 <div className="md:col-span-4">
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Tipo da Pessoa</label>
                   <Select 
@@ -243,7 +280,19 @@ export function ContactForm() {
                   </Select>
                 </div>
 
-                <div className="md:col-span-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                    Código <span title="Código interno"><Info className="inline w-3.5 h-3.5 text-blue-400 ml-1 cursor-help" /></span>
+                  </label>
+                  <Input 
+                    value={formData.code || ""} 
+                    onChange={(e) => handleChange("code", e.target.value)}
+                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    placeholder="Auto"
+                  />
+                </div>
+
+                <div className="md:col-span-6">
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Contribuinte</label>
                   <Select 
                     value={formData.contributor_type || 9}
@@ -255,35 +304,19 @@ export function ContactForm() {
                   </Select>
                 </div>
 
-                <div className="md:col-span-2">
-                    {/* Espaço reservado para manter grid alinhado */}
-                </div>
-
-                {/* Linha 2: Nomes (Estável) */}
+                {/* Linha 2: Nomes */}
                 <div className="md:col-span-6">
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">
                     {isPJ ? "Razão Social" : "Nome Completo"} <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <Input 
-                      value={formData.name || ""} 
-                      onChange={(e) => handleChange("name", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
-                      placeholder={isPJ ? "Razão Social da Empresa" : "Nome Completo do Contato"}
-                    />
-                                      <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-                    {isPJ ? "Data de Fundação" : "Data de Nascimento"}
-                  </label>
                   <Input 
-                    type="date"
-                    value={formData.birth_date?.split('T')[0] || ""} 
-                    onChange={(e) => handleChange("birth_date", e.target.value)}
+                    value={formData.name || ""} 
+                    onChange={(e) => handleChange("name", e.target.value)}
                     className="focus-visible:ring-blue-500 border-zinc-300"
+                    placeholder={isPJ ? "Razão Social da Empresa" : "Nome Completo do Contato"}
                   />
-                  </div>
                 </div>
                 
-                {/* Fantasia ocupa espaço apenas se PJ, senão vazio ou col-span-6 para manter alinhamento da próxima linha */}
                 <div className="md:col-span-6">
                   {isPJ ? (
                     <>
@@ -298,15 +331,22 @@ export function ContactForm() {
                       />
                     </>
                   ) : (
-                    <div className="hidden md:block">
-                        {/* Placeholder invisível para manter o grid estável em telas grandes, 
-                            garantindo que Documentos comecem na próxima linha */}
-                    </div>
+                    <>
+                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                        Data de Nascimento
+                      </label>
+                      <Input 
+                        type="date"
+                        value={formData.birth_date?.split('T')[0] || ""} 
+                        onChange={(e) => handleChange("birth_date", e.target.value)}
+                        className="focus-visible:ring-blue-500 border-zinc-300"
+                      />
+                    </>
                   )}
                 </div>
-                
-                {/* Linha 3: Documentos (Estável) */}
-                <div className="md:col-span-6">
+
+                {/* Linha 3: Documentos e Fundação (se PJ) */}
+                <div className="md:col-span-4">
                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">
                     {isEstrangeiro ? "Documento" : (isPJ ? "CNPJ" : "CPF")}
                   </label>
@@ -315,10 +355,13 @@ export function ContactForm() {
                     onChange={(e) => {
                       if (isEstrangeiro) {
                         handleChange("cpf_cnpj", e.target.value);
+                      } else if (isPJ) {
+                        handleMaskedChange("cpf_cnpj", e.target.value, maskCNPJ);
                       } else {
-                        handleMaskedChange("cpf_cnpj", e.target.value, maskCpfCnpj);
+                        handleMaskedChange("cpf_cnpj", e.target.value, maskCPF);
                       }
                     }}
+                    maxLength={isEstrangeiro ? undefined : (isPJ ? 18 : 14)}
                     className="focus-visible:ring-blue-500 border-zinc-300"
                     placeholder={
                       isEstrangeiro 
@@ -328,7 +371,7 @@ export function ContactForm() {
                   />
                 </div>
 
-                <div className="md:col-span-6">
+                <div className="md:col-span-4">
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">
                      {isEstrangeiro ? "Identificação Adicional" : (isPJ ? "Inscrição Estadual" : "RG")}
                   </label>
@@ -343,6 +386,20 @@ export function ContactForm() {
                     }
                   />
                 </div>
+
+                {isPJ && (
+                  <div className="md:col-span-4">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                      Data de Fundação
+                    </label>
+                    <Input 
+                      type="date"
+                      value={formData.birth_date?.split('T')[0] || ""} 
+                      onChange={(e) => handleChange("birth_date", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-zinc-300"
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -468,16 +525,22 @@ export function ContactForm() {
             {sections.contato && (
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                  <div className="md:col-span-6">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">E-mail Principal</label>
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Celular / WhatsApp</label>
                     <Input 
-                      value={formData.email || ""} 
-                      onChange={(e) => handleChange("email", e.target.value)}
+                      value={formData.mobile || ""} 
+                      onChange={(e) => {
+                        if (isEstrangeiro) {
+                          handleChange("mobile", e.target.value);
+                        } else {
+                          handleMaskedChange("mobile", e.target.value, maskPhone);
+                        }
+                      }}
                       className="focus-visible:ring-blue-500 border-zinc-300"
-                      type="email"
-                      placeholder="exemplo@email.com"
+                      placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 00000-0000"}
                     />
                   </div>
+
                   <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-zinc-700 mb-1.5">Telefone</label>
                     <Input 
@@ -493,19 +556,15 @@ export function ContactForm() {
                       placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 0000-0000"}
                     />
                   </div>
-                  <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Celular / WhatsApp</label>
+
+                  <div className="md:col-span-6">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">E-mail Principal</label>
                     <Input 
-                      value={formData.mobile || ""} 
-                      onChange={(e) => {
-                        if (isEstrangeiro) {
-                          handleChange("mobile", e.target.value);
-                        } else {
-                          handleMaskedChange("mobile", e.target.value, maskPhone);
-                        }
-                      }}
+                      value={formData.email || ""} 
+                      onChange={(e) => handleChange("email", e.target.value)}
                       className="focus-visible:ring-blue-500 border-zinc-300"
-                      placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 00000-0000"}
+                      type="email"
+                      placeholder="exemplo@email.com"
                     />
                   </div>
                 </div>
@@ -534,7 +593,7 @@ export function ContactForm() {
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="text-xs text-zinc-500 mb-1 block">Telefone</label>
+                        <label className="block text-sm font-medium text-zinc-700 mb-1.5">Telefone</label>
                         <Input 
                           value={contact.phone} 
                           onChange={(e) => updateSubContact(index, 'phone', e.target.value)}
@@ -585,11 +644,36 @@ export function ContactForm() {
             
             {sections.dadosAdicionais && (
               <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-                <div className="md:col-span-4">
-                </div>
                 
+                {/* Linha 1: Situação e Vendedor */}
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Cliente Desde</label>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Situação</label>
+                  <Select 
+                    value={formData.status || "ativo"}
+                    onChange={(e) => handleChange("status", e.target.value)}
+                    className={cn(
+                      "font-medium",
+                      formData.status === 'ativo' ? "text-green-600 bg-green-50" : 
+                      formData.status === 'inativo' ? "text-red-600 bg-red-50" : "text-zinc-600 bg-zinc-50"
+                    )}
+                  >
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="sem_movimento">Sem Movimento</option>
+                  </Select>
+                </div>
+
+                {!isSupplier && (
+                  <div className="md:col-span-4">
+                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Vendedor</label>
+                    <Select>
+                      <option value="">Selecione um vendedor</option>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="md:col-span-4">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">{isSupplier ? "Fornecedor Desde" : "Cliente Desde"}</label>
                   <Input 
                     type="date"
                     value={formData.date_since?.split('T')[0] || ""} 
@@ -598,16 +682,34 @@ export function ContactForm() {
                   />
                 </div>
 
+                {/* Linha 2: Operação e Carga */}
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Vendedor</label>
-                  <Select>
-                    <option value="">Selecione um vendedor</option>
-                  </Select>
+                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Natureza de Operação Padrão</label>
+                  <Input 
+                    value={formData.operation_nature || ""} 
+                    onChange={(e) => handleChange("operation_nature", e.target.value)}
+                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    placeholder="Ex: Venda de Mercadoria"
+                  />
                 </div>
-                
+
+                <div className="md:col-span-4">
+                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">% Carga Média (Opcional)</label>
+                  <Input 
+                    type="number"
+                    value={formData.avg_load || ""} 
+                    onChange={(e) => handleChange("avg_load", parseFloat(e.target.value))}
+                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                {/* Dados PF Específicos */}
                 {isPF && (
                   <>
-                    <div className="md:col-span-4">
+                    <div className="md:col-span-12 border-t border-zinc-100 my-2"></div>
+                    
+                    <div className="md:col-span-3">
                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Gênero</label>
                       <Select 
                         value={formData.gender || ""}
@@ -619,16 +721,8 @@ export function ContactForm() {
                         <option value="outro">Outro</option>
                       </Select>
                     </div>
-                    <div className="md:col-span-4">
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Profissão</label>
-                       <Input 
-                         value={formData.profession || ""} 
-                         onChange={(e) => handleChange("profession", e.target.value)}
-                         className="focus-visible:ring-blue-500 border-zinc-300"
-                         placeholder="Profissão"
-                       />
-                    </div>
-                    <div className="md:col-span-4">
+
+                    <div className="md:col-span-3">
                        <label className="block text-sm font-medium text-zinc-700 mb-1.5">Estado Civil</label>
                        <Select 
                          value={formData.marital_status || ""}
@@ -642,7 +736,18 @@ export function ContactForm() {
                          <option value="uniao_estavel">União Estável</option>
                        </Select>
                     </div>
-                    <div className="md:col-span-4">
+
+                    <div className="md:col-span-3">
+                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Profissão</label>
+                       <Input 
+                         value={formData.profession || ""} 
+                         onChange={(e) => handleChange("profession", e.target.value)}
+                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         placeholder="Profissão"
+                       />
+                    </div>
+
+                    <div className="md:col-span-3">
                        <label className="block text-sm font-medium text-zinc-700 mb-1.5">Naturalidade</label>
                        <Input 
                          value={formData.naturalness || ""} 
@@ -651,36 +756,210 @@ export function ContactForm() {
                          placeholder="Cidade/Estado"
                        />
                     </div>
+
+                    {/* Filiação */}
+                    <div className="md:col-span-6">
+                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Nome do Pai</label>
+                       <Input 
+                         value={formData.parents_json?.father || ""} 
+                         onChange={(e) => handleChange("parents_json", { ...formData.parents_json, father: e.target.value })}
+                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         placeholder="Nome do Pai"
+                       />
+                    </div>
+                    <div className="md:col-span-6">
+                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Nome da Mãe</label>
+                       <Input 
+                         value={formData.parents_json?.mother || ""} 
+                         onChange={(e) => handleChange("parents_json", { ...formData.parents_json, mother: e.target.value })}
+                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         placeholder="Nome da Mãe"
+                       />
+                    </div>
                   </>
                 )}
                 
-                {(isPJ || isEstrangeiro) && (
-                  <div className="md:col-span-4">
-                     <label className="block text-sm font-medium text-zinc-700 mb-1.5">Website</label>
-                     <Input 
-                       value={formData.website || ""} 
-                       onChange={(e) => handleChange("website", e.target.value)}
-                       className="focus-visible:ring-blue-500 border-zinc-300"
-                       placeholder="www.site.com.br"
-                     />
-                  </div>
-                )}
+                {/* Web/Contato Extra */}
+                <div className="md:col-span-12 border-t border-zinc-100 my-2"></div>
 
-                <div className="md:col-span-12">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Observações</label>
-                  <textarea 
-                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[100px]"
-                    value={formData.observations || ""}
-                    onChange={(e) => handleChange("observations", e.target.value)}
-                    placeholder="Observações internas sobre este contato..."
-                  />
+                <div className="md:col-span-6">
+                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Website</label>
+                   <Input 
+                     value={formData.website || ""} 
+                     onChange={(e) => handleChange("website", e.target.value)}
+                     className="focus-visible:ring-blue-500 border-zinc-300"
+                     placeholder="www.site.com.br"
+                   />
                 </div>
+                <div className="md:col-span-6">
+                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Skype</label>
+                   <Input 
+                     value={formData.skype || ""} 
+                     onChange={(e) => handleChange("skype", e.target.value)}
+                     className="focus-visible:ring-blue-500 border-zinc-300"
+                     placeholder="Skype ID"
+                   />
+                </div>
+
+              </div>
+            )}
+          </div>
+
+          {/* Financeiro */}
+          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+            <div 
+              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              onClick={() => toggleSection('financeiro')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <h2 className="font-semibold text-zinc-800">Financeiro</h2>
+              </div>
+              {sections.financeiro ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+            </div>
+            
+            {sections.financeiro && (
+              <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                
+                <div className="md:col-span-12">
+                  <label className="block text-sm font-medium text-zinc-700 mb-3">Limite de Crédito</label>
+                  <div className="flex flex-wrap gap-6 mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="credit_limit_type"
+                        checked={formData.credit_limit_type === 'ilimitado'}
+                        onChange={() => handleChange("credit_limit_type", 'ilimitado')}
+                        className="w-4 h-4 text-blue-600 border-zinc-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-zinc-700">Ilimitado</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="credit_limit_type"
+                        checked={formData.credit_limit_type === 'limitado'}
+                        onChange={() => handleChange("credit_limit_type", 'limitado')}
+                        className="w-4 h-4 text-blue-600 border-zinc-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-zinc-700">Limitado</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="credit_limit_type"
+                        checked={formData.credit_limit_type === 'zero'}
+                        onChange={() => handleChange("credit_limit_type", 'zero')}
+                        className="w-4 h-4 text-blue-600 border-zinc-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-zinc-700">Limite zero</span>
+                    </label>
+                  </div>
+                  
+                  {formData.credit_limit_type === 'limitado' && (
+                    <div className="max-w-xs">
+                      <div className="relative">
+                        <Input 
+                          value={formatCurrency(formData.credit_limit || 0)} 
+                          onChange={(e) => {
+                            const masked = maskCurrency(e.target.value);
+                            const numeric = parseCurrency(masked);
+                            handleChange("credit_limit", numeric);
+                          }}
+                          className="pl-3 focus-visible:ring-blue-500 border-zinc-300"
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="md:col-span-6">
+                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Condição de Pagamento</label>
+                   <Select 
+                     value={formData.payment_condition || ""}
+                     onChange={(e) => handleChange("payment_condition", e.target.value)}
+                   >
+                     <option value="">Padrão</option>
+                     <option value="a_vista">À Vista</option>
+                     <option value="30_dias">30 Dias</option>
+                     <option value="30_60_dias">30/60 Dias</option>
+                   </Select>
+                </div>
+
+                <div className="md:col-span-6">
+                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Categoria</label>
+                   <Select 
+                     value={formData.category_id || ""}
+                     onChange={(e) => handleChange("category_id", e.target.value)}
+                   >
+                     <option value="">Sem categoria</option>
+                     <option value="vip">Cliente VIP</option>
+                     <option value="revenda">Revenda</option>
+                   </Select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Observações */}
+          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+            <div 
+              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              onClick={() => toggleSection('observacoes')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <h2 className="font-semibold text-zinc-800">Observações</h2>
+              </div>
+              {sections.observacoes ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+            </div>
+            
+            {sections.observacoes && (
+              <div className="p-6">
+                <textarea 
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[120px]"
+                  value={formData.observations || ""}
+                  onChange={(e) => handleChange("observations", e.target.value)}
+                  placeholder="Observações internas sobre este contato..."
+                />
               </div>
             )}
           </div>
 
         </div>
       </form>
+
+      <ConfirmationDialog
+        isOpen={cancelDialogOpen}
+        onClose={() => setCancelDialogOpen(false)}
+        onConfirm={() => navigate(basePath)}
+        title="Cancelar Edição"
+        description="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
+        confirmText="Sim, cancelar"
+        variant="warning"
+      />
+
+      <ConfirmationDialog
+        isOpen={alertState.isOpen}
+        onClose={() => {
+          setAlertState(prev => ({ ...prev, isOpen: false }));
+          if (alertState.onConfirm) alertState.onConfirm();
+        }}
+        onConfirm={() => {
+          setAlertState(prev => ({ ...prev, isOpen: false }));
+          if (alertState.onConfirm) alertState.onConfirm();
+        }}
+        title={alertState.title}
+        description={alertState.description}
+        confirmText="OK"
+        variant={alertState.variant}
+        showCancel={false}
+      />
     </BlingLayout>
   );
 }

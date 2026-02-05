@@ -202,7 +202,9 @@ export async function createCheckout(args: { planId: string }): Promise<{ initPo
 }
 
 export * from "./api_products";
+export * from "./api_categories";
 export * from "./api_contacts";
+export * from "./api_salespersons";
 export * from "./api_admin";
 
 

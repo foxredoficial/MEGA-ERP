@@ -106,7 +106,8 @@ export function ServiceList() {
                     <input type="checkbox" className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
                   </th>
                   <th className="px-6 py-4">Serviço</th>
-                  <th className="px-6 py-4">Código (SKU)</th>
+                  <th className="px-6 py-4">Cód. LC 116</th>
+                  <th className="px-6 py-4">ISS (%)</th>
                   <th className="px-6 py-4">Preço Venda</th>
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
@@ -114,7 +115,7 @@ export function ServiceList() {
               <tbody className="divide-y divide-zinc-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                         <p>Carregando serviços...</p>
@@ -123,7 +124,7 @@ export function ServiceList() {
                   </tr>
                 ) : filteredServices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
                         <Briefcase className="w-12 h-12 text-zinc-300 mb-4" />
                         <h3 className="text-lg font-medium text-zinc-900 mb-1">Nenhum serviço encontrado</h3>
@@ -147,10 +148,22 @@ export function ServiceList() {
                           <Link to={`/app/servicos/${service.id}`} className="font-semibold text-zinc-900 hover:text-blue-600 transition-colors">
                             {service.name}
                           </Link>
+                          {service.sku && (
+                            <span className="text-xs text-zinc-500 font-mono mt-0.5">SKU: {service.sku}</span>
+                          )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-zinc-600 font-mono text-xs">
-                        {service.sku || "-"}
+                      <td className="px-6 py-4 text-zinc-600 text-sm">
+                        {service.service_code_lc116 ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-zinc-100 text-zinc-700 text-xs font-medium">
+                            {service.service_code_lc116}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400 text-xs italic">Não informado</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-zinc-600 text-sm">
+                        {service.iss_rate ? `${service.iss_rate}%` : "-"}
                       </td>
                       <td className="px-6 py-4 font-medium text-zinc-900">
                         {formatBRLFromCents(service.price * 100)}

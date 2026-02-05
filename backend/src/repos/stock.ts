@@ -1,4 +1,5 @@
 import { getTenantPool } from "../db_tenant.js";
+import { pool as saasPool } from "../db.js";
 import { randomUUID } from "crypto";
 import type { RowDataPacket } from "mysql2";
 
@@ -103,14 +104,50 @@ export async function addStockMovement(
 
 export async function getStockHistory(userId: string, productId: string) {
   const pool = await getTenantPool(userId);
-  const [rows] = await pool.query(
-    `SELECT sm.*, u.full_name AS user_name, pl.code AS lot_code
+  
+  // 1. Fetch movements from Tenant DB (without joining users)
+  const [rows] = await pool.query<(StockMovement & { lot_code: string | null } & RowDataPacket)[]>(
+    `SELECT sm.*, pl.code AS lot_code
      FROM stock_movements sm
-     LEFT JOIN users u ON sm.user_id = u.id
      LEFT JOIN product_lots pl ON sm.lot_id = pl.id
      WHERE sm.product_id = ?
      ORDER BY sm.created_at DESC`,
     [productId]
   );
-  return rows as (StockMovement & { user_name: string, lot_code: string | null })[];
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  // 2. Fetch User Names from SaaS DB
+  const userIds = [...new Set(rows.map(r => r.user_id))];
+  
+  // Create a map of userId -> userName
+  const userMap = new Map<string, string>();
+  
+  if (userIds.length > 0) {
+    // We can't use "WHERE id IN (?)" easily with array in mysql2 without expanding it manually or using a helper
+    // simpler to just iterate or build the query string carefully.
+    // Actually mysql2 supports IN (?)
+    
+    try {
+      const [users] = await saasPool.query<RowDataPacket[]>(
+        "SELECT id, full_name FROM users WHERE id IN (?)",
+        [userIds]
+      );
+      
+      users.forEach(u => {
+        userMap.set(u.id, u.full_name);
+      });
+    } catch (err) {
+      console.error("Error fetching user names for stock history:", err);
+      // Fallback: don't crash, just show Unknown or ID
+    }
+  }
+
+  // 3. Merge data
+  return rows.map(row => ({
+    ...row,
+    user_name: userMap.get(row.user_id) || "Usuário Desconhecido"
+  }));
 }

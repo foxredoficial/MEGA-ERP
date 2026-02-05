@@ -6,7 +6,10 @@ import {
   Box,
   FileText,
   DollarSign,
-  Info
+  Info,
+  Tags,
+  AlignLeft,
+  Percent
 } from "lucide-react";
 import { BlingHeader } from "@/components/BlingHeader";
 import { Button } from "@/components/ui/Button";
@@ -36,9 +39,12 @@ export function ServiceForm() {
     stock_min: 0,
     stock_max: 0,
     price: 0,
+    cost_price: 0,
     crossdocking: 0,
     location: "",
-    has_lot_control: false
+    has_lot_control: false,
+    iss_retention: false,
+    origin: "0"
   });
 
   useEffect(() => {
@@ -59,6 +65,12 @@ export function ServiceForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name) {
+      alert("O nome do serviço é obrigatório");
+      return;
+    }
+
     setSaving(true);
     try {
       if (isEditing && id) {
@@ -105,6 +117,11 @@ export function ServiceForm() {
                 <span className="text-sm text-zinc-500">
                   {isEditing ? `ID: ${id}` : "Preencha os dados do serviço"}
                 </span>
+                {formData.sku && (
+                  <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-mono border border-zinc-200">
+                    SKU: {formData.sku}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -133,6 +150,7 @@ export function ServiceForm() {
             {[
               { id: "geral", label: "Dados Gerais", icon: Box },
               { id: "fiscal", label: "Fiscal", icon: FileText },
+              { id: "detalhes", label: "Detalhes", icon: AlignLeft },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -151,63 +169,104 @@ export function ServiceForm() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-white">
-          <div className="max-w-4xl">
+        <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50">
+          <div className="w-full">
+            
             {activeTab === "geral" && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Nome do Serviço</label>
-                    <Input 
-                      value={formData.name || ""} 
-                      onChange={(e) => handleChange("name", e.target.value)}
-                      placeholder="Ex: Consultoria Técnica, Instalação, Manutenção..."
-                    />
-                  </div>
+              <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
+                {/* Identificação */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
+                  <h3 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                    <Box className="w-4 h-4 text-blue-600" />
+                    Identificação
+                  </h3>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Código (SKU)</label>
-                    <Input 
-                      value={formData.sku || ""} 
-                      onChange={(e) => handleChange("sku", e.target.value)}
-                      placeholder="Ex: SERV-001"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Venda</label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div className="md:col-span-8">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Nome do Serviço <span className="text-red-500">*</span></label>
                       <Input 
-                        className="pl-9"
-                        type="number"
-                        value={formData.price || 0} 
-                        onChange={(e) => handleChange("price", parseFloat(e.target.value))}
-                        placeholder="0.00"
+                        value={formData.name || ""} 
+                        onChange={(e) => handleChange("name", e.target.value)}
+                        placeholder="Ex: Consultoria Técnica Especializada"
+                        className="focus-visible:ring-blue-500"
                       />
                     </div>
-                  </div>
+                    
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Código (SKU)</label>
+                      <Input 
+                        value={formData.sku || ""} 
+                        onChange={(e) => handleChange("sku", e.target.value)}
+                        placeholder="Ex: SERV-001"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Unidade</label>
-                    <Select 
-                      value={formData.unit || "UN"}
-                      onChange={(e) => handleChange("unit", e.target.value)}
-                    >
-                      <option value="UN">Unidade (UN)</option>
-                      <option value="HR">Hora (HR)</option>
-                      <option value="DIA">Dia (DIA)</option>
-                      <option value="SV">Serviço (SV)</option>
-                    </Select>
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Unidade</label>
+                      <Select 
+                        value={formData.unit || "UN"}
+                        onChange={(e) => handleChange("unit", e.target.value)}
+                      >
+                        <option value="UN">Unidade (UN)</option>
+                        <option value="HR">Hora (HR)</option>
+                        <option value="DIA">Dia (DIA)</option>
+                        <option value="SV">Serviço (SV)</option>
+                        <option value="MES">Mês (MÊS)</option>
+                        <option value="ANO">Ano (ANO)</option>
+                      </Select>
+                    </div>
+
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Categoria</label>
+                      <Select 
+                        value={formData.category_id || ""}
+                        onChange={(e) => handleChange("category_id", e.target.value)}
+                      >
+                        <option value="">Sem categoria</option>
+                        <option value="manutencao">Manutenção</option>
+                        <option value="consultoria">Consultoria</option>
+                        <option value="instalação">Instalação</option>
+                      </Select>
+                    </div>
                   </div>
+                </div>
+
+                {/* Preços */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
+                  <h3 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    Preços
+                  </h3>
                   
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Observações</label>
-                    <Input 
-                      value={formData.observations || ""} 
-                      onChange={(e) => handleChange("observations", e.target.value)}
-                      placeholder="Detalhes adicionais sobre o serviço..."
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Venda</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">R$</span>
+                        <Input 
+                          className="pl-9 font-medium text-zinc-900"
+                          type="number"
+                          value={formData.price || 0} 
+                          onChange={(e) => handleChange("price", parseFloat(e.target.value))}
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Custo</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">R$</span>
+                        <Input 
+                          className="pl-9"
+                          type="number"
+                          value={formData.cost_price || 0} 
+                          onChange={(e) => handleChange("cost_price", parseFloat(e.target.value))}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-1">Usado para cálculo de margem.</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -215,38 +274,127 @@ export function ServiceForm() {
 
             {activeTab === "fiscal" && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <div className="flex items-center gap-2 mb-4">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <h3 className="text-lg font-medium text-zinc-900">Dados fiscais do serviço</h3>
-                </div>
-                
-                <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <p className="text-sm text-blue-800">
-                    Estes dados serão utilizados para a emissão de Nota Fiscal de Serviço (NFS-e).
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">Origem</label>
-                        <Select 
-                            value={formData.origin || ""}
-                            onChange={(e) => handleChange("origin", e.target.value)}
-                        >
-                            <option value="">Selecione a origem</option>
-                            <option value="0">0 - Nacional</option>
-                        </Select>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">Código NBS (Nomenclatura Brasileira de Serviços)</label>
-                        <Input 
-                            value={formData.ncm || ""} 
-                            onChange={(e) => handleChange("ncm", e.target.value)}
-                            placeholder="Ex: 1.01"
-                        />
-                        <p className="text-xs text-zinc-500 mt-1">Utilize o campo NCM para informar o NBS/LC116 se necessário.</p>
+                      <h3 className="text-lg font-medium text-zinc-900">Configuração Fiscal</h3>
+                      <p className="text-sm text-zinc-500">Dados obrigatórios para emissão de NFS-e</p>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div className="md:col-span-12">
+                      <div className="flex items-start gap-3 p-4 bg-yellow-50 text-yellow-800 rounded-md border border-yellow-100 mb-2">
+                        <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm">
+                          O <strong>Código do Serviço (LC 116)</strong> e o <strong>Código NBS</strong> são fundamentais para a correta tributação da nota fiscal de serviço. Consulte seu contador em caso de dúvidas.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-8">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Código do Serviço (LC 116/03)</label>
+                      <Input 
+                        value={formData.service_code_lc116 || ""} 
+                        onChange={(e) => handleChange("service_code_lc116", e.target.value)}
+                        placeholder="Ex: 14.01 - Lubrificação, limpeza, lustração..."
+                      />
+                    </div>
+
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Código NBS</label>
+                      <Input 
+                        value={formData.nbs_code || ""} 
+                        onChange={(e) => handleChange("nbs_code", e.target.value)}
+                        placeholder="Ex: 1.01"
+                      />
+                    </div>
+
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Alíquota de ISS (%)</label>
+                      <div className="relative">
+                        <Input 
+                          type="number"
+                          value={formData.iss_rate || ""} 
+                          onChange={(e) => handleChange("iss_rate", parseFloat(e.target.value))}
+                          placeholder="0.00"
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">%</span>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-4">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Origem</label>
+                      <Select 
+                        value={formData.origin || "0"}
+                        onChange={(e) => handleChange("origin", e.target.value)}
+                      >
+                        <option value="0">0 - Nacional</option>
+                        <option value="1">1 - Estrangeira (Imp. direta)</option>
+                        <option value="2">2 - Estrangeira (Adq. no mercado interno)</option>
+                      </Select>
+                    </div>
+
+                    <div className="md:col-span-4 flex items-end pb-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox"
+                          checked={formData.iss_retention || false}
+                          onChange={(e) => handleChange("iss_retention", e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded border-zinc-300 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-zinc-700">Retenção de ISS</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "detalhes" && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
+                  <h3 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                    <AlignLeft className="w-4 h-4 text-purple-600" />
+                    Descrições e Observações
+                  </h3>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Descrição Curta</label>
+                      <Input 
+                        value={formData.description_short || ""} 
+                        onChange={(e) => handleChange("description_short", e.target.value)}
+                        placeholder="Breve descrição para listagens"
+                      />
+                      <p className="text-xs text-zinc-500 mt-1">Aparece em listagens simples e resumos.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Descrição Complementar (Propostas/OS)</label>
+                      <textarea 
+                        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                        value={formData.description_complementary || ""} 
+                        onChange={(e) => handleChange("description_complementary", e.target.value)}
+                        placeholder="Descreva detalhadamente o escopo do serviço..."
+                      />
+                      <p className="text-xs text-zinc-500 mt-1">Este texto pode ser usado automaticamente em propostas comerciais e ordens de serviço.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">Observações Internas</label>
+                      <textarea 
+                        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                        value={formData.observations || ""} 
+                        onChange={(e) => handleChange("observations", e.target.value)}
+                        placeholder="Anotações internas, não visíveis ao cliente..."
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

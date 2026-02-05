@@ -72,21 +72,21 @@ export function BlingHeader() {
         {
           title: "Cadastros",
           items: [
-            { label: "Clientes e Fornecedores", href: "/app/contatos" },
-            { label: "Produtos", href: "/app/produtos" },
+            { label: "Clientes", href: "/app/clientes" },
+            { label: "Fornecedores", href: "/app/fornecedores" },
             { label: "Catálogo de Serviços", href: "/app/servicos" },
-            { label: "Vendedores", href: "#" },
+            { label: "Vendedores", href: "/app/vendedores" },
           ]
         },
         {
           title: "Ferramentas",
           items: [
-            { label: "Categorias de produtos", href: "#" },
-            { label: "Listas de preços", href: "#" },
+            { label: "Categorias de produtos", href: "/app/categorias" },
+            { label: "Listas de preços", href: "/app/listas-preco" },
           ]
         }
       ],
-      footerLink: { label: "Ver relatórios de cadastros", href: "#" }
+      // footerLink removed as requested
     },
     {
       label: "Vendas",
@@ -95,7 +95,8 @@ export function BlingHeader() {
         {
           title: "Gestão",
           items: [
-            { label: "Pedidos de venda", href: "#" },
+            { label: "Pedidos de venda", href: "/app/vendas/pedidos" },
+            { label: "Produtos", href: "/app/produtos" },
             { label: "Notas fiscais de saída", href: "#" },
             { label: "NFC-e", href: "#" },
             { label: "Frente de caixa", href: "#" },
@@ -123,7 +124,7 @@ export function BlingHeader() {
           items: [
             { label: "Pedidos de compra", href: "#" },
             { label: "Notas fiscais de entrada", href: "#" },
-            { label: "Fornecedores", href: "#" },
+            { label: "Fornecedores", href: "/app/fornecedores" },
           ]
         },
         {

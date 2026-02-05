@@ -39,6 +39,13 @@ export type Product = {
   item_type: string | null;
   parent_id: string | null;
   has_lot_control?: boolean;
+  
+  // Service specific fields
+  iss_rate?: number;
+  iss_retention?: boolean;
+  service_code_lc116?: string;
+  nbs_code?: string;
+
   created_at: string;
   updated_at: string;
 };

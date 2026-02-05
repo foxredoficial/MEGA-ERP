@@ -11,6 +11,8 @@ import { billingRouter } from "./routes/billing.js";
 import { adminRouter } from "./routes/admin.js";
 import productsRouter from "./routes/products.js";
 import contactsRouter from "./routes/contacts.js";
+import categoriesRouter from "./routes/categories.js";
+import priceListsRouter from "./routes/price_lists.js";
 
 const app = express();
 
@@ -57,6 +59,8 @@ app.use("/api/billing", billingRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/contacts", contactsRouter);
+app.use("/api/categories", categoriesRouter);
+app.use("/api/price-lists", priceListsRouter);
 
 app.use((_req, res) => {
   sendError(res, 404, "Rota não encontrada.");
