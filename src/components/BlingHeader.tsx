@@ -7,21 +7,20 @@ import {
   Grid, 
   ChevronDown, 
   LogOut,
-  User,
   ShoppingCart,
   Package,
-  FileText,
   Users,
   DollarSign,
-  BarChart3,
   Box,
   Shield,
-  Wrench,
-  ArrowRight
+  ArrowRight,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/hooks/useTheme";
 
 // Helper type for Mega Menu structure
 type MenuItem = {
@@ -51,6 +50,7 @@ export function BlingHeader() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const { theme, toggleTheme } = useTheme();
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -99,7 +99,7 @@ export function BlingHeader() {
             { label: "Produtos", href: "/app/produtos" },
             { label: "Notas fiscais de saída", href: "#" },
             { label: "NFC-e", href: "#" },
-            { label: "Frente de caixa", href: "#" },
+            { label: "Frente de caixa", href: "/app/pdv" },
             { label: "Propostas comerciais", href: "#" },
           ]
         },
@@ -146,11 +146,10 @@ export function BlingHeader() {
           title: "Gestão financeira",
           items: [
             { label: "Caixas e bancos", href: "#" },
-            { label: "Contas a pagar", href: "#" },
-            { label: "Contas a receber", href: "#" },
-            { label: "Ficha Financeira", href: "#" },
-            { label: "Comissões", href: "#" },
-            { label: "Controle de caixa", href: "#" },
+            { label: "Contas a receber", href: "/app/financeiro/titulos?kind=ar" },
+            { label: "Contas a pagar", href: "/app/financeiro/titulos?kind=ap" },
+            { label: "Controle de caixa", href: "/app/financeiro/caixa" },
+            { label: "Conciliação bancária", href: "#" },
           ]
         }
       ],
@@ -173,7 +172,7 @@ export function BlingHeader() {
   }
 
   return (
-    <header className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-sm fixed top-0 w-full z-50" ref={menuRef}>
+    <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 shadow-sm fixed top-0 w-full z-50" ref={menuRef}>
       {/* Top Bar */}
       <div className="h-14 px-4 flex items-center justify-between gap-4">
         {/* Logo & Mobile Menu */}
@@ -192,8 +191,8 @@ export function BlingHeader() {
             <div key={menu.label} className="relative group">
               <button
                 className={cn(
-                  "flex items-center gap-1 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md transition-colors",
-                  openMenu === menu.label && "text-blue-600 dark:text-blue-400 bg-zinc-50 dark:bg-zinc-900"
+                  "flex items-center gap-1 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-md transition-colors",
+                  openMenu === menu.label && "text-blue-600 dark:text-blue-400 bg-slate-50 dark:bg-slate-900"
                 )}
                 onClick={() => setOpenMenu(openMenu === menu.label ? null : menu.label)}
               >
@@ -205,7 +204,7 @@ export function BlingHeader() {
               {(openMenu === menu.label) && (
                 <div 
                   className={cn(
-                    "absolute top-full left-0 mt-1 bg-white dark:bg-zinc-950 rounded-md shadow-lg border border-zinc-100 dark:border-zinc-800 py-4 animate-in fade-in slide-in-from-top-2 z-50",
+                    "absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-100 dark:border-slate-800 py-4 animate-in fade-in slide-in-from-top-2 z-50",
                     menu.columns ? "w-[600px] grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-6 px-6" : "w-56"
                   )}
                 >
@@ -215,7 +214,7 @@ export function BlingHeader() {
                       {menu.columns.map((col, idx) => (
                         <div key={idx} className="flex flex-col gap-2">
                           {col.title && (
-                            <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider mb-1">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-1">
                               {col.title}
                             </h4>
                           )}
@@ -224,7 +223,7 @@ export function BlingHeader() {
                               <Link
                                 key={item.label}
                                 to={item.href}
-                                className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors"
+                                className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 py-1 transition-colors"
                                 onClick={() => setOpenMenu(null)}
                               >
                                 {item.label}
@@ -236,7 +235,7 @@ export function BlingHeader() {
                       
                       {/* Footer Link */}
                       {menu.footerLink && (
-                        <div className="col-span-full pt-3 mt-1 border-t border-zinc-100 dark:border-zinc-800">
+                        <div className="col-span-full pt-3 mt-1 border-t border-slate-100 dark:border-slate-800">
                           <Link 
                             to={menu.footerLink.href}
                             className="text-sm font-medium text-blue-600 dark:text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 flex items-center gap-1"
@@ -254,7 +253,7 @@ export function BlingHeader() {
                       <Link
                         key={item.label}
                         to={item.href}
-                        className="block px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-blue-600 dark:hover:text-blue-400"
+                        className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-blue-600 dark:hover:text-blue-400"
                         onClick={() => setOpenMenu(null)}
                       >
                         {item.label}
@@ -270,73 +269,83 @@ export function BlingHeader() {
         {/* Search & Actions */}
         <div className="flex items-center gap-3">
           <div className="relative hidden lg:block w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               placeholder="Pesquisar..."
-              className="w-full pl-9 pr-4 py-1.5 text-sm bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 border-transparent rounded-full focus:bg-white dark:focus:bg-zinc-950 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 outline-none transition-all"
+              className="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-100 dark:bg-slate-900 dark:text-slate-200 border-transparent rounded-full focus:bg-white dark:focus:bg-slate-950 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 outline-none transition-all"
             />
           </div>
 
-          <div className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full relative">
+          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative">
               <Grid className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full relative">
+            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950"></span>
             </button>
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full">
+            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
               <HelpCircle className="w-5 h-5" />
             </button>
             <button 
-              className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"
-              onClick={() => navigate("/app#profile")}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
+              onClick={() => navigate("/app#settings")}
             >
               <Settings className="w-5 h-5" />
             </button>
           </div>
 
           {/* User Profile */}
-          <div className="relative border-l border-zinc-200 dark:border-zinc-800 pl-4 ml-1">
+          <div className="relative border-l border-slate-200 dark:border-slate-800 pl-4 ml-1">
             <button
-              className="flex items-center gap-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 p-1 pr-2 rounded-lg transition-colors"
+              className="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-900 p-1 pr-2 rounded-lg transition-colors"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
             >
               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800">
                 {profile?.fullName?.charAt(0) || "U"}
               </div>
               <div className="hidden xl:block text-left">
-                <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 truncate max-w-[120px]">
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[120px]">
                   {profile?.companyName || "Minha Empresa"}
                 </div>
-                <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-[120px]">
+                <div className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[120px]">
                   {profile?.fullName || "Usuário"}
                 </div>
               </div>
-              <ChevronDown className="w-4 h-4 text-zinc-400" />
+              <ChevronDown className="w-4 h-4 text-slate-400" />
             </button>
 
             {userMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-zinc-950 rounded-md shadow-lg border border-zinc-100 dark:border-zinc-800 py-1 animate-in fade-in slide-in-from-top-2">
-                <div className="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{profile?.fullName}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{session?.email}</p>
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-md shadow-lg border border-slate-100 dark:border-slate-800 py-1 animate-in fade-in slide-in-from-top-2">
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{profile?.fullName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{session?.email}</p>
                 </div>
                 <Link
                   to="/app#profile"
-                  className="block px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900"
                   onClick={() => setUserMenuOpen(false)}
                 >
                   Meus Dados
                 </Link>
                 <Link
                   to="/app#plan"
-                  className="block px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900"
                   onClick={() => setUserMenuOpen(false)}
                 >
                   Minha Assinatura
                 </Link>
+                <button
+                  onClick={() => {
+                    toggleTheme();
+                    // Don't close menu immediately so user can see toggle
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 flex items-center gap-2"
+                >
+                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  Tema: {theme === 'dark' ? 'Escuro' : 'Claro'}
+                </button>
                 <button
                   onClick={() => {
                     signOut();

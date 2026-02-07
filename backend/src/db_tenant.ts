@@ -4,6 +4,35 @@ import { readFile } from "node:fs/promises";
 import { pool as saasPool } from "./db.js";
 
 const tenantPools = new Map<string, mysql.Pool>();
+const ensuredTenants = new Set<string>();
+
+async function ensureTenantSchema(tenantId: string, dbName: string) {
+  if (ensuredTenants.has(tenantId)) return;
+
+  const conn = await mysql.createConnection({
+    host: env.MYSQL_HOST,
+    port: env.MYSQL_PORT,
+    user: env.MYSQL_USER,
+    password: env.MYSQL_PASSWORD,
+    database: dbName,
+  });
+
+  try {
+    const schemaUrl = new URL("../tenant_schema.sql", import.meta.url);
+    const schema = await readFile(schemaUrl, "utf8");
+    const statements = schema
+      .split(/;\s*\n/g)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith("--"));
+
+    for (const stmt of statements) {
+      await conn.query(stmt);
+    }
+    ensuredTenants.add(tenantId);
+  } finally {
+    await conn.end();
+  }
+}
 
 export async function createTenantDatabase(tenantId: string) {
   const dbName = `megaerp_tenant_${tenantId.replace(/-/g, "_")}`;
@@ -18,7 +47,6 @@ export async function createTenantDatabase(tenantId: string) {
         user: env.MYSQL_USER,
         password: env.MYSQL_PASSWORD,
         database: dbName,
-        multipleStatements: true
     });
 
     try {
@@ -61,6 +89,7 @@ export async function getTenantPool(tenantId: string): Promise<mysql.Pool> {
     database: dbName,
     connectionLimit: 10,
     namedPlaceholders: true,
+    multipleStatements: false,
   });
 
   // Lazy creation check
@@ -76,7 +105,9 @@ export async function getTenantPool(tenantId: string): Promise<mysql.Pool> {
       throw err;
     }
   }
-  
+
+  await ensureTenantSchema(tenantId, dbName);
+
   tenantPools.set(tenantId, pool);
   return pool;
 }

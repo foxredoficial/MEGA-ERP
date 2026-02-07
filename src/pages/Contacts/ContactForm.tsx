@@ -197,7 +197,7 @@ export function ContactForm({ type }: ContactFormProps) {
     return (
       <BlingLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-zinc-500">Carregando...</div>
+          <div className="text-slate-500">Carregando...</div>
         </div>
       </BlingLayout>
     );
@@ -215,10 +215,10 @@ export function ContactForm({ type }: ContactFormProps) {
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-zinc-800">
+              <h1 className="text-xl font-bold text-slate-800">
                 {isEditing ? (isSupplier ? "Editar Fornecedor" : "Editar Cliente") : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}
               </h1>
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Link to="/app" className="hover:underline hover:text-blue-600">Home</Link>
                 <span>{'>'}</span>
                 <Link to={basePath} className="hover:underline hover:text-blue-600">{isSupplier ? "Fornecedores" : "Clientes"}</Link>
@@ -231,7 +231,7 @@ export function ContactForm({ type }: ContactFormProps) {
             <Button 
               variant="outline" 
               type="button" 
-              className="hover:bg-zinc-50 hover:text-zinc-900"
+              className="hover:bg-slate-50 hover:text-slate-900"
               onClick={() => setCancelDialogOpen(true)}
             >
               Cancelar
@@ -250,18 +250,18 @@ export function ContactForm({ type }: ContactFormProps) {
         <div className="space-y-6 max-w-full mx-auto">
           
           {/* Dados Cadastrais */}
-          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
-              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => toggleSection('dadosCadastrais')}
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-100 rounded text-blue-600">
                   <Building2 className="w-4 h-4" />
                 </div>
-                <h2 className="font-semibold text-zinc-800">Dados cadastrais</h2>
+                <h2 className="font-semibold text-slate-800">Dados cadastrais</h2>
               </div>
-              {sections.dadosCadastrais ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+              {sections.dadosCadastrais ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </div>
             
             {sections.dadosCadastrais && (
@@ -269,7 +269,7 @@ export function ContactForm({ type }: ContactFormProps) {
                 
                 {/* Linha 1: Tipo, Código, Contribuinte */}
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Tipo da Pessoa</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Tipo da Pessoa</label>
                   <Select 
                     value={formData.type}
                     onChange={(e) => handleChange("type", e.target.value)}
@@ -281,19 +281,19 @@ export function ContactForm({ type }: ContactFormProps) {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Código <span title="Código interno"><Info className="inline w-3.5 h-3.5 text-blue-400 ml-1 cursor-help" /></span>
                   </label>
                   <Input 
                     value={formData.code || ""} 
                     onChange={(e) => handleChange("code", e.target.value)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                     placeholder="Auto"
                   />
                 </div>
 
                 <div className="md:col-span-6">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Contribuinte</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Contribuinte</label>
                   <Select 
                     value={formData.contributor_type || 9}
                     onChange={(e) => handleChange("contributor_type", parseInt(e.target.value))}
@@ -306,13 +306,13 @@ export function ContactForm({ type }: ContactFormProps) {
 
                 {/* Linha 2: Nomes */}
                 <div className="md:col-span-6">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     {isPJ ? "Razão Social" : "Nome Completo"} <span className="text-red-500">*</span>
                   </label>
                   <Input 
                     value={formData.name || ""} 
                     onChange={(e) => handleChange("name", e.target.value)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                     placeholder={isPJ ? "Razão Social da Empresa" : "Nome Completo do Contato"}
                   />
                 </div>
@@ -320,26 +320,26 @@ export function ContactForm({ type }: ContactFormProps) {
                 <div className="md:col-span-6">
                   {isPJ ? (
                     <>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
                         Fantasia <span title="Nome fantasia da empresa"><Info className="inline w-3.5 h-3.5 text-blue-400 ml-1 cursor-help" /></span>
                       </label>
                       <Input 
                         value={formData.fantasy_name || ""} 
                         onChange={(e) => handleChange("fantasy_name", e.target.value)}
-                        className="focus-visible:ring-blue-500 border-zinc-300"
+                        className="focus-visible:ring-blue-500 border-slate-300"
                         placeholder="Nome Fantasia"
                       />
                     </>
                   ) : (
                     <>
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">
                         Data de Nascimento
                       </label>
                       <Input 
                         type="date"
                         value={formData.birth_date?.split('T')[0] || ""} 
                         onChange={(e) => handleChange("birth_date", e.target.value)}
-                        className="focus-visible:ring-blue-500 border-zinc-300"
+                        className="focus-visible:ring-blue-500 border-slate-300"
                       />
                     </>
                   )}
@@ -347,7 +347,7 @@ export function ContactForm({ type }: ContactFormProps) {
 
                 {/* Linha 3: Documentos e Fundação (se PJ) */}
                 <div className="md:col-span-4">
-                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     {isEstrangeiro ? "Documento" : (isPJ ? "CNPJ" : "CPF")}
                   </label>
                   <Input 
@@ -362,7 +362,7 @@ export function ContactForm({ type }: ContactFormProps) {
                       }
                     }}
                     maxLength={isEstrangeiro ? undefined : (isPJ ? 18 : 14)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                     placeholder={
                       isEstrangeiro 
                         ? "Passaporte ou ID" 
@@ -372,13 +372,13 @@ export function ContactForm({ type }: ContactFormProps) {
                 </div>
 
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
                      {isEstrangeiro ? "Identificação Adicional" : (isPJ ? "Inscrição Estadual" : "RG")}
                   </label>
                   <Input 
                     value={formData.rg_ie || ""} 
                     onChange={(e) => handleChange("rg_ie", e.target.value)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                     placeholder={
                       isEstrangeiro 
                         ? "Outro Documento" 
@@ -389,14 +389,14 @@ export function ContactForm({ type }: ContactFormProps) {
 
                 {isPJ && (
                   <div className="md:col-span-4">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
                       Data de Fundação
                     </label>
                     <Input 
                       type="date"
                       value={formData.birth_date?.split('T')[0] || ""} 
                       onChange={(e) => handleChange("birth_date", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                     />
                   </div>
                 )}
@@ -405,30 +405,30 @@ export function ContactForm({ type }: ContactFormProps) {
           </div>
 
           {/* Endereço */}
-          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
-              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => toggleSection('endereco')}
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-100 rounded text-blue-600">
                   <MapPin className="w-4 h-4" />
                 </div>
-                <h2 className="font-semibold text-zinc-800">Endereço</h2>
+                <h2 className="font-semibold text-slate-800">Endereço</h2>
               </div>
-              {sections.endereco ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+              {sections.endereco ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </div>
             
             {sections.endereco && (
               <div className="p-6">
-                <div className="flex border-b border-zinc-200 mb-6">
+                <div className="flex border-b border-slate-200 mb-6">
                   <button type="button" className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Geral</button>
-                  <button type="button" className="px-4 py-2 text-sm font-medium text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 rounded-t">Cobrança</button>
+                  <button type="button" className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t">Cobrança</button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">CEP</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">CEP</label>
                     <div className="relative">
                       <Input 
                         value={formData.address_zip || ""} 
@@ -439,66 +439,66 @@ export function ContactForm({ type }: ContactFormProps) {
                             handleMaskedChange("address_zip", e.target.value, maskZip);
                           }
                         }}
-                        className="focus-visible:ring-blue-500 border-zinc-300 pr-8"
+                        className="focus-visible:ring-blue-500 border-slate-300 pr-8"
                         placeholder={isEstrangeiro ? "Zip Code" : "00000-000"}
                       />
-                      <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 cursor-pointer hover:text-blue-600" />
+                      <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 cursor-pointer hover:text-blue-600" />
                     </div>
                   </div>
                   
                   <div className="md:col-span-5">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Endereço</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Endereço</label>
                     <Input 
                       value={formData.address_street || ""} 
                       onChange={(e) => handleChange("address_street", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                       placeholder="Rua, Avenida, etc"
                     />
                   </div>
                   
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Número</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Número</label>
                     <Input 
                       value={formData.address_number || ""} 
                       onChange={(e) => handleChange("address_number", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                     />
                   </div>
                   
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Complemento</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Complemento</label>
                     <Input 
                       value={formData.address_complement || ""} 
                       onChange={(e) => handleChange("address_complement", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                       placeholder="Apto, Bloco, Sala"
                     />
                   </div>
 
                   <div className="md:col-span-5">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Bairro</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Bairro</label>
                     <Input 
                       value={formData.address_neighborhood || ""} 
                       onChange={(e) => handleChange("address_neighborhood", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                     />
                   </div>
 
                   <div className="md:col-span-5">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Cidade</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Cidade</label>
                     <Input 
                       value={formData.address_city || ""} 
                       onChange={(e) => handleChange("address_city", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                     />
                   </div>
                   
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">UF</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">UF</label>
                     <Input 
                       value={formData.address_state || ""} 
                       onChange={(e) => handleChange("address_state", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                       maxLength={2}
                     />
                   </div>
@@ -508,25 +508,25 @@ export function ContactForm({ type }: ContactFormProps) {
           </div>
 
           {/* Contato */}
-          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
-              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => toggleSection('contato')}
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-100 rounded text-blue-600">
                   <Phone className="w-4 h-4" />
                 </div>
-                <h2 className="font-semibold text-zinc-800">Contato</h2>
+                <h2 className="font-semibold text-slate-800">Contato</h2>
               </div>
-              {sections.contato ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+              {sections.contato ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </div>
             
             {sections.contato && (
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Celular / WhatsApp</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Celular / WhatsApp</label>
                     <Input 
                       value={formData.mobile || ""} 
                       onChange={(e) => {
@@ -536,13 +536,13 @@ export function ContactForm({ type }: ContactFormProps) {
                           handleMaskedChange("mobile", e.target.value, maskPhone);
                         }
                       }}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                       placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 00000-0000"}
                     />
                   </div>
 
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Telefone</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Telefone</label>
                     <Input 
                       value={formData.phone || ""} 
                       onChange={(e) => {
@@ -552,52 +552,52 @@ export function ContactForm({ type }: ContactFormProps) {
                            handleMaskedChange("phone", e.target.value, maskPhone);
                          }
                       }}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                       placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 0000-0000"}
                     />
                   </div>
 
                   <div className="md:col-span-6">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">E-mail Principal</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">E-mail Principal</label>
                     <Input 
                       value={formData.email || ""} 
                       onChange={(e) => handleChange("email", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-zinc-300"
+                      className="focus-visible:ring-blue-500 border-slate-300"
                       type="email"
                       placeholder="exemplo@email.com"
                     />
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-100 pt-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-3">Contatos Adicionais</label>
+                <div className="border-t border-slate-100 pt-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Contatos Adicionais</label>
                   
                   {(Array.isArray(formData.contacts_json) ? formData.contacts_json : []).map((contact: any, index: number) => (
-                    <div key={index} className="flex gap-3 mb-3 items-start bg-zinc-50 p-3 rounded-lg border border-zinc-200">
+                    <div key={index} className="flex gap-3 mb-3 items-start bg-slate-50 p-3 rounded-lg border border-slate-200">
                       <div className="flex-1">
-                        <label className="text-xs text-zinc-500 mb-1 block">Nome</label>
+                        <label className="text-xs text-slate-500 mb-1 block">Nome</label>
                         <Input 
                           value={contact.name} 
                           onChange={(e) => updateSubContact(index, 'name', e.target.value)}
-                          className="h-9 text-sm focus-visible:ring-blue-500 border-zinc-300"
+                          className="h-9 text-sm focus-visible:ring-blue-500 border-slate-300"
                           placeholder="Nome do contato"
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="text-xs text-zinc-500 mb-1 block">E-mail</label>
+                        <label className="text-xs text-slate-500 mb-1 block">E-mail</label>
                         <Input 
                           value={contact.email} 
                           onChange={(e) => updateSubContact(index, 'email', e.target.value)}
-                          className="h-9 text-sm focus-visible:ring-blue-500 border-zinc-300"
+                          className="h-9 text-sm focus-visible:ring-blue-500 border-slate-300"
                           placeholder="email@exemplo.com"
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-zinc-700 mb-1.5">Telefone</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Telefone</label>
                         <Input 
                           value={contact.phone} 
                           onChange={(e) => updateSubContact(index, 'phone', e.target.value)}
-                          className="h-9 text-sm focus-visible:ring-blue-500 border-zinc-300"
+                          className="h-9 text-sm focus-visible:ring-blue-500 border-slate-300"
                           placeholder="(00) 0000-0000"
                         />
                       </div>
@@ -628,18 +628,18 @@ export function ContactForm({ type }: ContactFormProps) {
           </div>
           
           {/* Dados Adicionais */}
-          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
-              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => toggleSection('dadosAdicionais')}
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-100 rounded text-blue-600">
                   <FileText className="w-4 h-4" />
                 </div>
-                <h2 className="font-semibold text-zinc-800">Dados Adicionais</h2>
+                <h2 className="font-semibold text-slate-800">Dados Adicionais</h2>
               </div>
-              {sections.dadosAdicionais ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+              {sections.dadosAdicionais ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </div>
             
             {sections.dadosAdicionais && (
@@ -647,14 +647,14 @@ export function ContactForm({ type }: ContactFormProps) {
                 
                 {/* Linha 1: Situação e Vendedor */}
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Situação</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Situação</label>
                   <Select 
                     value={formData.status || "ativo"}
                     onChange={(e) => handleChange("status", e.target.value)}
                     className={cn(
                       "font-medium",
                       formData.status === 'ativo' ? "text-green-600 bg-green-50" : 
-                      formData.status === 'inativo' ? "text-red-600 bg-red-50" : "text-zinc-600 bg-zinc-50"
+                      formData.status === 'inativo' ? "text-red-600 bg-red-50" : "text-slate-600 bg-slate-50"
                     )}
                   >
                     <option value="ativo">Ativo</option>
@@ -665,7 +665,7 @@ export function ContactForm({ type }: ContactFormProps) {
 
                 {!isSupplier && (
                   <div className="md:col-span-4">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1.5">Vendedor</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Vendedor</label>
                     <Select>
                       <option value="">Selecione um vendedor</option>
                     </Select>
@@ -673,33 +673,33 @@ export function ContactForm({ type }: ContactFormProps) {
                 )}
 
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">{isSupplier ? "Fornecedor Desde" : "Cliente Desde"}</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">{isSupplier ? "Fornecedor Desde" : "Cliente Desde"}</label>
                   <Input 
                     type="date"
                     value={formData.date_since?.split('T')[0] || ""} 
                     onChange={(e) => handleChange("date_since", e.target.value)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                   />
                 </div>
 
                 {/* Linha 2: Operação e Carga */}
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">Natureza de Operação Padrão</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Natureza de Operação Padrão</label>
                   <Input 
                     value={formData.operation_nature || ""} 
                     onChange={(e) => handleChange("operation_nature", e.target.value)}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                     placeholder="Ex: Venda de Mercadoria"
                   />
                 </div>
 
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-zinc-700 mb-1.5">% Carga Média (Opcional)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">% Carga Média (Opcional)</label>
                   <Input 
                     type="number"
                     value={formData.avg_load || ""} 
                     onChange={(e) => handleChange("avg_load", parseFloat(e.target.value))}
-                    className="focus-visible:ring-blue-500 border-zinc-300"
+                    className="focus-visible:ring-blue-500 border-slate-300"
                     placeholder="0.00"
                   />
                 </div>
@@ -707,10 +707,10 @@ export function ContactForm({ type }: ContactFormProps) {
                 {/* Dados PF Específicos */}
                 {isPF && (
                   <>
-                    <div className="md:col-span-12 border-t border-zinc-100 my-2"></div>
+                    <div className="md:col-span-12 border-t border-slate-100 my-2"></div>
                     
                     <div className="md:col-span-3">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1.5">Gênero</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Gênero</label>
                       <Select 
                         value={formData.gender || ""}
                         onChange={(e) => handleChange("gender", e.target.value)}
@@ -723,7 +723,7 @@ export function ContactForm({ type }: ContactFormProps) {
                     </div>
 
                     <div className="md:col-span-3">
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Estado Civil</label>
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Estado Civil</label>
                        <Select 
                          value={formData.marital_status || ""}
                          onChange={(e) => handleChange("marital_status", e.target.value)}
@@ -738,41 +738,41 @@ export function ContactForm({ type }: ContactFormProps) {
                     </div>
 
                     <div className="md:col-span-3">
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Profissão</label>
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Profissão</label>
                        <Input 
                          value={formData.profession || ""} 
                          onChange={(e) => handleChange("profession", e.target.value)}
-                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         className="focus-visible:ring-blue-500 border-slate-300"
                          placeholder="Profissão"
                        />
                     </div>
 
                     <div className="md:col-span-3">
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Naturalidade</label>
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Naturalidade</label>
                        <Input 
                          value={formData.naturalness || ""} 
                          onChange={(e) => handleChange("naturalness", e.target.value)}
-                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         className="focus-visible:ring-blue-500 border-slate-300"
                          placeholder="Cidade/Estado"
                        />
                     </div>
 
                     {/* Filiação */}
                     <div className="md:col-span-6">
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Nome do Pai</label>
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome do Pai</label>
                        <Input 
                          value={formData.parents_json?.father || ""} 
                          onChange={(e) => handleChange("parents_json", { ...formData.parents_json, father: e.target.value })}
-                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         className="focus-visible:ring-blue-500 border-slate-300"
                          placeholder="Nome do Pai"
                        />
                     </div>
                     <div className="md:col-span-6">
-                       <label className="block text-sm font-medium text-zinc-700 mb-1.5">Nome da Mãe</label>
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Nome da Mãe</label>
                        <Input 
                          value={formData.parents_json?.mother || ""} 
                          onChange={(e) => handleChange("parents_json", { ...formData.parents_json, mother: e.target.value })}
-                         className="focus-visible:ring-blue-500 border-zinc-300"
+                         className="focus-visible:ring-blue-500 border-slate-300"
                          placeholder="Nome da Mãe"
                        />
                     </div>
@@ -780,23 +780,23 @@ export function ContactForm({ type }: ContactFormProps) {
                 )}
                 
                 {/* Web/Contato Extra */}
-                <div className="md:col-span-12 border-t border-zinc-100 my-2"></div>
+                <div className="md:col-span-12 border-t border-slate-100 my-2"></div>
 
                 <div className="md:col-span-6">
-                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Website</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Website</label>
                    <Input 
                      value={formData.website || ""} 
                      onChange={(e) => handleChange("website", e.target.value)}
-                     className="focus-visible:ring-blue-500 border-zinc-300"
+                     className="focus-visible:ring-blue-500 border-slate-300"
                      placeholder="www.site.com.br"
                    />
                 </div>
                 <div className="md:col-span-6">
-                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Skype</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Skype</label>
                    <Input 
                      value={formData.skype || ""} 
                      onChange={(e) => handleChange("skype", e.target.value)}
-                     className="focus-visible:ring-blue-500 border-zinc-300"
+                     className="focus-visible:ring-blue-500 border-slate-300"
                      placeholder="Skype ID"
                    />
                 </div>
@@ -806,25 +806,25 @@ export function ContactForm({ type }: ContactFormProps) {
           </div>
 
           {/* Financeiro */}
-          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
-              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => toggleSection('financeiro')}
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-100 rounded text-blue-600">
                   <DollarSign className="w-4 h-4" />
                 </div>
-                <h2 className="font-semibold text-zinc-800">Financeiro</h2>
+                <h2 className="font-semibold text-slate-800">Financeiro</h2>
               </div>
-              {sections.financeiro ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+              {sections.financeiro ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </div>
             
             {sections.financeiro && (
               <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
                 
                 <div className="md:col-span-12">
-                  <label className="block text-sm font-medium text-zinc-700 mb-3">Limite de Crédito</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Limite de Crédito</label>
                   <div className="flex flex-wrap gap-6 mb-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -832,9 +832,9 @@ export function ContactForm({ type }: ContactFormProps) {
                         name="credit_limit_type"
                         checked={formData.credit_limit_type === 'ilimitado'}
                         onChange={() => handleChange("credit_limit_type", 'ilimitado')}
-                        className="w-4 h-4 text-blue-600 border-zinc-300 focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700">Ilimitado</span>
+                      <span className="text-sm text-slate-700">Ilimitado</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -842,9 +842,9 @@ export function ContactForm({ type }: ContactFormProps) {
                         name="credit_limit_type"
                         checked={formData.credit_limit_type === 'limitado'}
                         onChange={() => handleChange("credit_limit_type", 'limitado')}
-                        className="w-4 h-4 text-blue-600 border-zinc-300 focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700">Limitado</span>
+                      <span className="text-sm text-slate-700">Limitado</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -852,9 +852,9 @@ export function ContactForm({ type }: ContactFormProps) {
                         name="credit_limit_type"
                         checked={formData.credit_limit_type === 'zero'}
                         onChange={() => handleChange("credit_limit_type", 'zero')}
-                        className="w-4 h-4 text-blue-600 border-zinc-300 focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-zinc-700">Limite zero</span>
+                      <span className="text-sm text-slate-700">Limite zero</span>
                     </label>
                   </div>
                   
@@ -868,7 +868,7 @@ export function ContactForm({ type }: ContactFormProps) {
                             const numeric = parseCurrency(masked);
                             handleChange("credit_limit", numeric);
                           }}
-                          className="pl-3 focus-visible:ring-blue-500 border-zinc-300"
+                          className="pl-3 focus-visible:ring-blue-500 border-slate-300"
                           placeholder="R$ 0,00"
                         />
                       </div>
@@ -877,7 +877,7 @@ export function ContactForm({ type }: ContactFormProps) {
                 </div>
 
                 <div className="md:col-span-6">
-                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Condição de Pagamento</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Condição de Pagamento</label>
                    <Select 
                      value={formData.payment_condition || ""}
                      onChange={(e) => handleChange("payment_condition", e.target.value)}
@@ -890,7 +890,7 @@ export function ContactForm({ type }: ContactFormProps) {
                 </div>
 
                 <div className="md:col-span-6">
-                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Categoria</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Categoria</label>
                    <Select 
                      value={formData.category_id || ""}
                      onChange={(e) => handleChange("category_id", e.target.value)}
@@ -905,24 +905,24 @@ export function ContactForm({ type }: ContactFormProps) {
           </div>
 
           {/* Observações */}
-          <div className="bg-white rounded-lg shadow-sm border border-zinc-200 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
-              className="flex items-center justify-between px-6 py-4 bg-zinc-50/50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors"
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
               onClick={() => toggleSection('observacoes')}
             >
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-100 rounded text-blue-600">
                   <MessageSquare className="w-4 h-4" />
                 </div>
-                <h2 className="font-semibold text-zinc-800">Observações</h2>
+                <h2 className="font-semibold text-slate-800">Observações</h2>
               </div>
-              {sections.observacoes ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />}
+              {sections.observacoes ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </div>
             
             {sections.observacoes && (
               <div className="p-6">
                 <textarea 
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[120px]"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[120px]"
                   value={formData.observations || ""}
                   onChange={(e) => handleChange("observations", e.target.value)}
                   placeholder="Observações internas sobre este contato..."

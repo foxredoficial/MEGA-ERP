@@ -104,21 +104,21 @@ export function ServiceForm() {
       
       <main className="flex-1 pt-14 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex-none px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white z-10">
+        <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
-            <Link to="/app/servicos" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-zinc-600" />
+            <Link to="/app/servicos" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900">
+              <h1 className="text-2xl font-bold text-slate-900">
                 {isEditing ? "Editar Serviço" : "Novo Serviço"}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm text-slate-500">
                   {isEditing ? `ID: ${id}` : "Preencha os dados do serviço"}
                 </span>
                 {formData.sku && (
-                  <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-mono border border-zinc-200">
+                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono border border-slate-200">
                     SKU: {formData.sku}
                   </span>
                 )}
@@ -145,7 +145,7 @@ export function ServiceForm() {
         </div>
 
         {/* Tabs */}
-        <div className="flex-none border-b border-zinc-200 bg-white overflow-x-auto">
+        <div className="flex-none border-b border-slate-200 bg-white overflow-x-auto">
           <div className="flex items-center px-6">
             {[
               { id: "geral", label: "Dados Gerais", icon: Box },
@@ -158,7 +158,7 @@ export function ServiceForm() {
                 className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-zinc-600 hover:text-zinc-900 hover:border-zinc-300"
+                    : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -169,21 +169,21 @@ export function ServiceForm() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
           <div className="w-full">
             
             {activeTab === "geral" && (
               <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
                 {/* Identificação */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
-                  <h3 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                  <h3 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
                     <Box className="w-4 h-4 text-blue-600" />
                     Identificação
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                     <div className="md:col-span-8">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Nome do Serviço <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Serviço <span className="text-red-500">*</span></label>
                       <Input 
                         value={formData.name || ""} 
                         onChange={(e) => handleChange("name", e.target.value)}
@@ -193,7 +193,7 @@ export function ServiceForm() {
                     </div>
                     
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Código (SKU)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Código (SKU)</label>
                       <Input 
                         value={formData.sku || ""} 
                         onChange={(e) => handleChange("sku", e.target.value)}
@@ -202,7 +202,7 @@ export function ServiceForm() {
                     </div>
 
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Unidade</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Unidade</label>
                       <Select 
                         value={formData.unit || "UN"}
                         onChange={(e) => handleChange("unit", e.target.value)}
@@ -217,7 +217,7 @@ export function ServiceForm() {
                     </div>
 
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Categoria</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
                       <Select 
                         value={formData.category_id || ""}
                         onChange={(e) => handleChange("category_id", e.target.value)}
@@ -232,19 +232,19 @@ export function ServiceForm() {
                 </div>
 
                 {/* Preços */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
-                  <h3 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                  <h3 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
                     Preços
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Venda</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Venda</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">R$</span>
                         <Input 
-                          className="pl-9 font-medium text-zinc-900"
+                          className="pl-9 font-medium text-slate-900"
                           type="number"
                           value={formData.price || 0} 
                           onChange={(e) => handleChange("price", parseFloat(e.target.value))}
@@ -254,9 +254,9 @@ export function ServiceForm() {
                     </div>
 
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Custo</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Custo</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">R$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">R$</span>
                         <Input 
                           className="pl-9"
                           type="number"
@@ -265,7 +265,7 @@ export function ServiceForm() {
                           placeholder="0.00"
                         />
                       </div>
-                      <p className="text-xs text-zinc-500 mt-1">Usado para cálculo de margem.</p>
+                      <p className="text-xs text-slate-500 mt-1">Usado para cálculo de margem.</p>
                     </div>
                   </div>
                 </div>
@@ -274,14 +274,14 @@ export function ServiceForm() {
 
             {activeTab === "fiscal" && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                   <div className="flex items-center gap-2 mb-6">
                     <div className="p-2 bg-blue-50 rounded-lg">
                       <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-zinc-900">Configuração Fiscal</h3>
-                      <p className="text-sm text-zinc-500">Dados obrigatórios para emissão de NFS-e</p>
+                      <h3 className="text-lg font-medium text-slate-900">Configuração Fiscal</h3>
+                      <p className="text-sm text-slate-500">Dados obrigatórios para emissão de NFS-e</p>
                     </div>
                   </div>
 
@@ -296,7 +296,7 @@ export function ServiceForm() {
                     </div>
 
                     <div className="md:col-span-8">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Código do Serviço (LC 116/03)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Código do Serviço (LC 116/03)</label>
                       <Input 
                         value={formData.service_code_lc116 || ""} 
                         onChange={(e) => handleChange("service_code_lc116", e.target.value)}
@@ -305,7 +305,7 @@ export function ServiceForm() {
                     </div>
 
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Código NBS</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Código NBS</label>
                       <Input 
                         value={formData.nbs_code || ""} 
                         onChange={(e) => handleChange("nbs_code", e.target.value)}
@@ -314,7 +314,7 @@ export function ServiceForm() {
                     </div>
 
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Alíquota de ISS (%)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Alíquota de ISS (%)</label>
                       <div className="relative">
                         <Input 
                           type="number"
@@ -323,12 +323,12 @@ export function ServiceForm() {
                           placeholder="0.00"
                           className="pr-8"
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 font-medium">%</span>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">%</span>
                       </div>
                     </div>
 
                     <div className="md:col-span-4">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Origem</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Origem</label>
                       <Select 
                         value={formData.origin || "0"}
                         onChange={(e) => handleChange("origin", e.target.value)}
@@ -345,9 +345,9 @@ export function ServiceForm() {
                           type="checkbox"
                           checked={formData.iss_retention || false}
                           onChange={(e) => handleChange("iss_retention", e.target.checked)}
-                          className="w-4 h-4 text-blue-600 rounded border-zinc-300 focus:ring-blue-500"
+                          className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
                         />
-                        <span className="text-sm font-medium text-zinc-700">Retenção de ISS</span>
+                        <span className="text-sm font-medium text-slate-700">Retenção de ISS</span>
                       </label>
                     </div>
                   </div>
@@ -357,38 +357,38 @@ export function ServiceForm() {
 
             {activeTab === "detalhes" && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
-                  <h3 className="text-lg font-medium text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                  <h3 className="text-lg font-medium text-slate-900 mb-4 flex items-center gap-2">
                     <AlignLeft className="w-4 h-4 text-purple-600" />
                     Descrições e Observações
                   </h3>
                   
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Descrição Curta</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Descrição Curta</label>
                       <Input 
                         value={formData.description_short || ""} 
                         onChange={(e) => handleChange("description_short", e.target.value)}
                         placeholder="Breve descrição para listagens"
                       />
-                      <p className="text-xs text-zinc-500 mt-1">Aparece em listagens simples e resumos.</p>
+                      <p className="text-xs text-slate-500 mt-1">Aparece em listagens simples e resumos.</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Descrição Complementar (Propostas/OS)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Descrição Complementar (Propostas/OS)</label>
                       <textarea 
-                        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
                         value={formData.description_complementary || ""} 
                         onChange={(e) => handleChange("description_complementary", e.target.value)}
                         placeholder="Descreva detalhadamente o escopo do serviço..."
                       />
-                      <p className="text-xs text-zinc-500 mt-1">Este texto pode ser usado automaticamente em propostas comerciais e ordens de serviço.</p>
+                      <p className="text-xs text-slate-500 mt-1">Este texto pode ser usado automaticamente em propostas comerciais e ordens de serviço.</p>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Observações Internas</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Observações Internas</label>
                       <textarea 
-                        className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
                         value={formData.observations || ""} 
                         onChange={(e) => handleChange("observations", e.target.value)}
                         placeholder="Anotações internas, não visíveis ao cliente..."

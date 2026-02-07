@@ -2,12 +2,35 @@ import { Router } from "express";
 import { z } from "zod";
 import { asyncHandler, sendError } from "../http.js";
 import { requireAuth, type AuthedRequest } from "../auth/requireAuth.js";
-import { findUserById, updateUserPassword, updateUserProfile } from "../repos/users.js";
+import { findUserById, updateUserPassword, updateUserProfile, updateUserPreferences } from "../repos/users.js";
 import { getSubscriptionByUserId } from "../repos/subscriptions.js";
 import { findPlanById } from "../repos/plans.js";
 import bcrypt from "bcryptjs";
 
 export const meRouter = Router();
+
+meRouter.put(
+  "/preferences",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const r = req as AuthedRequest;
+    const body = z.object({
+      theme: z.enum(['light', 'dark']).optional(),
+    }).safeParse(req.body);
+
+    if (!body.success) return sendError(res, 400, "Dados inválidos.", body.error.flatten());
+
+    const user = await findUserById(r.auth.userId);
+    if (!user) return sendError(res, 401, "Usuário não encontrado.");
+
+    const currentPrefs = typeof user.preferences === 'object' ? user.preferences : {};
+    const newPrefs = { ...currentPrefs, ...body.data };
+
+    await updateUserPreferences(user.id, newPrefs);
+
+    res.json({ ok: true, preferences: newPrefs });
+  })
+);
 
 meRouter.put(
   "/password",

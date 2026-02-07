@@ -59,19 +59,19 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Dashboard</h2>
-        <p className="text-zinc-500 dark:text-zinc-400">Visão geral do sistema e métricas principais.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Dashboard</h2>
+        <p className="text-slate-500 dark:text-slate-400">Visão geral do sistema e métricas principais.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
-            <Users className="h-4 w-4 text-zinc-500" />
+            <Users className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.users}</div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               +20.1% em relação ao mês passado
             </p>
           </CardContent>
@@ -79,11 +79,11 @@ export function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Assinaturas Ativas</CardTitle>
-            <CreditCard className="h-4 w-4 text-zinc-500" />
+            <CreditCard className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               +15% em relação ao mês passado
             </p>
           </CardContent>
@@ -91,11 +91,11 @@ export function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-            <TrendingUp className="h-4 w-4 text-zinc-500" />
+            <TrendingUp className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ 12.234,00</div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               +12% em relação ao mês passado
             </p>
           </CardContent>
@@ -103,11 +103,11 @@ export function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-            <Activity className="h-4 w-4 text-zinc-500" />
+            <Activity className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">5.4%</div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               +2.1% em relação ao mês passado
             </p>
           </CardContent>
@@ -193,23 +193,23 @@ export function Dashboard() {
         <CardContent>
           <div className="space-y-4">
             {stats.recentUsers?.map((user) => (
-              <div key={user.id} className="flex items-center justify-between border-b border-zinc-100 pb-4 last:border-0 last:pb-0 dark:border-zinc-800">
+              <div key={user.id} className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0 dark:border-slate-800">
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                     <span className="font-semibold">{user.full_name.charAt(0).toUpperCase()}</span>
                   </div>
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">{user.full_name}</p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">{user.email}</p>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{user.full_name}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
                   </div>
                 </div>
-                <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   {new Date(user.created_at).toLocaleDateString()}
                 </div>
               </div>
             ))}
             {(!stats.recentUsers || stats.recentUsers.length === 0) && (
-              <p className="text-center text-zinc-500">Nenhum usuário recente.</p>
+              <p className="text-center text-slate-500">Nenhum usuário recente.</p>
             )}
           </div>
         </CardContent>

@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 export function SiteFooter() {
   const status = useAuthStore((s) => s.status);
   return (
-    <footer className="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
       <div className="container px-4">
         <div className="flex flex-col gap-6 py-10 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2">
@@ -14,7 +14,7 @@ export function SiteFooter() {
             </span>
             <div>
               <div className="text-sm font-semibold">MEGA ERP</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">© {new Date().getFullYear()} • Todos os direitos reservados</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">© {new Date().getFullYear()} • Todos os direitos reservados</div>
             </div>
           </div>
 

@@ -31,22 +31,20 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div 
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
         className={cn(
-          "relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-2xl dark:bg-zinc-950 dark:border dark:border-zinc-800 animate-in zoom-in-95 duration-200",
+          "absolute inset-0 bg-white shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800 flex flex-col animate-in zoom-in-95 duration-200",
           className
         )}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{title}</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-            <X className="h-4 w-4" />
+        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">{title}</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9">
+            <X className="h-5 w-5" />
           </Button>
         </div>
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );

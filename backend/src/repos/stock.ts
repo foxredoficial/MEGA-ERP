@@ -44,6 +44,13 @@ export async function addStockMovement(
       throw new Error("Este produto possui controle de lote. É obrigatório informar o lote.");
     }
 
+    const [productRows] = await connection.query<RowDataPacket[]>(
+      "SELECT stock FROM products WHERE id = ? FOR UPDATE",
+      [productId]
+    );
+    if (productRows.length === 0) throw new Error("Product not found");
+    const currentProductStock = Number(productRows[0].stock ?? 0);
+
     // Determine adjustment value
     let adjustment = 0;
     if (type === 'in') {
@@ -54,15 +61,26 @@ export async function addStockMovement(
       adjustment = quantity; // quantity can be negative for adjustment
     }
 
+    const nextProductStock = currentProductStock + adjustment;
+    if (nextProductStock < 0) {
+      throw new Error("Estoque insuficiente.");
+    }
+
     // Handle Lot Stock Update
     if (lotId) {
       const [lots] = await connection.query<RowDataPacket[]>(
-        "SELECT id, stock, is_active FROM product_lots WHERE id = ? AND product_id = ?",
+        "SELECT id, stock, is_active FROM product_lots WHERE id = ? AND product_id = ? FOR UPDATE",
         [lotId, productId]
       );
       
       if (lots.length === 0) throw new Error("Lot not found or does not belong to this product");
       const lot = lots[0];
+
+      const currentLotStock = Number(lot.stock ?? 0);
+      const nextLotStock = currentLotStock + adjustment;
+      if (nextLotStock < 0) {
+        throw new Error("Estoque insuficiente no lote.");
+      }
 
       // Update lot stock
       await connection.query(
@@ -74,8 +92,7 @@ export async function addStockMovement(
       // Or simply: ensure it's active if stock > 0? 
       // User says: "Lotes inativos podem ser reativados automaticamente. Caso um lote inativo esteja com saldo zero e ocorra um estorno que gere saldo positivo, o lote será reativado."
       // Let's check the new stock
-      const newLotStock = Number(lot.stock) + adjustment;
-      if (lot.is_active === 0 && newLotStock > 0) {
+      if (lot.is_active === 0 && nextLotStock > 0) {
         await connection.query("UPDATE product_lots SET is_active = 1 WHERE id = ?", [lotId]);
       }
     }

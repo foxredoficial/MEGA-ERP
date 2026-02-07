@@ -8,13 +8,11 @@ export function Settings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' || 'light';
-    setTheme(savedTheme);
+    setTheme('system');
   }, []);
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
     
     // Apply theme immediately
     const root = window.document.documentElement;
@@ -31,8 +29,8 @@ export function Settings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Configurações</h2>
-        <p className="text-zinc-500 dark:text-zinc-400">Gerencie as preferências do painel administrativo.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Configurações</h2>
+        <p className="text-slate-500 dark:text-slate-400">Gerencie as preferências do painel administrativo.</p>
       </div>
 
       <Card>
@@ -41,7 +39,7 @@ export function Settings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Tema do Painel</label>
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Tema do Painel</label>
             <div className="grid grid-cols-3 gap-4 sm:max-w-md">
               <Button
                 variant={theme === 'light' ? 'primary' : 'outline'}
@@ -68,7 +66,7 @@ export function Settings() {
                 <span>Sistema</span>
               </Button>
             </div>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-slate-500">
               Selecione o tema de sua preferência para o painel administrativo.
             </p>
           </div>
@@ -81,10 +79,10 @@ export function Settings() {
         </CardHeader>
         <CardContent>
              <div className="space-y-4">
-                 <div className="flex items-center justify-between p-4 border rounded-lg border-zinc-200 dark:border-zinc-800">
+                 <div className="flex items-center justify-between p-4 border rounded-lg border-slate-200 dark:border-slate-800">
                      <div>
-                         <p className="font-medium text-zinc-900 dark:text-zinc-100">Versão do Painel</p>
-                         <p className="text-sm text-zinc-500">v1.0.0 (Beta)</p>
+                         <p className="font-medium text-slate-900 dark:text-slate-100">Versão do Painel</p>
+                         <p className="text-sm text-slate-500">v1.0.0 (Beta)</p>
                      </div>
                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
                  </div>

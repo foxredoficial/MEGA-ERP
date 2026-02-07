@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { usePlanStore } from "@/stores/planStore";
 import { useAuthStore } from "@/stores/authStore";
 import { getPublicPlans, type Plan } from "@/lib/api";
@@ -52,8 +51,6 @@ export default function Auth() {
     if (selectedPlanId && plans.some((p) => p.id === selectedPlanId)) return selectedPlanId;
     return null;
   }, [planIdFromQuery, plans, selectedPlanId]);
-
-  const plan = useMemo(() => (planId ? plans.find((p) => p.id === planId) ?? null : null), [planId, plans]);
 
   const signUp = useAuthStore((s) => s.signUp);
   const signIn = useAuthStore((s) => s.signIn);
@@ -127,7 +124,7 @@ export default function Auth() {
         {mode !== "forgot" && (
           <Button
             variant="secondary"
-            className="w-full h-11 justify-center gap-2 font-medium text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            className="w-full h-11 justify-center gap-2 font-medium text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
             disabled={busy}
             onClick={() => {
               const url = `/api/auth/google/start?next=${encodeURIComponent(next)}${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`;
@@ -145,10 +142,10 @@ export default function Auth() {
         {mode !== "forgot" && (
           <div className="relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+              <div className="w-full border-t border-slate-200 dark:border-slate-800" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white dark:bg-zinc-950 px-2 text-xs uppercase text-zinc-500">
+              <span className="bg-white dark:bg-slate-950 px-2 text-xs uppercase text-slate-500">
                 Ou continue com email
               </span>
             </div>
@@ -160,21 +157,21 @@ export default function Auth() {
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-900 dark:text-zinc-100">Nome Completo</label>
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Nome Completo</label>
                   <Input 
                     value={fullName} 
                     onChange={(e) => setFullName(e.target.value)} 
                     placeholder="João Silva"
-                    className="h-11 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                    className="h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-900 dark:text-zinc-100">Empresa</label>
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Empresa</label>
                   <Input 
                     value={companyName} 
                     onChange={(e) => setCompanyName(e.target.value)} 
                     placeholder="Minha Loja"
-                    className="h-11 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                    className="h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                   />
                 </div>
               </div>
@@ -182,13 +179,13 @@ export default function Auth() {
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-900 dark:text-zinc-100">Email</label>
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
-                className="pl-10 h-11 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800" 
+                className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800" 
                 placeholder="voce@empresa.com" 
               />
             </div>
@@ -197,7 +194,7 @@ export default function Auth() {
           {mode !== "forgot" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-900 dark:text-zinc-100">Senha</label>
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Senha</label>
                 {mode === "login" && (
                   <Link 
                     to={`/auth?mode=forgot${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`}
@@ -208,12 +205,12 @@ export default function Auth() {
                 )}
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-11 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                  className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                   placeholder="••••••••"
                 />
               </div>
@@ -228,10 +225,10 @@ export default function Auth() {
                   type="checkbox"
                   checked={acceptTerms}
                   onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-600 dark:border-zinc-700 dark:bg-zinc-900 dark:ring-offset-zinc-950"
+                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:ring-offset-slate-950"
                 />
               </div>
-              <label htmlFor="terms" className="text-sm text-zinc-500 dark:text-zinc-400">
+              <label htmlFor="terms" className="text-sm text-slate-500 dark:text-slate-400">
                 Ao criar uma conta, você concorda com nossos{" "}
                 <Link to="/termos" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
                   Termos de Uso
@@ -281,7 +278,7 @@ export default function Auth() {
 
         <div className="text-center text-sm">
           {mode === "signup" ? (
-            <span className="text-zinc-500 dark:text-zinc-400">
+            <span className="text-slate-500 dark:text-slate-400">
               Já tem uma conta?{" "}
               <Link 
                 to={`/auth?mode=login${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`}
@@ -291,7 +288,7 @@ export default function Auth() {
               </Link>
             </span>
           ) : mode === "login" ? (
-            <span className="text-zinc-500 dark:text-zinc-400">
+            <span className="text-slate-500 dark:text-slate-400">
               Não tem uma conta?{" "}
               <Link 
                 to={`/auth?mode=signup${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`}

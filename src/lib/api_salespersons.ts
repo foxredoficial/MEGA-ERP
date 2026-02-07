@@ -17,9 +17,7 @@ export type Salesperson = {
 export type SalespersonInput = Omit<Salesperson, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
 
 export async function getSalespersons() {
-  // Using a mock endpoint or generic endpoint if available
-  // In a real scenario this would hit /api/salespersons
-  return apiFetch<{ salespersons: Salesperson[] }>("/api/salespersons").then(r => r.salespersons).catch(() => []);
+  return apiFetch<{ salespersons: Salesperson[] }>("/api/salespersons").then(r => r.salespersons);
 }
 
 export async function getSalesperson(id: string) {

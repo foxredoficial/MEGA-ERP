@@ -37,11 +37,17 @@ export type UserAuthDetails = {
   googleId: string | null;
 };
 
+export type UserPreferences = {
+  theme?: 'light' | 'dark';
+  [key: string]: any;
+};
+
 type AuthState = {
   status: AuthStatus;
   session: AuthSession | null;
   profile: UserProfile | null;
   authDetails: UserAuthDetails | null;
+  preferences: UserPreferences | null;
   error: string | null;
   init: () => Promise<void>;
   signUp: (args: {
@@ -55,6 +61,7 @@ type AuthState = {
   requestPasswordReset: (email: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
+  updatePreferences: (patch: Partial<UserPreferences>) => Promise<void>;
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -62,26 +69,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   profile: null,
   authDetails: null,
+  preferences: null,
   error: null,
 
   init: async () => {
     set({ status: "loading", error: null });
     try {
-      const me = await getMe(true);
+      const me = await getMe();
+
+      if (!me.authenticated) {
+        set({ status: "signedOut", session: null, profile: null, authDetails: null, preferences: null });
+        return;
+      }
+
       set({
         status: "signedIn",
         session: { userId: me.user.id, email: me.user.email, role: me.user.role },
         profile: me.profile,
         authDetails: me.auth,
+        preferences: me.preferences ?? {},
       });
     } catch (e) {
       const err = e as Partial<ApiError> | null;
-      if (err?.status === 401) {
-        set({ status: "signedOut", session: null, profile: null, authDetails: null });
-        return;
-      }
-
-      set({ status: "signedOut", session: null, profile: null, authDetails: null, error: err?.message ?? "Não foi possível carregar sua sessão." });
+      set({ status: "signedOut", session: null, profile: null, authDetails: null, preferences: null, error: err?.message ?? "Não foi possível carregar sua sessão." });
     }
   },
 
@@ -100,6 +110,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         session: { userId: me.user.id, email: me.user.email, role: me.user.role },
         profile: me.profile,
         authDetails: me.auth,
+        preferences: me.preferences ?? {},
       });
       return true;
     } catch (e) {
@@ -118,6 +129,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         session: { userId: me.user.id, email: me.user.email, role: me.user.role },
         profile: me.profile,
         authDetails: me.auth,
+        preferences: me.preferences ?? {},
       });
       return true;
     } catch (e) {
@@ -146,7 +158,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       void e;
     }
-    set({ status: "signedOut", session: null, profile: null });
+    set({ status: "signedOut", session: null, profile: null, preferences: null });
   },
 
   updateProfile: async (patch) => {
@@ -205,6 +217,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       const err = e as Partial<ApiError> | null;
       set({ error: err?.message ?? "Não foi possível salvar o perfil." });
+    }
+  },
+
+  updatePreferences: async (patch) => {
+    const current = get().preferences ?? {};
+    const next = { ...current, ...patch };
+    set({ preferences: next });
+    try {
+      // Import dynamically to avoid cycle if needed, but api.ts is fine
+      const { updatePreferences } = await import('@/lib/api');
+      await updatePreferences(patch);
+    } catch (e) {
+       console.error("Failed to sync preferences", e);
     }
   },
 }));

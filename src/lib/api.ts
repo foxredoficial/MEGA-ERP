@@ -98,7 +98,15 @@ export type MeResponse = {
     hasPassword: boolean;
     googleId: string | null;
   };
+  preferences: {
+    theme?: 'light' | 'dark';
+    [key: string]: any;
+  } | null;
 };
+
+export type AuthMeResponse =
+  | { authenticated: false }
+  | ({ authenticated: true } & MeResponse);
 
 export type Subscription = {
   id: string;
@@ -137,15 +145,8 @@ export async function logout(): Promise<void> {
   await apiFetch<void>("/api/auth/logout", { method: "POST" });
 }
 
-export async function getMe(silent = false): Promise<MeResponse> {
-  try {
-    return await apiFetch<MeResponse>("/api/auth/me", { method: "GET" });
-  } catch (err) {
-    if (silent && (err as ApiError).status === 401) {
-      throw err; // Re-throw but caller handles it
-    }
-    throw err;
-  }
+export async function getMe(): Promise<AuthMeResponse> {
+  return apiFetch<AuthMeResponse>("/api/auth/me", { method: "GET" });
 }
 
 export async function requestPasswordReset(args: { email: string }): Promise<void> {
@@ -190,6 +191,13 @@ export async function updateProfile(args: {
   });
 }
 
+export async function updatePreferences(args: { theme?: 'light' | 'dark' }): Promise<{ ok: true; preferences: any }> {
+  return apiFetch("/api/me/preferences", {
+    method: "PUT",
+    body: JSON.stringify(args),
+  });
+}
+
 export async function getMySubscription(): Promise<{ subscription: Subscription | null }> {
   return apiFetch<{ subscription: Subscription | null }>("/api/me/subscription", { method: "GET" });
 }
@@ -206,5 +214,4 @@ export * from "./api_categories";
 export * from "./api_contacts";
 export * from "./api_salespersons";
 export * from "./api_admin";
-
 

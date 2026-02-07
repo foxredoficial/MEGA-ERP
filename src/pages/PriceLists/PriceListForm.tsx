@@ -193,7 +193,7 @@ export function PriceListForm() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-zinc-800">
+              <h1 className="text-xl font-bold text-slate-800">
                 {isEditing ? "Editar Lista de Preços" : "Nova Lista de Preços"}
               </h1>
             </div>
@@ -216,12 +216,12 @@ export function PriceListForm() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Config */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200">
-              <h2 className="font-semibold text-zinc-800 mb-4">Configurações Gerais</h2>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+              <h2 className="font-semibold text-slate-800 mb-4">Configurações Gerais</h2>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Nome da Lista</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Nome da Lista</label>
                   <Input 
                     value={formData.name} 
                     onChange={(e) => handleChange("name", e.target.value)}
@@ -231,7 +231,7 @@ export function PriceListForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Tipo de Precificação</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Precificação</label>
                   <Select 
                     value={formData.type} 
                     onChange={(e) => handleChange("type", e.target.value)}
@@ -243,9 +243,9 @@ export function PriceListForm() {
                 </div>
 
                 {formData.type !== 'custom' && (
-                  <div className="p-4 bg-zinc-50 rounded-md border border-zinc-100 space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-md border border-slate-100 space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Regra de Ajuste</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Regra de Ajuste</label>
                       <div className="flex gap-2">
                         <Button 
                           type="button"
@@ -267,7 +267,7 @@ export function PriceListForm() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
                         Valor do Ajuste {formData.type === 'percentage' ? '(%)' : '(R$)'}
                       </label>
                       <Input 
@@ -284,7 +284,7 @@ export function PriceListForm() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Data Início</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Data Início</label>
                     <Input 
                       type="date"
                       value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ""}
@@ -292,7 +292,7 @@ export function PriceListForm() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Data Fim</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Data Fim</label>
                     <Input 
                       type="date"
                       value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ""}
@@ -302,7 +302,7 @@ export function PriceListForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                   <Select 
                     value={formData.status} 
                     onChange={(e) => handleChange("status", e.target.value)}
@@ -317,12 +317,12 @@ export function PriceListForm() {
 
           {/* Products Selection */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-zinc-200 min-h-[600px] flex flex-col">
-              <h2 className="font-semibold text-zinc-800 mb-4">Produtos da Lista</h2>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 min-h-[600px] flex flex-col">
+              <h2 className="font-semibold text-slate-800 mb-4">Produtos da Lista</h2>
               
               {/* Product Adder */}
               <div className="mb-6 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   placeholder="Pesquisar produto para adicionar..." 
                   className="pl-10"
@@ -330,14 +330,14 @@ export function PriceListForm() {
                   onChange={(e) => setProductSearch(e.target.value)}
                 />
                 {productSearch && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-zinc-200 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto z-10">
+                  <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto z-10">
                     {availableProducts.length === 0 ? (
-                      <div className="p-3 text-sm text-zinc-500 text-center">Nenhum produto encontrado</div>
+                      <div className="p-3 text-sm text-slate-500 text-center">Nenhum produto encontrado</div>
                     ) : (
                       availableProducts.map(product => (
                         <div 
                           key={product.id}
-                          className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-zinc-50 last:border-0"
+                          className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0"
                           onClick={() => {
                             handleAddItem(product);
                             setProductSearch("");
@@ -345,9 +345,9 @@ export function PriceListForm() {
                         >
                           <div>
                             <div className="font-medium text-sm">{product.name}</div>
-                            <div className="text-xs text-zinc-500">SKU: {product.sku || '-'}</div>
+                            <div className="text-xs text-slate-500">SKU: {product.sku || '-'}</div>
                           </div>
-                          <div className="text-sm font-medium text-zinc-700">
+                          <div className="text-sm font-medium text-slate-700">
                             {formatCurrency(product.price)}
                           </div>
                         </div>
@@ -358,9 +358,9 @@ export function PriceListForm() {
               </div>
 
               {/* Selected Products Table */}
-              <div className="flex-1 overflow-auto border rounded-md border-zinc-200">
+              <div className="flex-1 overflow-auto border rounded-md border-slate-200">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-zinc-50 text-zinc-500 font-medium sticky top-0 z-0">
+                  <thead className="bg-slate-50 text-slate-500 font-medium sticky top-0 z-0">
                     <tr>
                       <th className="px-4 py-3">Produto</th>
                       <th className="px-4 py-3 text-right">Preço Original</th>
@@ -371,10 +371,10 @@ export function PriceListForm() {
                       <th className="px-4 py-3 w-10"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  <tbody className="divide-y divide-slate-100">
                     {selectedItems.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-12 text-center text-zinc-500">
+                        <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
                           Nenhum produto selecionado. Adicione produtos acima.
                         </td>
                       </tr>
@@ -386,12 +386,12 @@ export function PriceListForm() {
                           : calculateFinalPrice(originalPrice);
 
                         return (
-                          <tr key={item.product_id} className="hover:bg-zinc-50">
+                          <tr key={item.product_id} className="hover:bg-slate-50">
                             <td className="px-4 py-3">
                               <div className="font-medium">{item.product?.name}</div>
-                              <div className="text-xs text-zinc-400">{item.product?.sku}</div>
+                              <div className="text-xs text-slate-400">{item.product?.sku}</div>
                             </td>
-                            <td className="px-4 py-3 text-right text-zinc-500">
+                            <td className="px-4 py-3 text-right text-slate-500">
                               {formatCurrency(originalPrice)}
                             </td>
                             {formData.type !== 'custom' && (
@@ -426,7 +426,7 @@ export function PriceListForm() {
                                 type="button"
                                 variant="ghost" 
                                 size="icon"
-                                className="h-8 w-8 text-zinc-400 hover:text-red-600"
+                                className="h-8 w-8 text-slate-400 hover:text-red-600"
                                 onClick={() => handleRemoveItem(item.product_id)}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -439,7 +439,7 @@ export function PriceListForm() {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-4 text-sm text-zinc-500 text-right">
+              <div className="mt-4 text-sm text-slate-500 text-right">
                 {selectedItems.length} produtos selecionados
               </div>
             </div>

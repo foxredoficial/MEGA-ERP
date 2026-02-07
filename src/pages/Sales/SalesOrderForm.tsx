@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -7,15 +7,18 @@ import {
   User,
   Calendar,
   Package,
-  Trash2,
-  Plus
+  Trash2
 } from "lucide-react";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { ContactSearch } from "@/components/ContactSearch";
 import { ProductSearch } from "@/components/ProductSearch";
 import { formatCurrency } from "@/lib/utils";
+import { getSalesOrder, upsertSalesOrder, type SalesOrderStatus } from "@/lib/api_sales_orders";
+import { addStockMovement, getProduct } from "@/lib/api_products";
+import { createFinancialTitle } from "@/lib/api_financial_titles";
 
 interface OrderItem {
   id: string;
@@ -31,16 +34,45 @@ export function SalesOrderForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(Boolean(id));
+  const [initialStatus, setInitialStatus] = useState<SalesOrderStatus | null>(null);
   
   const [formData, setFormData] = useState({
     clientId: "",
     client: "",
     date: new Date().toISOString().split('T')[0],
-    status: 'open',
+    status: 'open' as SalesOrderStatus,
     observations: ""
   });
 
   const [items, setItems] = useState<OrderItem[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    load(id);
+  }, [id]);
+
+  async function load(orderId: string) {
+    try {
+      setLoading(true);
+      const order = await getSalesOrder(orderId);
+      if (!order) {
+        navigate("/app/vendas/pedidos");
+        return;
+      }
+      setFormData({
+        clientId: order.customerId,
+        client: order.customerName,
+        date: order.date,
+        status: order.status,
+        observations: order.observations,
+      });
+      setItems(order.items);
+      setInitialStatus(order.status);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -101,23 +133,77 @@ export function SalesOrderForm() {
         return;
       }
 
-      const orderData = {
-        ...formData,
-        items
-      };
-      
-      console.log("Saving order:", orderData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const nextStatus = formData.status;
+
+      const order = await upsertSalesOrder({
+        id,
+        customerId: formData.clientId,
+        customerName: formData.client,
+        date: formData.date,
+        status: nextStatus,
+        observations: formData.observations,
+        items,
+      });
+
+      const prevStatus = initialStatus;
+      const shouldCreateTitle = nextStatus === 'billed' && prevStatus !== 'billed' && prevStatus !== 'delivered' && prevStatus !== 'canceled';
+      const shouldStockOut = nextStatus === 'delivered' && prevStatus !== 'delivered' && prevStatus !== 'canceled';
+
+      if (shouldCreateTitle) {
+        await createFinancialTitle({
+          kind: 'ar',
+          origin: 'sales_order',
+          refId: order.id,
+          partyId: order.customerId,
+          partyName: order.customerName,
+          description: `Pedido ${order.number}`,
+          amount: order.totals.total,
+          dueDate: order.date,
+        });
+      }
+
+      if (shouldStockOut) {
+        const products = await Promise.all(
+          [...new Set(order.items.map((i) => i.productId))].map((pid) => getProduct(pid))
+        );
+        const byId = new Map(products.map((p) => [p.id, p] as const));
+        for (const item of order.items) {
+          const p = byId.get(item.productId);
+          if (!p) throw new Error('Produto não encontrado.');
+          if (p.has_lot_control) {
+            throw new Error(`O produto "${p.name}" exige controle de lote. Selecione um lote para dar baixa.`);
+          }
+          if (p.stock < item.quantity) {
+            throw new Error(`Estoque insuficiente para: ${p.name}. Saldo atual: ${p.stock}`);
+          }
+        }
+        for (const item of order.items) {
+          await addStockMovement(item.productId, {
+            type: 'out',
+            quantity: item.quantity,
+            reason: `Pedido ${order.number}`,
+          });
+        }
+      }
+
       alert("Pedido salvo com sucesso!");
       navigate("/app/vendas/pedidos");
     } catch (error) {
-      alert("Erro ao salvar pedido");
+      alert("Erro ao salvar pedido: " + (error as Error).message);
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <BlingLayout>
+        <div className="pt-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        </div>
+      </BlingLayout>
+    );
+  }
 
   return (
     <BlingLayout>
@@ -125,14 +211,14 @@ export function SalesOrderForm() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link to="/app/vendas/pedidos" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-zinc-600" />
+            <Link to="/app/vendas/pedidos" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {id ? "Editar Pedido" : "Novo Pedido de Venda"}
               </h1>
-              <div className="flex items-center gap-2 text-sm text-zinc-500 mt-1">
+              <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
                 <ShoppingCart className="w-4 h-4" />
                 <span>Vendas</span>
                 <span>/</span>
@@ -164,15 +250,15 @@ export function SalesOrderForm() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-              <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" />
                 Dados do Cliente
               </h2>
               
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Cliente</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
                   <ContactSearch 
                     onSelect={(contact) => {
                       handleChange("client", contact.name);
@@ -184,8 +270,37 @@ export function SalesOrderForm() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-              <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                Dados do Pedido
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Data</label>
+                  <Input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => handleChange('date', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => handleChange('status', e.target.value)}
+                  >
+                    <option value="open">Em aberto</option>
+                    <option value="billed">Faturado</option>
+                    <option value="delivered">Entregue</option>
+                    <option value="canceled">Cancelado</option>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <Package className="w-5 h-5 text-blue-600" />
                 Itens do Pedido
               </h2>
@@ -194,9 +309,9 @@ export function SalesOrderForm() {
                 <ProductSearch onSelect={handleAddItem} />
 
                 {items.length > 0 ? (
-                  <div className="border border-zinc-200 rounded-lg overflow-hidden">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
                     <table className="w-full text-sm text-left">
-                      <thead className="bg-zinc-50 text-zinc-600 font-medium border-b border-zinc-200">
+                      <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                         <tr>
                           <th className="px-4 py-3">Produto</th>
                           <th className="px-4 py-3 w-24">Qtd</th>
@@ -206,11 +321,11 @@ export function SalesOrderForm() {
                           <th className="px-4 py-3 w-10"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-200">
+                      <tbody className="divide-y divide-slate-200">
                         {items.map((item) => (
-                          <tr key={item.id} className="hover:bg-zinc-50">
+                          <tr key={item.id} className="hover:bg-slate-50">
                             <td className="px-4 py-3">
-                              <div className="font-medium text-zinc-900">{item.description}</div>
+                              <div className="font-medium text-slate-900">{item.description}</div>
                             </td>
                             <td className="px-4 py-3">
                               <Input
@@ -241,14 +356,14 @@ export function SalesOrderForm() {
                                 onChange={(e) => handleUpdateItem(item.id, 'discount', Number(e.target.value))}
                               />
                             </td>
-                            <td className="px-4 py-3 text-right font-medium text-zinc-900">
+                            <td className="px-4 py-3 text-right font-medium text-slate-900">
                               {formatCurrency(item.total)}
                             </td>
                             <td className="px-4 py-3 text-center">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveItem(item.id)}
-                                className="text-zinc-400 hover:text-red-500 transition-colors"
+                                className="text-slate-400 hover:text-red-500 transition-colors"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -256,21 +371,21 @@ export function SalesOrderForm() {
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot className="bg-zinc-50 font-medium">
+                      <tfoot className="bg-slate-50 font-medium">
                         <tr>
-                          <td colSpan={4} className="px-4 py-3 text-right text-zinc-600">Subtotal</td>
-                          <td className="px-4 py-3 text-right text-zinc-900">{formatCurrency(totals.subtotal)}</td>
+                          <td colSpan={4} className="px-4 py-3 text-right text-slate-600">Subtotal</td>
+                          <td className="px-4 py-3 text-right text-slate-900">{formatCurrency(totals.subtotal)}</td>
                           <td></td>
                         </tr>
                         {totals.discount > 0 && (
                           <tr>
-                            <td colSpan={4} className="px-4 py-3 text-right text-zinc-600">Descontos</td>
+                            <td colSpan={4} className="px-4 py-3 text-right text-slate-600">Descontos</td>
                             <td className="px-4 py-3 text-right text-red-600">-{formatCurrency(totals.discount)}</td>
                             <td></td>
                           </tr>
                         )}
-                        <tr className="border-t border-zinc-200">
-                          <td colSpan={4} className="px-4 py-3 text-right text-lg text-zinc-900">Total</td>
+                        <tr className="border-t border-slate-200">
+                          <td colSpan={4} className="px-4 py-3 text-right text-lg text-slate-900">Total</td>
                           <td className="px-4 py-3 text-right text-lg text-blue-600 font-bold">{formatCurrency(totals.total)}</td>
                           <td></td>
                         </tr>
@@ -278,9 +393,9 @@ export function SalesOrderForm() {
                     </table>
                   </div>
                 ) : (
-                  <div className="p-8 text-center border-2 border-dashed border-zinc-200 rounded-lg bg-zinc-50">
-                    <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-                    <p className="text-zinc-500">Nenhum item adicionado ao pedido</p>
+                  <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
+                    <Package className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-slate-500">Nenhum item adicionado ao pedido</p>
                   </div>
                 )}
               </div>
@@ -289,15 +404,15 @@ export function SalesOrderForm() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-              <h2 className="text-lg font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
                 Detalhes da Venda
               </h2>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Data de Emissão</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Data de Emissão</label>
                   <Input 
                     type="date" 
                     value={formData.date}
@@ -306,9 +421,9 @@ export function SalesOrderForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                   <select 
-                    className="w-full rounded-lg border-zinc-200 text-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-lg border-slate-200 text-sm focus:ring-blue-500 focus:border-blue-500"
                     value={formData.status}
                     onChange={(e) => handleChange("status", e.target.value)}
                   >
@@ -320,9 +435,9 @@ export function SalesOrderForm() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Observações</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
                   <textarea 
-                    className="w-full rounded-lg border-zinc-200 text-sm focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
+                    className="w-full rounded-lg border-slate-200 text-sm focus:ring-blue-500 focus:border-blue-500 min-h-[100px]"
                     placeholder="Observações internas..."
                     value={formData.observations}
                     onChange={(e) => handleChange("observations", e.target.value)}

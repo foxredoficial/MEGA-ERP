@@ -4,6 +4,30 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   full_name VARCHAR(255) NOT NULL,
   company_name VARCHAR(255) NULL,
+
+  document VARCHAR(20) NULL,
+  phone VARCHAR(20) NULL,
+  address_zip VARCHAR(10) NULL,
+  address_street VARCHAR(255) NULL,
+  address_number VARCHAR(20) NULL,
+  address_neighborhood VARCHAR(100) NULL,
+  address_city VARCHAR(100) NULL,
+  address_state VARCHAR(2) NULL,
+  address_complement VARCHAR(100) NULL,
+  person_type ENUM('fisica', 'juridica') NULL DEFAULT 'juridica',
+  ie VARCHAR(50) NULL,
+  im VARCHAR(50) NULL,
+  cnae VARCHAR(20) NULL,
+  tax_regime VARCHAR(50) NULL,
+  mobile VARCHAR(20) NULL,
+  email_billing VARCHAR(255) NULL,
+  website VARCHAR(255) NULL,
+
+  google_id VARCHAR(255) NULL,
+  has_password TINYINT(1) NOT NULL DEFAULT 1,
+  role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+  preferences JSON NULL,
+
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL
 );
@@ -33,3 +57,15 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   CONSTRAINT fk_subscriptions_plan FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 
+CREATE TABLE IF NOT EXISTS security_events (
+  id CHAR(36) PRIMARY KEY,
+  kind VARCHAR(50) NOT NULL,
+  ip VARCHAR(64) NULL,
+  method VARCHAR(10) NULL,
+  path VARCHAR(500) NULL,
+  query VARCHAR(1000) NULL,
+  user_agent VARCHAR(500) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_security_events_created (created_at),
+  INDEX idx_security_events_kind (kind)
+);

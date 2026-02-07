@@ -142,17 +142,17 @@ export function CategoryForm() {
       
       <main className="flex-1 pt-14 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex-none px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white z-10">
+        <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
-            <Link to="/app/categorias" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-zinc-600" />
+            <Link to="/app/categorias" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900">
+              <h1 className="text-2xl font-bold text-slate-900">
                 {isEditing ? "Editar Categoria" : "Nova Categoria"}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm text-slate-500">
                   {isEditing ? `ID: ${id}` : "Defina os dados da categoria"}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export function CategoryForm() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
           <div className="w-full mx-auto">
             <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
               
@@ -194,7 +194,7 @@ export function CategoryForm() {
                     {/* Left Column: Name and Description */}
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
                           Nome da Categoria <span className="text-red-500">*</span>
                         </label>
                         <Input 
@@ -207,9 +207,9 @@ export function CategoryForm() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-2">Descrição</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Descrição</label>
                         <textarea 
-                          className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[120px] resize-y"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[120px] resize-y"
                           value={formData.description || ""}
                           onChange={(e) => handleChange("description", e.target.value)}
                           placeholder="Descrição opcional para esta categoria..."
@@ -220,7 +220,7 @@ export function CategoryForm() {
                     {/* Right Column: Parent and Color */}
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-2">Categoria Pai</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Categoria Pai</label>
                         <Select 
                           value={formData.parent_id || ""}
                           onChange={(e) => handleChange("parent_id", e.target.value || null)}
@@ -233,13 +233,13 @@ export function CategoryForm() {
                             </option>
                           ))}
                         </Select>
-                        <p className="text-xs text-zinc-500 mt-2">
+                        <p className="text-xs text-slate-500 mt-2">
                           Selecione uma categoria pai para criar uma subcategoria.
                         </p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-3 flex items-center gap-2">
+                        <label className="block text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
                           <Palette className="w-4 h-4" />
                           Cor da Etiqueta
                         </label>
@@ -251,7 +251,7 @@ export function CategoryForm() {
                               onClick={() => handleChange("color", color)}
                               className={`w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center ${
                                 formData.color === color 
-                                  ? "border-zinc-900 scale-110 shadow-md" 
+                                  ? "border-slate-900 scale-110 shadow-md" 
                                   : "border-transparent hover:scale-105"
                               }`}
                               style={{ backgroundColor: color }}
@@ -272,8 +272,8 @@ export function CategoryForm() {
                             />
                             <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center bg-white ${
                               !PRESET_COLORS.includes(formData.color || "") 
-                                ? "border-zinc-900 scale-110 shadow-md" 
-                                : "border-zinc-200"
+                                ? "border-slate-900 scale-110 shadow-md" 
+                                : "border-slate-200"
                             }`}>
                               <div 
                                 className="w-full h-full rounded-full"
@@ -286,7 +286,7 @@ export function CategoryForm() {
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-zinc-500 mt-2">
+                        <p className="text-xs text-slate-500 mt-2">
                           Esta cor será usada para identificar visualmente a categoria nas listagens.
                         </p>
                       </div>

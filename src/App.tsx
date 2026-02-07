@@ -10,8 +10,13 @@ import { ContactForm } from "@/pages/Contacts/ContactForm";
 import { ServiceList } from "@/pages/Services/ServiceList";
 import { ServiceForm } from "@/pages/Services/ServiceForm";
 import { ServiceOrderList } from "@/pages/ServiceOrders/ServiceOrderList";
+import { ServiceOrderForm } from "@/pages/ServiceOrders/ServiceOrderForm";
 import { SalesOrderList } from "@/pages/Sales/SalesOrderList";
 import { SalesOrderForm } from "@/pages/Sales/SalesOrderForm";
+import { POS } from "@/pages/POS/POS";
+import { CashControlList } from "@/pages/Financial/CashControlList";
+import { CashControlDetail } from "@/pages/Financial/CashControlDetail";
+import { FinancialTitlesList } from "@/pages/Financial/FinancialTitlesList";
 import { SalespersonList } from "@/pages/Salespersons/SalespersonList";
 import { SalespersonForm } from "@/pages/Salespersons/SalespersonForm";
 import { CategoryList } from "@/pages/Categories/CategoryList";
@@ -171,10 +176,34 @@ export default function App() {
           }
         />
         <Route
+          path="/app/pdv"
+          element={
+            <ProtectedRoute>
+              <POS />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/app/ordens-servico"
           element={
             <ProtectedRoute>
               <ServiceOrderList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/ordens-servico/novo"
+          element={
+            <ProtectedRoute>
+              <ServiceOrderForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/ordens-servico/:id"
+          element={
+            <ProtectedRoute>
+              <ServiceOrderForm />
             </ProtectedRoute>
           }
         />
@@ -223,6 +252,30 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ContactForm type="supplier" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/caixa"
+          element={
+            <ProtectedRoute>
+              <CashControlList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/caixa/:id"
+          element={
+            <ProtectedRoute>
+              <CashControlDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/titulos"
+          element={
+            <ProtectedRoute>
+              <FinancialTitlesList />
             </ProtectedRoute>
           }
         />

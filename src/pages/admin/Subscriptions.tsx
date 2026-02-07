@@ -44,8 +44,8 @@ export function Subscriptions() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Assinaturas</h2>
-          <p className="text-zinc-500 dark:text-zinc-400">Gerencie os planos e pagamentos recorrentes.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">Assinaturas</h2>
+          <p className="text-slate-500 dark:text-slate-400">Gerencie os planos e pagamentos recorrentes.</p>
         </div>
       </div>
 
@@ -53,7 +53,7 @@ export function Subscriptions() {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-medium">Histórico de Assinaturas</CardTitle>
           <div className="relative w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
             <Input 
               placeholder="Buscar assinatura..." 
               className="pl-9" 
@@ -63,9 +63,9 @@ export function Subscriptions() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
             <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+              <thead className="bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
                   <th className="px-6 py-3 font-medium">Cliente</th>
                   <th className="px-6 py-3 font-medium">Plano</th>
@@ -74,25 +74,25 @@ export function Subscriptions() {
                   <th className="px-6 py-3 font-medium">Término</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-200 bg-white dark:divide-zinc-800 dark:bg-zinc-950">
+              <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
                 {filteredSubscriptions.map((sub) => (
-                  <tr key={sub.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                  <tr key={sub.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-zinc-900 dark:text-zinc-100">{sub.user_name}</div>
-                      <div className="text-xs text-zinc-500">{sub.user_email}</div>
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{sub.user_name}</div>
+                      <div className="text-xs text-slate-500">{sub.user_email}</div>
                     </td>
                     <td className="px-6 py-4 font-medium">
                       {sub.plan_name}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge tone={sub.status === 'active' ? 'green' : 'zinc'}>
+                      <Badge tone={sub.status === 'active' ? 'green' : 'slate'}>
                         {sub.status === 'active' ? 'Ativo' : sub.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-zinc-500">
+                    <td className="px-6 py-4 text-slate-500">
                       {new Date(sub.started_at).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-zinc-500">
+                    <td className="px-6 py-4 text-slate-500">
                       {sub.ended_at ? new Date(sub.ended_at).toLocaleDateString() : '-'}
                     </td>
                   </tr>
@@ -100,7 +100,7 @@ export function Subscriptions() {
               </tbody>
             </table>
             {filteredSubscriptions.length === 0 && (
-              <div className="p-6 text-center text-zinc-500">
+              <div className="p-6 text-center text-slate-500">
                 Nenhuma assinatura encontrada.
               </div>
             )}

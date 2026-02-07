@@ -76,7 +76,7 @@ export function PriceListList() {
   const getStatusColor = (status: string) => {
     return status === 'active' 
       ? 'bg-green-100 text-green-700' 
-      : 'bg-zinc-100 text-zinc-600';
+      : 'bg-slate-100 text-slate-600';
   };
 
   return (
@@ -84,8 +84,8 @@ export function PriceListList() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Listas de Preços</h1>
-            <p className="text-sm text-zinc-500 mt-1">Gerencie regras de precificação e tabelas personalizadas.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Listas de Preços</h1>
+            <p className="text-sm text-slate-500 mt-1">Gerencie regras de precificação e tabelas personalizadas.</p>
           </div>
           <Link to="/app/listas-preco/novo">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 gap-2">
@@ -95,9 +95,9 @@ export function PriceListList() {
           </Link>
         </div>
 
-        <div className="bg-white p-1 rounded-xl shadow-sm border border-zinc-200">
+        <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
               placeholder="Buscar lista de preços..." 
               className="pl-10 border-none shadow-none focus-visible:ring-0 bg-transparent h-12 text-base"
@@ -107,10 +107,10 @@ export function PriceListList() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-zinc-50/50 text-zinc-500 font-medium border-b border-zinc-100">
+              <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4">Nome</th>
                   <th className="px-6 py-4">Tipo</th>
@@ -120,16 +120,16 @@ export function PriceListList() {
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-50">
+              <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                       Carregando listas...
                     </td>
                   </tr>
                 ) : filteredLists.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                       Nenhuma lista de preços encontrada.
                     </td>
                   </tr>
@@ -137,7 +137,7 @@ export function PriceListList() {
                   filteredLists.map((list) => (
                     <tr key={list.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
-                        <Link to={`/app/listas-preco/${list.id}`} className="font-semibold text-zinc-900 hover:text-blue-600">
+                        <Link to={`/app/listas-preco/${list.id}`} className="font-semibold text-slate-900 hover:text-blue-600">
                           {list.name}
                         </Link>
                       </td>
@@ -151,7 +151,7 @@ export function PriceListList() {
                       </td>
                       <td className="px-6 py-4">
                         {list.type === 'custom' ? (
-                          <span className="text-zinc-400">-</span>
+                          <span className="text-slate-400">-</span>
                         ) : (
                           <span className={list.adjustment_type === 'increase' ? 'text-green-600' : 'text-red-600'}>
                             {list.adjustment_type === 'increase' ? '+' : '-'}
@@ -160,7 +160,7 @@ export function PriceListList() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-zinc-500 text-xs">
+                      <td className="px-6 py-4 text-slate-500 text-xs">
                         <div className="flex flex-col gap-0.5">
                           {list.start_date && (
                             <span className="flex items-center gap-1">
@@ -183,14 +183,14 @@ export function PriceListList() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Link to={`/app/listas-preco/${list.id}`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-zinc-400 hover:text-red-600"
+                            className="h-8 w-8 text-slate-400 hover:text-red-600"
                             onClick={() => handleDeleteClick(list.id)}
                           >
                             <Trash2 className="w-4 h-4" />

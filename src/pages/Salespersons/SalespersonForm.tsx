@@ -91,24 +91,24 @@ export function SalespersonForm() {
       
       <main className="flex-1 pt-14 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex-none px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white z-10">
+        <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
-            <Link to="/app/vendedores" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-zinc-600" />
+            <Link to="/app/vendedores" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900">
+              <h1 className="text-2xl font-bold text-slate-900">
                 {isEditing ? "Editar Vendedor" : "Novo Vendedor"}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm text-slate-500">
                   {isEditing ? `ID: ${id}` : "Preencha os dados do vendedor"}
                 </span>
                 {formData.status && (
                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                      formData.status === 'active' 
                        ? 'bg-green-50 text-green-700 border border-green-100' 
-                       : 'bg-zinc-100 text-zinc-600 border border-zinc-200'
+                       : 'bg-slate-100 text-slate-600 border border-slate-200'
                    }`}>
                      {formData.status === 'active' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                      {formData.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -137,7 +137,7 @@ export function SalespersonForm() {
         </div>
 
         {/* Tabs */}
-        <div className="flex-none border-b border-zinc-200 bg-white overflow-x-auto">
+        <div className="flex-none border-b border-slate-200 bg-white overflow-x-auto">
           <div className="flex items-center px-6">
             {[
               { id: "geral", label: "Dados Gerais", icon: User },
@@ -149,7 +149,7 @@ export function SalespersonForm() {
                 className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-zinc-600 hover:text-zinc-900 hover:border-zinc-300"
+                    : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -160,31 +160,31 @@ export function SalespersonForm() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-zinc-50/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
           <div className="w-full">
             {activeTab === "geral" && (
               <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
                 {/* Basic Info Card */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
-                  <h2 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
                     Informações Pessoais
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
                         Nome Completo <span className="text-red-500">*</span>
                       </label>
                       <Input 
                         value={formData.name || ""} 
                         onChange={(e) => handleChange("name", e.target.value)}
                         placeholder="Ex: João da Silva"
-                        className="bg-zinc-50"
+                        className="bg-slate-50"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">CPF</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">CPF</label>
                       <Input 
                         value={formData.cpf || ""} 
                         onChange={(e) => handleChange("cpf", e.target.value)}
@@ -193,7 +193,7 @@ export function SalespersonForm() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Status</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                       <Select 
                         value={formData.status || "active"}
                         onChange={(e) => handleChange("status", e.target.value)}
@@ -206,16 +206,16 @@ export function SalespersonForm() {
                 </div>
 
                 {/* Contact Info Card */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
-                  <h2 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <Mail className="w-4 h-4 text-blue-600" />
                     Contato
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input 
                           value={formData.email || ""} 
                           onChange={(e) => handleChange("email", e.target.value)}
@@ -226,9 +226,9 @@ export function SalespersonForm() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Telefone / WhatsApp</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Telefone / WhatsApp</label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input 
                           value={formData.phone || ""} 
                           onChange={(e) => handleChange("phone", e.target.value)}
@@ -241,14 +241,14 @@ export function SalespersonForm() {
                 </div>
 
                 {/* Commission Info Card */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
-                  <h2 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <Percent className="w-4 h-4 text-blue-600" />
                     Comissionamento
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Comissão (%)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Comissão (%)</label>
                       <div className="relative">
                         <Input 
                           type="number"
@@ -257,9 +257,9 @@ export function SalespersonForm() {
                           placeholder="0.00"
                           className="pr-8"
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">%</span>
                       </div>
-                      <p className="text-xs text-zinc-500 mt-1">Percentual aplicado sobre as vendas deste vendedor.</p>
+                      <p className="text-xs text-slate-500 mt-1">Percentual aplicado sobre as vendas deste vendedor.</p>
                     </div>
                   </div>
                 </div>
@@ -268,14 +268,14 @@ export function SalespersonForm() {
 
             {activeTab === "observacoes" && (
               <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-zinc-200">
-                  <h2 className="text-base font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600" />
                     Observações Internas
                   </h2>
                   <div>
                     <textarea 
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[150px]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[150px]"
                       value={formData.observations || ""}
                       onChange={(e) => handleChange("observations", e.target.value)}
                       placeholder="Observações sobre o vendedor..."

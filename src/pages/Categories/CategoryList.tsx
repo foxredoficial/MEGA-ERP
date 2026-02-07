@@ -89,8 +89,8 @@ export function CategoryList() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Categorias de Produtos</h1>
-            <p className="text-sm text-zinc-500 mt-1">Organize seus produtos em departamentos e seções.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Categorias de Produtos</h1>
+            <p className="text-sm text-slate-500 mt-1">Organize seus produtos em departamentos e seções.</p>
           </div>
           <div className="flex items-center gap-3">
              <Link to="/app/categorias/nova">
@@ -102,9 +102,9 @@ export function CategoryList() {
           </div>
         </div>
 
-        <div className="bg-white p-1 rounded-xl shadow-sm border border-zinc-200 flex flex-col md:flex-row gap-2 items-center">
+        <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-2 items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
               placeholder="Buscar categorias..." 
               className="pl-10 border-none shadow-none focus-visible:ring-0 bg-transparent h-12 text-base"
@@ -114,20 +114,20 @@ export function CategoryList() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-zinc-50/50 text-zinc-500 font-medium border-b border-zinc-100">
+              <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 w-[60%]">Nome</th>
                   <th className="px-6 py-4">Categoria Pai</th>
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-50">
+              <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={3} className="px-6 py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                         <p>Carregando categorias...</p>
@@ -136,11 +136,11 @@ export function CategoryList() {
                   </tr>
                 ) : displayCategories.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={3} className="px-6 py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                        <FolderTree className="w-12 h-12 text-zinc-300 mb-4" />
-                        <h3 className="text-lg font-medium text-zinc-900 mb-1">Nenhuma categoria encontrada</h3>
-                        <p className="text-zinc-500 mb-6">Comece criando sua primeira categoria de produtos.</p>
+                        <FolderTree className="w-12 h-12 text-slate-300 mb-4" />
+                        <h3 className="text-lg font-medium text-slate-900 mb-1">Nenhuma categoria encontrada</h3>
+                        <p className="text-slate-500 mb-6">Comece criando sua primeira categoria de produtos.</p>
                         <Link to="/app/categorias/nova">
                           <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
                             Adicionar Nova
@@ -158,10 +158,10 @@ export function CategoryList() {
                           <div style={{ width: `${(category.level || 0) * 32}px` }} className="flex-shrink-0" />
                           
                           {category.level && category.level > 0 ? (
-                            <CornerDownRight className="w-4 h-4 text-zinc-300 mr-2 -ml-1" />
+                            <CornerDownRight className="w-4 h-4 text-slate-300 mr-2 -ml-1" />
                           ) : null}
                           
-                          <Link to={`/app/categorias/${category.id}`} className="font-semibold text-zinc-900 hover:text-blue-600 transition-colors flex items-center gap-3">
+                          <Link to={`/app/categorias/${category.id}`} className="font-semibold text-slate-900 hover:text-blue-600 transition-colors flex items-center gap-3">
                              <div 
                                 className="w-4 h-4 rounded-full flex-shrink-0 border border-black/5 shadow-sm" 
                                 style={{ backgroundColor: category.color || '#e4e4e7' }}
@@ -171,15 +171,15 @@ export function CategoryList() {
                           </Link>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-zinc-600">
+                      <td className="px-6 py-4 text-slate-600">
                         {category.parent_id ? (
                           <div className="flex items-center gap-1">
-                            <span className="bg-zinc-100 px-2 py-0.5 rounded text-xs text-zinc-500 border border-zinc-200">
+                            <span className="bg-slate-100 px-2 py-0.5 rounded text-xs text-slate-500 border border-slate-200">
                               {getParentName(category.parent_id)}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-zinc-400 text-xs uppercase tracking-wider font-medium">Raiz</span>
+                          <span className="text-slate-400 text-xs uppercase tracking-wider font-medium">Raiz</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -187,7 +187,7 @@ export function CategoryList() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 gap-1 px-2"
+                            className="h-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 gap-1 px-2"
                             onClick={() => navigate(`/app/categorias/nova?parent_id=${category.id}`)}
                             title="Adicionar subcategoria"
                           >
@@ -195,14 +195,14 @@ export function CategoryList() {
                             <span className="text-xs">Sub</span>
                           </Button>
                           <Link to={`/app/categorias/${category.id}`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600 hover:bg-blue-50">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                             onClick={() => handleDeleteClick(category.id)}
                           >
                             <Trash2 className="w-4 h-4" />

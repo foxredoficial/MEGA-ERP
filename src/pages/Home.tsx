@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, Check, Globe, LayoutDashboard, Package, ShoppingCart, Store, Wallet } from "lucide-react";
+import { ArrowRight, BarChart3, Check, Globe, LayoutDashboard, Package, Store, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MarketingLayout } from "@/components/MarketingLayout";
 import { Button } from "@/components/ui/Button";
@@ -49,7 +49,7 @@ export default function Home() {
     <MarketingLayout>
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-10 pb-20 lg:pt-24 lg:pb-32">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-white to-white dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-white to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-900" />
         <div className="container px-4">
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 flex justify-center">
@@ -57,13 +57,13 @@ export default function Home() {
                 Novo: Integração com Mercado Livre 🚀
               </Badge>
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
               O ERP Completo para <br className="hidden sm:block" />
               <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
                 Transformar seu Negócio
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 dark:text-zinc-300">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
               Do PDV ao Financeiro, tenha o controle total da sua empresa em uma única plataforma. 
               Simples, rápido e pensado para o crescimento do empreendedor brasileiro.
             </p>
@@ -74,13 +74,13 @@ export default function Home() {
                 </Button>
               </Link>
               <Link to="/login">
-                <Button variant="secondary" size="lg" className="h-12 w-full rounded-full border-zinc-200 px-8 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 sm:w-auto">
+                <Button variant="secondary" size="lg" className="h-12 w-full rounded-full border-slate-200 px-8 text-base dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 sm:w-auto">
                   Fazer Login
                 </Button>
               </Link>
             </div>
             
-            <div className="mt-12 flex flex-col items-center justify-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 sm:flex-row sm:gap-8">
+            <div className="mt-12 flex flex-col items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:gap-8">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-green-500" /> Sem cartão de crédito
               </div>
@@ -95,8 +95,8 @@ export default function Home() {
 
           {/* Hero Image / Dashboard Preview */}
           <div className="relative mx-auto mt-16 max-w-5xl lg:mt-24">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900/50">
-              <div className="aspect-[16/9] overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 relative group">
+            <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-800 dark:bg-slate-900/50">
+              <div className="aspect-[16/9] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 relative group">
                 <img 
                   src="/dashboard-preview.png" 
                   alt="MegaERP Dashboard" 
@@ -114,13 +114,13 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="bg-zinc-50 py-20 dark:bg-zinc-900/50">
+      <section className="bg-slate-50 py-20 dark:bg-slate-900/50">
         <div className="container px-4">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
               Tudo o que você precisa em um só lugar
             </h2>
-            <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-300">
+            <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
               Chega de usar várias planilhas e sistemas desconectados. O MEGA ERP centraliza sua operação.
             </p>
           </div>
@@ -129,13 +129,13 @@ export default function Home() {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="group relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 transition hover:border-blue-500/30 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-500/30"
+                className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 transition hover:border-blue-500/30 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/30"
               >
                 <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
                   <feature.icon className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{feature.title}</h3>
-                <p className="mt-3 text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">{feature.title}</h3>
+                <p className="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed">
                   {feature.desc}
                 </p>
               </div>
@@ -145,14 +145,14 @@ export default function Home() {
       </section>
 
       {/* Social Proof / Trust */}
-      <section className="py-20 dark:bg-zinc-900">
+      <section className="py-20 dark:bg-slate-900">
         <div className="container px-4">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white lg:text-4xl">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-4xl">
                 Simplifique sua rotina e foque no crescimento
               </h2>
-              <p className="mt-6 text-lg text-zinc-600 dark:text-zinc-300">
+              <p className="mt-6 text-lg text-slate-600 dark:text-slate-300">
                 Milhares de empreendedores perdem tempo com burocracia. O MEGA ERP automatiza processos manuais para você ganhar tempo.
               </p>
               
@@ -162,7 +162,7 @@ export default function Home() {
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                       <Check className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-zinc-700 dark:text-zinc-200">{item}</span>
+                    <span className="text-slate-700 dark:text-slate-200">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -177,21 +177,21 @@ export default function Home() {
             </div>
             
             <div className="grid gap-6 sm:grid-cols-2">
-              <div className="rounded-3xl border border-zinc-100 bg-zinc-50 p-8 dark:border-zinc-800 dark:bg-zinc-800/50">
+              <div className="rounded-3xl border border-slate-100 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-800/50">
                 <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">+1000</div>
-                <div className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">Empresas ativas</div>
+                <div className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">Empresas ativas</div>
               </div>
-              <div className="rounded-3xl border border-zinc-100 bg-zinc-50 p-8 dark:border-zinc-800 dark:bg-zinc-800/50">
+              <div className="rounded-3xl border border-slate-100 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-800/50">
                 <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">98%</div>
-                <div className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">Satisfação dos clientes</div>
+                <div className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">Satisfação dos clientes</div>
               </div>
-              <div className="rounded-3xl border border-zinc-100 bg-zinc-50 p-8 dark:border-zinc-800 dark:bg-zinc-800/50">
+              <div className="rounded-3xl border border-slate-100 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-800/50">
                 <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">24/7</div>
-                <div className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">Monitoramento de servidores</div>
+                <div className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">Monitoramento de servidores</div>
               </div>
-              <div className="rounded-3xl border border-zinc-100 bg-zinc-50 p-8 dark:border-zinc-800 dark:bg-zinc-800/50">
+              <div className="rounded-3xl border border-slate-100 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-800/50">
                 <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">0</div>
-                <div className="mt-2 text-sm font-medium text-zinc-600 dark:text-zinc-400">Custo de implantação</div>
+                <div className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">Custo de implantação</div>
               </div>
             </div>
           </div>

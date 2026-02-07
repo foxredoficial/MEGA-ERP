@@ -63,8 +63,8 @@ export function ProductList() {
         {/* Header Section - Matches ContactList */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Produtos</h1>
-            <p className="text-sm text-zinc-500 mt-1">Gerencie seu catálogo de produtos e serviços.</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Produtos</h1>
+            <p className="text-sm text-slate-500 mt-1">Gerencie seu catálogo de produtos e serviços.</p>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/app/produtos/novo">
@@ -77,9 +77,9 @@ export function ProductList() {
         </div>
 
         {/* Filters & Toolbar - Matches ContactList */}
-        <div className="bg-white p-1 rounded-xl shadow-sm border border-zinc-200 flex flex-col md:flex-row gap-2 items-center">
+        <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-2 items-center">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
               placeholder="Pesquisar por nome ou SKU..." 
               className="pl-10 border-none shadow-none focus-visible:ring-0 bg-transparent h-12 text-base"
@@ -87,13 +87,13 @@ export function ProductList() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="h-8 w-px bg-zinc-200 hidden md:block"></div>
+          <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
           <div className="flex items-center gap-2 pr-2 w-full md:w-auto justify-end">
-             <Button variant="ghost" className="text-zinc-500 hover:text-blue-600">
+             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
                <Filter className="w-4 h-4 mr-2" />
                <span className="text-sm">Filtros</span>
              </Button>
-             <Button variant="ghost" className="text-zinc-500 hover:text-blue-600">
+             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
                <Download className="w-4 h-4 mr-2" />
                <span className="text-sm">Exportar</span>
              </Button>
@@ -101,13 +101,13 @@ export function ProductList() {
         </div>
 
         {/* Table - Matches ContactList */}
-        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-zinc-50/50 text-zinc-500 font-medium border-b border-zinc-100">
+              <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 w-14">
-                    <input type="checkbox" className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                   </th>
                   <th className="px-6 py-4">Produto</th>
                   <th className="px-6 py-4">SKU</th>
@@ -116,10 +116,10 @@ export function ProductList() {
                   <th className="px-6 py-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-50">
+              <tbody className="divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                         <p>Carregando produtos...</p>
@@ -128,11 +128,11 @@ export function ProductList() {
                   </tr>
                 ) : filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                        <Box className="w-12 h-12 text-zinc-300 mb-4" />
-                        <h3 className="text-lg font-medium text-zinc-900 mb-1">Nenhum produto encontrado</h3>
-                        <p className="text-zinc-500 mb-6">Comece adicionando seu primeiro produto ou serviço.</p>
+                        <Box className="w-12 h-12 text-slate-300 mb-4" />
+                        <h3 className="text-lg font-medium text-slate-900 mb-1">Nenhum produto encontrado</h3>
+                        <p className="text-slate-500 mb-6">Comece adicionando seu primeiro produto ou serviço.</p>
                         <Link to="/app/produtos/novo">
                           <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
                             Adicionar Novo
@@ -145,20 +145,20 @@ export function ProductList() {
                   filteredProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
-                        <input type="checkbox" className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500" />
+                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <Link to={`/app/produtos/${product.id}`} className="font-semibold text-zinc-900 hover:text-blue-600 transition-colors">
+                          <Link to={`/app/produtos/${product.id}`} className="font-semibold text-slate-900 hover:text-blue-600 transition-colors">
                             {product.name}
                           </Link>
-                          <span className="text-xs text-zinc-500 capitalize">{product.type === 'service' ? 'Serviço' : 'Produto'}</span>
+                          <span className="text-xs text-slate-500 capitalize">{product.type === 'service' ? 'Serviço' : 'Produto'}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-zinc-600 font-mono text-xs">
+                      <td className="px-6 py-4 text-slate-600 font-mono text-xs">
                         {product.sku || "-"}
                       </td>
-                      <td className="px-6 py-4 font-medium text-zinc-900">
+                      <td className="px-6 py-4 font-medium text-slate-900">
                         {formatBRLFromCents(product.price * 100)}
                       </td>
                       <td className="px-6 py-4">
@@ -171,14 +171,14 @@ export function ProductList() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Link to={`/app/produtos/${product.id}`}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600 hover:bg-blue-50">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50">
                               <Edit className="w-4 h-4" />
                             </Button>
                           </Link>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                             onClick={() => handleDelete(product.id)}
                           >
                             <Trash2 className="w-4 h-4" />

@@ -10,6 +10,7 @@ export const pool = mysql.createPool({
   database: env.MYSQL_DATABASE,
   connectionLimit: 10,
   namedPlaceholders: true,
+  multipleStatements: false,
 });
 
 async function executeSqlScript(connection: mysql.Connection, sql: string) {
@@ -29,7 +30,6 @@ export async function ensureDatabaseAndSchema() {
     port: env.MYSQL_PORT,
     user: env.MYSQL_USER,
     password: env.MYSQL_PASSWORD,
-    multipleStatements: true,
   });
 
   try {
@@ -44,7 +44,6 @@ export async function ensureDatabaseAndSchema() {
     user: env.MYSQL_USER,
     password: env.MYSQL_PASSWORD,
     database: env.MYSQL_DATABASE,
-    multipleStatements: true,
   });
 
   try {

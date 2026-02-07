@@ -1,4 +1,4 @@
-import { apiFetch, Plan } from "./api";
+import { apiFetch } from "./api";
 
 export type AdminStats = {
   users: number;

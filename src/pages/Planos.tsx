@@ -78,8 +78,8 @@ export default function Planos() {
       <section className="container px-4 py-12 md:py-16">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-950 dark:text-white md:text-4xl">Planos</h1>
-            <p className="mt-3 max-w-2xl text-sm text-zinc-600 dark:text-zinc-300">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white md:text-4xl">Planos</h1>
+            <p className="mt-3 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
               Compare recursos e escolha o plano ideal para iniciar. Você pode alterar depois pelo seu painel.
             </p>
           </div>
@@ -113,7 +113,7 @@ export default function Planos() {
         ) : null}
 
         {!error && plans.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
             Nenhum plano disponível no momento.
           </div>
         ) : null}
@@ -124,9 +124,9 @@ export default function Planos() {
               <h2 className="text-xl font-bold tracking-tight">Comparação</h2>
               <Badge>Planos</Badge>
             </div>
-            <div className="mt-5 overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
               <div
-                className="grid border-b border-zinc-200 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400"
+                className="grid border-b border-slate-200 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400"
                 style={{ gridTemplateColumns: `minmax(240px, 1fr) repeat(${plans.length}, minmax(160px, 220px))` }}
               >
                 <div>Recurso</div>
@@ -137,16 +137,16 @@ export default function Planos() {
               {uniqueFeatures.map((feature) => (
                 <div
                   key={feature}
-                  className="grid items-center px-4 py-4 text-sm text-zinc-700 even:bg-zinc-50 dark:text-zinc-200 dark:even:bg-zinc-900"
+                  className="grid items-center px-4 py-4 text-sm text-slate-700 even:bg-slate-50 dark:text-slate-200 dark:even:bg-slate-900"
                   style={{ gridTemplateColumns: `minmax(240px, 1fr) repeat(${plans.length}, minmax(160px, 220px))` }}
                 >
-                  <div className="font-medium text-zinc-900 dark:text-zinc-100">{feature}</div>
+                  <div className="font-medium text-slate-900 dark:text-slate-100">{feature}</div>
                   {plans.map((p) => (
                     <div key={`${p.id}:${feature}`} className="flex items-center gap-2">
                       {p.features.includes(feature) ? (
                         <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <span className="text-zinc-400">—</span>
+                        <span className="text-slate-400">—</span>
                       )}
                     </div>
                   ))}
@@ -156,11 +156,11 @@ export default function Planos() {
           </div>
         ) : null}
 
-        <div className="mt-14 rounded-3xl border border-zinc-200 bg-zinc-50 p-8 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mt-14 rounded-3xl border border-slate-200 bg-slate-50 p-8 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div>
               <div className="text-sm font-semibold">Precisa de algo específico?</div>
-              <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">
+              <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                 Fale com a equipe para alinhar implantação, migração e necessidades do seu negócio.
               </div>
             </div>

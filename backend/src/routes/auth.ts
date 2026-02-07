@@ -11,6 +11,30 @@ import { buildGoogleAuthUrl, exchangeGoogleCodeForTokens, verifyGoogleIdToken } 
 
 export const authRouter = Router();
 
+function buildProfile(user: any) {
+  return {
+    fullName: user.full_name,
+    companyName: user.company_name,
+    document: user.document ?? null,
+    phone: user.phone ?? null,
+    addressZip: user.address_zip ?? null,
+    addressStreet: user.address_street ?? null,
+    addressNumber: user.address_number ?? null,
+    addressNeighborhood: user.address_neighborhood ?? null,
+    addressCity: user.address_city ?? null,
+    addressState: user.address_state ?? null,
+    addressComplement: user.address_complement ?? null,
+    personType: user.person_type ?? null,
+    ie: user.ie ?? null,
+    im: user.im ?? null,
+    cnae: user.cnae ?? null,
+    taxRegime: user.tax_regime ?? null,
+    mobile: user.mobile ?? null,
+    emailBilling: user.email_billing ?? null,
+    website: user.website ?? null,
+  };
+}
+
 function safeNextPath(value: unknown) {
   if (typeof value !== "string") return "/app";
   if (!value.startsWith("/")) return "/app";
@@ -24,28 +48,18 @@ authRouter.get(
   "/me",
   asyncHandler(async (req, res) => {
     const session = await getSessionFromRequest(req);
-    if (!session) return sendError(res, 401, "Não autenticado.");
+    if (!session) return res.json({ authenticated: false } as const);
     const user = await findUserById(session.userId);
-    if (!user) return sendError(res, 401, "Sessão inválida.");
+    if (!user) return res.json({ authenticated: false } as const);
     res.json({
+      authenticated: true as const,
       user: { id: user.id, email: user.email, role: user.role },
-      profile: { 
-        fullName: user.full_name, 
-        companyName: user.company_name,
-        document: user.document,
-        phone: user.phone,
-        addressZip: user.address_zip,
-        addressStreet: user.address_street,
-        addressNumber: user.address_number,
-        addressNeighborhood: user.address_neighborhood,
-        addressCity: user.address_city,
-        addressState: user.address_state,
-        addressComplement: user.address_complement
-      },
+      profile: buildProfile(user),
       auth: {
         hasPassword: Boolean(user.has_password),
         googleId: user.google_id
-      }
+      },
+      preferences: user.preferences
     });
   })
 );
@@ -94,17 +108,12 @@ authRouter.get(
     const next = safeNextPath(req.cookies?.megaerp_g_next);
     const stateCookie = typeof req.cookies?.megaerp_g_state === "string" ? (req.cookies.megaerp_g_state as string) : null;
 
-    console.log("[Google Callback] Cookies:", Object.keys(req.cookies || {}));
-    console.log("[Google Callback] Query:", req.query);
-    console.log("[Google Callback] State Cookie:", stateCookie);
-
     res.clearCookie("megaerp_g_state", { path: "/" });
     res.clearCookie("megaerp_g_next", { path: "/" });
 
     const code = typeof req.query.code === "string" ? req.query.code : null;
     const state = typeof req.query.state === "string" ? req.query.state : null;
     if (!code || !state || !stateCookie || state !== stateCookie) {
-      console.log("[Google Callback] State mismatch or missing params");
       return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_state`);
     }
 
@@ -114,11 +123,9 @@ authRouter.get(
       const googleId = profile.sub; // Google User ID
 
       const isLinking = state.startsWith("link:");
-      console.log("[Google Callback] isLinking:", isLinking);
 
       if (isLinking) {
         const session = await getSessionFromRequest(req);
-        console.log("[Google Callback] Session found:", !!session, session?.email);
         
         if (!session) return res.redirect(`${env.APP_ORIGIN}/app#security?error=link_failed_session`);
         
@@ -196,14 +203,9 @@ authRouter.get(
       }
 
       if (!user) return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_user`);
-
-      console.log(`[Google Callback] User found/created: ${user.id} (${user.email})`);
       const token = await signSession({ sub: user.id, email: user.email, role: user.role });
-      console.log(`[Google Callback] Token signed, length: ${token.length}`);
       
       setSessionCookie(res, token);
-      console.log(`[Google Callback] Cookie set. Redirecting to: ${env.APP_ORIGIN}${next}`);
-
       return res.redirect(`${env.APP_ORIGIN}${next}`);
     } catch (err) {
       console.error("[Google Callback] Error:", err);
@@ -264,8 +266,29 @@ authRouter.post(
 
     res.json({
       user: { id, email },
-      profile: { fullName: body.data.fullName.trim(), companyName: body.data.companyName.trim() || null },
-      auth: { hasPassword: true, googleId: null }
+      profile: {
+        fullName: body.data.fullName.trim(),
+        companyName: body.data.companyName.trim() || null,
+        document: null,
+        phone: null,
+        addressZip: null,
+        addressStreet: null,
+        addressNumber: null,
+        addressNeighborhood: null,
+        addressCity: null,
+        addressState: null,
+        addressComplement: null,
+        personType: 'juridica',
+        ie: null,
+        im: null,
+        cnae: null,
+        taxRegime: null,
+        mobile: null,
+        emailBilling: null,
+        website: null,
+      },
+      auth: { hasPassword: true, googleId: null },
+      preferences: null,
     });
   })
 );
@@ -294,8 +317,9 @@ authRouter.post(
 
     res.json({
       user: { id: user.id, email: user.email, role: user.role },
-      profile: { fullName: user.full_name, companyName: user.company_name },
-      auth: { hasPassword: Boolean(user.has_password), googleId: user.google_id }
+      profile: buildProfile(user),
+      auth: { hasPassword: Boolean(user.has_password), googleId: user.google_id },
+      preferences: user.preferences
     });
   })
 );

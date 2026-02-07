@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Building2, Moon, Sun, LayoutDashboard, Settings, LogOut, ChevronDown, User } from "lucide-react";
+import { Building2, Moon, Sun, LayoutDashboard, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -29,16 +29,16 @@ export function SiteHeader() {
   const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.fullName || session?.email || "User")}&background=random`;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-200/70 bg-white/70 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-900/60">
+    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/70 backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/60">
       <div className="container px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
+          <Link to="/" className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">
               <Building2 className="h-5 w-5" />
             </span>
             <div className="leading-tight">
               <div className="text-sm font-semibold">MEGA ERP</div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">SaaS PDV • ERP</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">SaaS PDV • ERP</div>
             </div>
           </Link>
 
@@ -47,8 +47,8 @@ export function SiteHeader() {
               to="/planos"
               className={({ isActive }) =>
                 cn(
-                  "text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white",
-                  isActive && "text-zinc-950 dark:text-white"
+                  "text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white",
+                  isActive && "text-slate-950 dark:text-white"
                 )
               }
             >
@@ -59,8 +59,8 @@ export function SiteHeader() {
                 to="/auth?mode=login"
                 className={({ isActive }) =>
                   cn(
-                    "text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-200 dark:hover:text-white",
-                    isActive && "text-zinc-950 dark:text-white"
+                    "text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white",
+                    isActive && "text-slate-950 dark:text-white"
                   )
                 }
               >
@@ -74,7 +74,7 @@ export function SiteHeader() {
               type="button"
               aria-label="Alternar tema"
               onClick={toggleTheme}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
@@ -88,36 +88,36 @@ export function SiteHeader() {
                 <div className="relative" ref={menuRef}>
                   <button
                     onClick={() => setMenuOpen(!menuOpen)}
-                    className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white pl-2 pr-3 py-1.5 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white pl-2 pr-3 py-1.5 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
                   >
-                     <img src={avatarUrl} alt="" className="h-8 w-8 rounded-lg bg-zinc-200 object-cover" />
+                     <img src={avatarUrl} alt="" className="h-8 w-8 rounded-lg bg-slate-200 object-cover" />
                      <div className="hidden text-left sm:block">
-                       <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                       <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                           {profile?.fullName?.split(' ')[0] || "Usuário"}
                        </div>
-                       <div className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                       <div className="text-[10px] text-slate-500 dark:text-slate-400">
                           Minha conta
                        </div>
                      </div>
-                     <ChevronDown className="h-4 w-4 text-zinc-500" />
+                     <ChevronDown className="h-4 w-4 text-slate-500" />
                   </button>
               
                   {menuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-zinc-200 bg-white p-2 shadow-lg ring-1 ring-black/5 dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg ring-1 ring-black/5 dark:border-slate-800 dark:bg-slate-900">
                       <div className="px-2 py-1.5">
-                        <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                           {profile?.fullName || session?.email}
                         </div>
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {session?.email}
                         </div>
                       </div>
-                      <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                      <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
                       
                       <Link 
                         to="/app" 
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         <LayoutDashboard className="h-4 w-4" />
                         Área do Cliente
@@ -126,13 +126,13 @@ export function SiteHeader() {
                       <Link 
                         to="/app#profile" 
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         <Settings className="h-4 w-4" />
                         Meu Perfil
                       </Link>
                       
-                      <div className="my-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                      <div className="my-1 h-px bg-slate-100 dark:bg-slate-800" />
                       
                       <button
                         onClick={() => { setMenuOpen(false); signOut(); }}

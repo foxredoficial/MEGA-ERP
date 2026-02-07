@@ -41,24 +41,13 @@ export function ConfirmationDialog({
     }
   };
 
-  const getButtonVariant = () => {
-    switch (variant) {
-      case "danger":
-        return "destructive"; // Assuming you have a destructive variant or use generic styling
-      case "success":
-        return "default"; // or green
-      default:
-        return "primary";
-    }
-  };
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="">
       <div className="flex flex-col items-center text-center pt-4 pb-2">
         {getIcon()}
-        <h3 className="text-xl font-semibold text-zinc-900 mb-2">{title}</h3>
+        <h3 className="text-xl font-semibold text-slate-900 mb-2">{title}</h3>
         {description && (
-          <p className="text-zinc-500 mb-8 max-w-sm">
+          <p className="text-slate-500 mb-8 max-w-sm">
             {description}
           </p>
         )}
@@ -75,7 +64,7 @@ export function ConfirmationDialog({
             </Button>
           )}
           <Button 
-            variant={variant === 'danger' ? 'destructive' : 'primary'} // Adjust based on your Button component props
+            variant="primary"
             onClick={onConfirm}
             disabled={loading}
             className={`w-full ${variant === 'danger' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}

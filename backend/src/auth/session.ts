@@ -31,7 +31,6 @@ export async function verifySession(token: string) {
 
 export function setSessionCookie(res: Response, token: string) {
   const isProd = process.env.NODE_ENV === "production";
-  console.log(`[Session] Setting cookie: ${env.SESSION_COOKIE_NAME}, Secure: ${isProd}, SameSite: Lax`);
   res.cookie(env.SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: isProd,
@@ -60,4 +59,3 @@ export async function getSessionFromRequest(req: Request) {
     return null;
   }
 }
-

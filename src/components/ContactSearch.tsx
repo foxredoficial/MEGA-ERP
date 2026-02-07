@@ -16,7 +16,6 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     loadContacts();
@@ -46,7 +45,6 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
       setLoading(true);
       const data = await getContacts();
       setContacts(data);
-      setHasLoaded(true);
     } catch (error) {
       console.error("Erro ao carregar contatos:", error);
     } finally {
@@ -101,7 +99,7 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
   return (
     <div className={cn("relative", className)} ref={wrapperRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <Input
           placeholder="Buscar cliente (Nome, CPF/CNPJ, Telefone...)"
           className="pl-10"
@@ -114,23 +112,23 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
         />
         {loading && (
            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-             <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+             <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
            </div>
         )}
       </div>
 
       {isOpen && search.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {filteredContacts.length > 0 ? (
             <ul className="py-1">
               {filteredContacts.map(contact => (
                 <li
                   key={contact.id}
-                  className="px-4 py-2 hover:bg-zinc-50 cursor-pointer text-sm border-b border-zinc-50 last:border-0"
+                  className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b border-slate-50 last:border-0"
                   onClick={() => handleSelect(contact)}
                 >
-                  <div className="font-medium text-zinc-900">{contact.name}</div>
-                  <div className="text-zinc-500 text-xs flex flex-wrap gap-x-2 gap-y-1">
+                  <div className="font-medium text-slate-900">{contact.name}</div>
+                  <div className="text-slate-500 text-xs flex flex-wrap gap-x-2 gap-y-1">
                      {contact.cpf_cnpj && <span>Doc: {contact.cpf_cnpj}</span>}
                      {contact.phone && <span>Tel: {contact.phone}</span>}
                      {contact.mobile && <span>Cel: {contact.mobile}</span>}
@@ -139,7 +137,7 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
               ))}
             </ul>
           ) : (
-            <div className="px-4 py-3 text-sm text-zinc-500 text-center">
+            <div className="px-4 py-3 text-sm text-slate-500 text-center">
               {loading ? "Carregando..." : "Nenhum cliente encontrado."}
             </div>
           )}

@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { env } from "./env.js";
 import { ensureDatabaseAndSchema, pingDb } from "./db.js";
 import { sendError } from "./http.js";
@@ -13,30 +15,68 @@ import productsRouter from "./routes/products.js";
 import contactsRouter from "./routes/contacts.js";
 import categoriesRouter from "./routes/categories.js";
 import priceListsRouter from "./routes/price_lists.js";
+import salespersonsRouter from "./routes/salespersons.js";
+import cashRouter from "./routes/cash.js";
+import financialTitlesRouter from "./routes/financial_titles.js";
+import salesOrdersRouter from "./routes/sales_orders.js";
+import pdvSalesRouter from "./routes/pdv_sales.js";
+import serviceOrdersRouter from "./routes/service_orders.js";
+import { honeypotRouter } from "./security/honeypot.js";
+import { sameOriginGuard } from "./security/sameOrigin.js";
 
 const app = express();
 
 app.disable("x-powered-by");
 
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
+const allowedOrigins = [
+  env.APP_ORIGIN,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174",
+  "http://localhost:5175",
+  "http://127.0.0.1:5175",
+  "http://localhost:5176",
+  "http://127.0.0.1:5176",
+];
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Muitas tentativas. Tente novamente em alguns minutos." },
+});
+
 app.use(
   cors({
-    origin: [
-      env.APP_ORIGIN,
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:5174",
-      "http://127.0.0.1:5174",
-      "http://localhost:5175",
-      "http://127.0.0.1:5175",
-      "http://localhost:5176",
-      "http://127.0.0.1:5176",
-    ],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
 
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
+app.use("/api", apiLimiter);
+app.use(honeypotRouter());
+app.use("/api", sameOriginGuard(allowedOrigins));
 
 app.get("/api/health", async (_req, res) => {
   const isProd = process.env.NODE_ENV === "production";
@@ -53,7 +93,7 @@ app.get("/api/health", async (_req, res) => {
 });
 
 app.use("/api/public", publicRouter);
-app.use("/api/auth", authRouter);
+app.use("/api/auth", authLimiter, authRouter);
 app.use("/api/me", meRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/admin", adminRouter);
@@ -61,6 +101,12 @@ app.use("/api/products", productsRouter);
 app.use("/api/contacts", contactsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/price-lists", priceListsRouter);
+app.use("/api/salespersons", salespersonsRouter);
+app.use("/api/cash", cashRouter);
+app.use("/api/financial", financialTitlesRouter);
+app.use("/api/sales-orders", salesOrdersRouter);
+app.use("/api/pdv", pdvSalesRouter);
+app.use("/api/service-orders", serviceOrdersRouter);
 
 app.use((_req, res) => {
   sendError(res, 404, "Rota não encontrada.");

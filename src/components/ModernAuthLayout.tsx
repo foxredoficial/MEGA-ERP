@@ -10,11 +10,11 @@ interface ModernAuthLayoutProps {
 
 export function ModernAuthLayout({ children, title, subtitle }: ModernAuthLayoutProps) {
   return (
-    <div className="min-h-screen flex bg-white dark:bg-zinc-950">
+    <div className="min-h-screen flex bg-white dark:bg-slate-950">
       {/* Left Column - Form Area */}
-      <div className="flex-1 flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 relative z-10 bg-white dark:bg-zinc-950">
+      <div className="flex-1 flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24 relative z-10 bg-white dark:bg-slate-950">
         <div className="absolute top-6 left-6 lg:top-10 lg:left-10">
-          <Link to="/" className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors">
+          <Link to="/" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors">
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm font-medium">Voltar para Home</span>
           </Link>
@@ -26,22 +26,22 @@ export function ModernAuthLayout({ children, title, subtitle }: ModernAuthLayout
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
                 <LayoutDashboard className="h-6 w-6" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                 MegaERP
               </span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
               {title}
             </h2>
-            <p className="mt-2 text-base text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-base text-slate-600 dark:text-slate-400">
               {subtitle}
             </p>
           </div>
           
           {children}
           
-          <div className="mt-10 border-t border-zinc-100 pt-6 dark:border-zinc-800">
-            <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="mt-10 border-t border-slate-100 pt-6 dark:border-slate-800">
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400">
               &copy; {new Date().getFullYear()} MegaERP SaaS. Todos os direitos reservados.
             </p>
           </div>
@@ -49,7 +49,7 @@ export function ModernAuthLayout({ children, title, subtitle }: ModernAuthLayout
       </div>
 
       {/* Right Column - Brand/Marketing Area */}
-      <div className="hidden lg:block relative w-0 flex-1 overflow-hidden bg-zinc-900">
+      <div className="hidden lg:block relative w-0 flex-1 overflow-hidden bg-slate-900">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[url('/dashboard-preview.png')] bg-cover bg-center" />
           {/* Blue Blur Overlay - Brand Theme */}

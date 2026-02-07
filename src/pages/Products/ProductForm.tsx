@@ -268,17 +268,17 @@ export function ProductForm() {
       
       <main className="flex-1 pt-14 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex-none px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white z-10">
+        <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
-            <Link to="/app/produtos" className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-zinc-600" />
+            <Link to="/app/produtos" className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-zinc-900">
+              <h1 className="text-2xl font-bold text-slate-900">
                 {isEditing ? "Editar Produto" : "Novo Produto"}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm text-slate-500">
                   {isEditing ? `ID: ${id}` : "Preencha os dados do produto"}
                 </span>
               </div>
@@ -304,7 +304,7 @@ export function ProductForm() {
         </div>
 
         {/* Tabs */}
-        <div className="flex-none border-b border-zinc-200 bg-white overflow-x-auto">
+        <div className="flex-none border-b border-slate-200 bg-white overflow-x-auto">
           <div className="flex items-center px-6">
             {[
               { id: "geral", label: "Dados Gerais", icon: Box },
@@ -319,7 +319,7 @@ export function ProductForm() {
                 className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-zinc-600 hover:text-zinc-900 hover:border-zinc-300"
+                    : "border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -336,7 +336,7 @@ export function ProductForm() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Nome do Produto</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Produto</label>
                     <Input 
                       value={formData.name || ""} 
                       onChange={(e) => handleChange("name", e.target.value)}
@@ -345,7 +345,7 @@ export function ProductForm() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">SKU</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
                     <Input 
                       value={formData.sku || ""} 
                       onChange={(e) => handleChange("sku", e.target.value)}
@@ -354,7 +354,7 @@ export function ProductForm() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Categoria</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
                     <Select 
                       value={formData.category_id || ""}
                       onChange={(e) => handleChange("category_id", e.target.value || null)}
@@ -369,9 +369,9 @@ export function ProductForm() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de Venda</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Venda</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <Input 
                         className="pl-9"
                         type="number"
@@ -383,7 +383,7 @@ export function ProductForm() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Unidade</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Unidade</label>
                     <Select 
                       value={formData.unit || "UN"}
                       onChange={(e) => handleChange("unit", e.target.value)}
@@ -397,7 +397,7 @@ export function ProductForm() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Formato</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Formato</label>
                     <Select 
                       value={formData.format || "simple"}
                       onChange={(e) => handleChange("format", e.target.value)}
@@ -417,7 +417,7 @@ export function ProductForm() {
 {/* Type selection removed to enforce separation between Products and Services modules */}
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-700 mb-1">Condição</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Condição</label>
                     <Select 
                       value={formData.condition_type || "new"}
                       onChange={(e) => handleChange("condition_type", e.target.value)}
@@ -435,7 +435,7 @@ export function ProductForm() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 mb-4">
                     <FileText className="w-4 h-4 text-blue-600" />
-                    <h3 className="text-lg font-medium text-zinc-900">Dados da nota fiscal</h3>
+                    <h3 className="text-lg font-medium text-slate-900">Dados da nota fiscal</h3>
                 </div>
                 
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-start gap-3">
@@ -447,7 +447,7 @@ export function ProductForm() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">Origem</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Origem</label>
                         <Select 
                             value={formData.origin || ""}
                             onChange={(e) => handleChange("origin", e.target.value)}
@@ -465,7 +465,7 @@ export function ProductForm() {
                         </Select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">NCM</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">NCM</label>
                         <Input 
                             value={formData.ncm || ""} 
                             onChange={(e) => handleChange("ncm", e.target.value)}
@@ -473,7 +473,7 @@ export function ProductForm() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">CEST</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">CEST</label>
                         <Input 
                             value={formData.cest || ""} 
                             onChange={(e) => handleChange("cest", e.target.value)}
@@ -481,7 +481,7 @@ export function ProductForm() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">Tipo do item</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tipo do item</label>
                         <Select 
                             value={formData.item_type || ""}
                             onChange={(e) => handleChange("item_type", e.target.value)}
@@ -502,7 +502,7 @@ export function ProductForm() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 mb-4">
                     <Layers className="w-4 h-4 text-blue-600" />
-                    <h3 className="text-lg font-medium text-zinc-900">Variações do Produto</h3>
+                    <h3 className="text-lg font-medium text-slate-900">Variações do Produto</h3>
                 </div>
                 
                 {formData.format === 'variation' ? (
@@ -520,7 +520,7 @@ export function ProductForm() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                              <label className="block text-sm font-medium text-zinc-700 mb-1">Nome do atributo *</label>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">Nome do atributo *</label>
                               <Input 
                                   placeholder="Ex: Cor, tamanho, largura, voltagem..." 
                                   value={variationName}
@@ -528,7 +528,7 @@ export function ProductForm() {
                               />
                           </div>
                           <div>
-                              <label className="block text-sm font-medium text-zinc-700 mb-1">Opções</label>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">Opções</label>
                               <div className="flex gap-2">
                                 <Input 
                                     placeholder="Separe as opções com Enter ou Tab" 
@@ -551,18 +551,18 @@ export function ProductForm() {
                         </div>
 
                         {variationsList.length > 0 && (
-                          <div className="mt-6 border border-zinc-200 rounded-lg overflow-hidden">
+                          <div className="mt-6 border border-slate-200 rounded-lg overflow-hidden">
                             <table className="w-full text-sm text-left">
-                              <thead className="bg-zinc-50 border-b border-zinc-200">
+                              <thead className="bg-slate-50 border-b border-slate-200">
                                 <tr>
-                                  <th className="px-4 py-2 font-medium text-zinc-700">Atributo</th>
-                                  <th className="px-4 py-2 font-medium text-zinc-700">Opções</th>
-                                  <th className="px-4 py-2 font-medium text-zinc-700 w-[50px]"></th>
+                                  <th className="px-4 py-2 font-medium text-slate-700">Atributo</th>
+                                  <th className="px-4 py-2 font-medium text-slate-700">Opções</th>
+                                  <th className="px-4 py-2 font-medium text-slate-700 w-[50px]"></th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {variationsList.map((v, i) => (
-                                  <tr key={i} className="border-b border-zinc-100 last:border-0">
+                                  <tr key={i} className="border-b border-slate-100 last:border-0">
                                     <td className="px-4 py-2">{v.name}</td>
                                     <td className="px-4 py-2">
                                       <div className="flex gap-1 flex-wrap">
@@ -589,10 +589,10 @@ export function ProductForm() {
                         )}
                     </div>
                 ) : (
-                    <div className="text-center py-12 border-2 border-dashed border-zinc-200 rounded-lg">
-                        <Layers className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
-                        <h3 className="text-lg font-medium text-zinc-900">Formato Simples</h3>
-                        <p className="text-zinc-500 max-w-md mx-auto mt-2">
+                    <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-lg">
+                        <Layers className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <h3 className="text-lg font-medium text-slate-900">Formato Simples</h3>
+                        <p className="text-slate-500 max-w-md mx-auto mt-2">
                             Este produto está configurado como "Simples". Para adicionar variações (cor, tamanho, etc), altere o formato para "Com Variação" na aba Dados Gerais.
                         </p>
                         <Button 
@@ -613,12 +613,12 @@ export function ProductForm() {
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                       <Layers className="w-4 h-4 text-blue-600" />
-                      <h3 className="text-lg font-medium text-zinc-900">Configurações de Estoque</h3>
+                      <h3 className="text-lg font-medium text-slate-900">Configurações de Estoque</h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Mínimo</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Mínimo</label>
                       <Input 
                         type="number"
                         value={formData.stock_min || 0}
@@ -626,7 +626,7 @@ export function ProductForm() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Máximo</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Máximo</label>
                       <Input 
                         type="number"
                         value={formData.stock_max || 0}
@@ -634,7 +634,7 @@ export function ProductForm() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Crossdocking</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Crossdocking</label>
                       <Input 
                         type="number"
                         value={formData.crossdocking || 0}
@@ -642,7 +642,7 @@ export function ProductForm() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-zinc-700 mb-1">Localização</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Localização</label>
                       <Input 
                         value={formData.location || ""}
                         onChange={(e) => handleChange("location", e.target.value)}
@@ -654,7 +654,7 @@ export function ProductForm() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <Box className="w-4 h-4 text-blue-600" />
-                            <h3 className="text-lg font-medium text-zinc-900">Controle de Lote</h3>
+                            <h3 className="text-lg font-medium text-slate-900">Controle de Lote</h3>
                         </div>
                         <div className="flex items-center gap-2">
                             <input 
@@ -673,9 +673,9 @@ export function ProductForm() {
                                     handleChange("has_lot_control", e.target.checked);
                                 }}
                                 disabled={formData.format === 'variation'}
-                                className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500" 
+                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
                             />
-                            <label htmlFor="lot_control" className="text-sm text-zinc-700">
+                            <label htmlFor="lot_control" className="text-sm text-slate-700">
                                 {formData.has_lot_control ? "Ativado" : "Desativado"}
                             </label>
                         </div>
@@ -698,27 +698,27 @@ export function ProductForm() {
                                             </div>
                                             
                                             {loadingLots ? (
-                                                <div className="text-center py-4 text-zinc-500">Carregando lotes...</div>
+                                                <div className="text-center py-4 text-slate-500">Carregando lotes...</div>
                                             ) : lots.length === 0 ? (
-                                                <div className="text-center py-8 border border-dashed border-zinc-200 rounded-lg text-zinc-500">
+                                                <div className="text-center py-8 border border-dashed border-slate-200 rounded-lg text-slate-500">
                                                     Nenhum lote cadastrado.
                                                 </div>
                                             ) : (
-                                                <div className="border border-zinc-200 rounded-lg overflow-hidden">
+                                                <div className="border border-slate-200 rounded-lg overflow-hidden">
                                                     <table className="w-full text-sm text-left">
-                                                        <thead className="bg-zinc-50 border-b border-zinc-200">
+                                                        <thead className="bg-slate-50 border-b border-slate-200">
                                                             <tr>
-                                                                <th className="px-4 py-2 font-medium text-zinc-700">Código</th>
-                                                                <th className="px-4 py-2 font-medium text-zinc-700">Fabricação</th>
-                                                                <th className="px-4 py-2 font-medium text-zinc-700">Validade</th>
-                                                                <th className="px-4 py-2 font-medium text-zinc-700">Saldo</th>
-                                                                <th className="px-4 py-2 font-medium text-zinc-700">Status</th>
-                                                                <th className="px-4 py-2 font-medium text-zinc-700 text-right">Ações</th>
+                                                                <th className="px-4 py-2 font-medium text-slate-700">Código</th>
+                                                                <th className="px-4 py-2 font-medium text-slate-700">Fabricação</th>
+                                                                <th className="px-4 py-2 font-medium text-slate-700">Validade</th>
+                                                                <th className="px-4 py-2 font-medium text-slate-700">Saldo</th>
+                                                                <th className="px-4 py-2 font-medium text-slate-700">Status</th>
+                                                                <th className="px-4 py-2 font-medium text-slate-700 text-right">Ações</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {lots.map(lot => (
-                                                                <tr key={lot.id} className={`border-b border-zinc-100 last:border-0 ${!lot.is_active ? 'bg-zinc-50 opacity-60' : ''}`}>
+                                                                <tr key={lot.id} className={`border-b border-slate-100 last:border-0 ${!lot.is_active ? 'bg-slate-50 opacity-60' : ''}`}>
                                                                     <td className="px-4 py-2">{lot.code}</td>
                                                                     <td className="px-4 py-2">{lot.manufacturing_date ? format(new Date(lot.manufacturing_date), 'dd/MM/yyyy') : '-'}</td>
                                                                     <td className="px-4 py-2">{lot.expiration_date ? format(new Date(lot.expiration_date), 'dd/MM/yyyy') : '-'}</td>
@@ -742,11 +742,11 @@ export function ProductForm() {
                                             )}
                                         </>
                                     ) : (
-                                        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4">
-                                            <h4 className="font-medium text-zinc-900 mb-4">{editingLot ? 'Editar Lote' : 'Novo Lote'}</h4>
+                                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                                            <h4 className="font-medium text-slate-900 mb-4">{editingLot ? 'Editar Lote' : 'Novo Lote'}</h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-zinc-700 mb-1">Código do Lote *</label>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Código do Lote *</label>
                                                     <Input 
                                                         value={lotFormData.code} 
                                                         onChange={e => setLotFormData({...lotFormData, code: e.target.value})}
@@ -754,14 +754,14 @@ export function ProductForm() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-zinc-700 mb-1">Observações</label>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Observações</label>
                                                     <Input 
                                                         value={lotFormData.observations || ""} 
                                                         onChange={e => setLotFormData({...lotFormData, observations: e.target.value})}
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-zinc-700 mb-1">Data de Fabricação</label>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Data de Fabricação</label>
                                                     <Input 
                                                         type="date"
                                                         value={lotFormData.manufacturing_date || ""} 
@@ -769,7 +769,7 @@ export function ProductForm() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-zinc-700 mb-1">Data de Validade</label>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Data de Validade</label>
                                                     <Input 
                                                         type="date"
                                                         value={lotFormData.expiration_date || ""} 
@@ -795,33 +795,33 @@ export function ProductForm() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <Box className="w-4 h-4 text-blue-600" />
-                        <h3 className="text-lg font-medium text-zinc-900">Saldo inicial</h3>
+                        <h3 className="text-lg font-medium text-slate-900">Saldo inicial</h3>
                     </div>
                   </div>
 
                   {isEditing ? (
-                    <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-6 text-center">
-                      <p className="text-zinc-600 mb-4">
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
+                      <p className="text-slate-600 mb-4">
                         Para gerenciar o estoque de um produto já cadastrado, utilize as movimentações de estoque.
                       </p>
                       <div className="flex justify-center gap-4 text-sm">
-                        <div className="bg-white px-4 py-2 rounded border border-zinc-200 shadow-sm">
-                          <span className="block text-zinc-500 text-xs uppercase tracking-wider">Estoque Atual</span>
-                          <span className="block text-xl font-bold text-zinc-900">{formData.stock || 0}</span>
+                        <div className="bg-white px-4 py-2 rounded border border-slate-200 shadow-sm">
+                          <span className="block text-slate-500 text-xs uppercase tracking-wider">Estoque Atual</span>
+                          <span className="block text-xl font-bold text-slate-900">{formData.stock || 0}</span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-white border border-zinc-200 rounded-lg p-6">
+                    <div className="bg-white border border-slate-200 rounded-lg p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <label className="block text-sm font-medium text-zinc-700 mb-1">Depósito</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Depósito</label>
                           <Select defaultValue="geral">
                             <option value="geral">Geral</option>
                           </Select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-zinc-700 mb-1">Quantidade</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Quantidade</label>
                           <Input 
                             type="number"
                             value={initialStock.quantity}
@@ -832,9 +832,9 @@ export function ProductForm() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <label className="block text-sm font-medium text-zinc-700 mb-1">Preço de compra unitário</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Preço de compra unitário</label>
                           <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input 
                               className="pl-9"
                               type="number"
@@ -844,9 +844,9 @@ export function ProductForm() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-zinc-700 mb-1">Custo de compra Un</label>
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Custo de compra Un</label>
                           <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input 
                               className="pl-9"
                               type="number"
@@ -858,9 +858,9 @@ export function ProductForm() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-zinc-700 mb-1">Observações do saldo inicial</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Observações do saldo inicial</label>
                         <textarea 
-                          className="w-full rounded-xl border border-zinc-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[80px]"
+                          className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[80px]"
                           value={initialStock.observations}
                           onChange={(e) => setInitialStock({...initialStock, observations: e.target.value})}
                         />
@@ -875,7 +875,7 @@ export function ProductForm() {
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="flex items-center gap-2 mb-4">
                     <ImageIcon className="w-4 h-4 text-blue-600" />
-                    <h3 className="text-lg font-medium text-zinc-900">Imagem principal do produto</h3>
+                    <h3 className="text-lg font-medium text-slate-900">Imagem principal do produto</h3>
                 </div>
 
                 <div className="bg-purple-50 border border-purple-100 p-3 rounded-lg flex items-center gap-2 mb-6">
@@ -885,25 +885,25 @@ export function ProductForm() {
                   <span className="text-sm text-purple-800">Beta: Clique na imagem para opção de remover fundo.</span>
                 </div>
 
-                <p className="text-sm text-zinc-500 mb-4">
+                <p className="text-sm text-slate-500 mb-4">
                   Você pode remover o fundo das imagens para atender aos requisitos dos canais de venda.
                 </p>
 
                 <div className="border-2 border-dashed border-green-400/50 bg-white rounded-lg p-12 text-center transition-colors hover:bg-green-50/30 cursor-pointer">
                   <div className="flex flex-col items-center justify-center gap-3">
-                    <div className="p-3 bg-zinc-50 rounded-full">
-                      <UploadCloud className="w-8 h-8 text-zinc-400" />
+                    <div className="p-3 bg-slate-50 rounded-full">
+                      <UploadCloud className="w-8 h-8 text-slate-400" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-zinc-900">Arraste arquivos para cá</h4>
-                      <p className="text-sm text-zinc-500 mt-1">
+                      <h4 className="font-semibold text-slate-900">Arraste arquivos para cá</h4>
+                      <p className="text-sm text-slate-500 mt-1">
                         ou se preferir <span className="text-blue-600 hover:underline">anexar arquivos</span>
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mt-4 text-sm text-zinc-500">
+                <div className="flex items-center gap-2 mt-4 text-sm text-slate-500">
                   <Info className="w-4 h-4" />
                   <span>Imagens armazenadas no Sistema</span>
                   <button className="text-blue-600 hover:underline">clique aqui</button>
