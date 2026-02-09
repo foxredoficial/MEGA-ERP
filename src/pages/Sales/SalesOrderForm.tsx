@@ -260,6 +260,7 @@ export function SalesOrderForm() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
                   <ContactSearch 
+                    contactType="cliente"
                     onSelect={(contact) => {
                       handleChange("client", contact.name);
                       handleChange("clientId", contact.id);

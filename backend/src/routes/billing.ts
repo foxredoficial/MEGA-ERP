@@ -9,6 +9,7 @@ export const billingRouter = Router();
 
 type MpPreapprovalResponse = {
   init_point?: string;
+  id?: string;
 };
 
 billingRouter.post(
@@ -32,6 +33,7 @@ billingRouter.post(
       reason: `MEGA ERP - ${plan.name}`,
       external_reference: `user:${r.auth.userId}:plan:${plan.id}`,
       payer_email: r.auth.email,
+      notification_url: env.WEBHOOK_BASE_URL ? `${env.WEBHOOK_BASE_URL}/api/webhooks/mercadopago` : undefined,
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
@@ -66,7 +68,17 @@ billingRouter.post(
     const initPoint = data?.init_point;
     if (!initPoint) return sendError(res, 502, "Resposta inválida do Mercado Pago.");
 
-    res.json({ initPoint });
+    const mpPreapprovalId = data?.id;
+    if (mpPreapprovalId) {
+      const { upsertSubscriptionByMpPreapprovalId } = await import("../repos/subscriptions.js");
+      await upsertSubscriptionByMpPreapprovalId({
+        userId: r.auth.userId,
+        planId: plan.id,
+        status: "past_due",
+        mpPreapprovalId,
+      });
+    }
+
+    res.json({ initPoint, mpPreapprovalId: mpPreapprovalId ?? null });
   })
 );
-

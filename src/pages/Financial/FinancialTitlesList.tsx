@@ -5,8 +5,10 @@ import { BlingLayout } from "@/components/BlingLayout";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ContactSearch } from "@/components/ContactSearch";
 import {
   listFinancialTitles,
+  createFinancialTitle,
   registerPayment,
   type FinancialTitle,
   type FinancialTitleKind,
@@ -34,6 +36,14 @@ export function FinancialTitlesList() {
   const [payTitle, setPayTitle] = useState<FinancialTitle | null>(null);
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState<FinancialPaymentMethod>("money");
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newPartyId, setNewPartyId] = useState<string | null>(null);
+  const [newPartyName, setNewPartyName] = useState<string>("");
+  const [newDescription, setNewDescription] = useState<string>("");
+  const [newAmount, setNewAmount] = useState<string>("");
+  const [newDueDate, setNewDueDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
 
   const header = kind === "ar" ? "Contas a Receber" : "Contas a Pagar";
 
@@ -71,6 +81,50 @@ export function FinancialTitlesList() {
     setPayAmount(String(remaining));
     setPayMethod("money");
     setShowPayModal(true);
+  }
+
+  function openCreate() {
+    setNewPartyId(null);
+    setNewPartyName("");
+    setNewDescription("");
+    setNewAmount("");
+    setNewDueDate(new Date().toISOString().slice(0, 10));
+    setShowCreateModal(true);
+  }
+
+  async function confirmCreate() {
+    const amount = Number(String(newAmount).replace(",", "."));
+    if (!newDescription.trim()) {
+      alert("Informe uma descrição.");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Informe um valor válido.");
+      return;
+    }
+    if (!newDueDate) {
+      alert("Informe o vencimento.");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      await createFinancialTitle({
+        kind,
+        origin: "manual",
+        partyId: newPartyId,
+        partyName: newPartyName.trim() || null,
+        description: newDescription.trim(),
+        amount,
+        dueDate: newDueDate,
+      });
+      setShowCreateModal(false);
+      await load();
+    } catch (e) {
+      alert("Erro ao criar título: " + (e as Error).message);
+    } finally {
+      setCreating(false);
+    }
   }
 
   async function confirmPay() {
@@ -139,6 +193,10 @@ export function FinancialTitlesList() {
             <Button variant={kind === "ap" ? "primary" : "outline"} onClick={() => setSearchParams({ kind: "ap" })}>
               <ArrowUpRight className="w-4 h-4 mr-2" />
               Pagar
+            </Button>
+
+            <Button className="bg-slate-900 hover:bg-slate-800 text-white" onClick={openCreate}>
+              Novo título
             </Button>
           </div>
         </div>
@@ -261,6 +319,77 @@ export function FinancialTitlesList() {
               </Button>
               <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => void confirmPay()} disabled={paying}>
                 {paying ? "Processando..." : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-white flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200">
+              <div className="text-lg font-bold text-slate-900">Novo título ({kind === "ar" ? "a receber" : "a pagar"})</div>
+              <div className="text-sm text-slate-500 mt-1">Lançamento manual</div>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto p-6">
+              <div className="space-y-4 max-w-3xl">
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    {kind === "ar" ? "Cliente" : "Fornecedor"}
+                  </label>
+                  <div className="mt-2">
+                    <ContactSearch
+                      contactType={kind === "ar" ? "cliente" : "fornecedor"}
+                      selectedContactId={newPartyId ?? undefined}
+                      onSelect={(c) => {
+                        setNewPartyId(c.id);
+                        setNewPartyName(c.name);
+                      }}
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <Input value={newPartyName} onChange={(e) => setNewPartyName(e.target.value)} placeholder="Nome (opcional)" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</label>
+                  <Input
+                    className="mt-2 h-12"
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Ex.: Mensalidade / Serviço / Compra"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor</label>
+                    <Input
+                      type="number"
+                      className="mt-2 h-12"
+                      value={newAmount}
+                      onChange={(e) => setNewAmount(e.target.value)}
+                      placeholder="0,00"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Vencimento</label>
+                    <Input type="date" className="mt-2 h-12" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowCreateModal(false)} disabled={creating}>
+                Cancelar
+              </Button>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => void confirmCreate()} disabled={creating}>
+                {creating ? "Criando..." : "Criar"}
               </Button>
             </div>
           </div>

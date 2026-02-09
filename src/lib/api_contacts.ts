@@ -6,7 +6,7 @@ export type Contact = {
   name: string;
   fantasy_name: string | null;
   code: string | null;
-  type: 'fisica' | 'juridica' | 'estrangeiro';
+  type: 'fisica' | 'juridica';
   cpf_cnpj: string | null;
   rg_ie: string | null;
   contributor_type: number | null;
@@ -59,10 +59,16 @@ export type Contact = {
   updated_at: string;
 };
 
+export type ContactType = "cliente" | "fornecedor";
+
 export type ContactInput = Omit<Contact, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
 
-export async function getContacts() {
-  return apiFetch<{ contacts: Contact[] }>("/api/contacts").then(r => r.contacts);
+export async function getContacts(args?: { contactType?: ContactType }) {
+  const params = new URLSearchParams();
+  if (args?.contactType) params.set("contactType", args.contactType);
+  const qs = params.toString();
+  const url = qs ? `/api/contacts?${qs}` : "/api/contacts";
+  return apiFetch<{ contacts: Contact[] }>(url).then((r) => r.contacts);
 }
 
 export async function getContact(id: string) {

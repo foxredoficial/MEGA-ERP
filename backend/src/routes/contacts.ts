@@ -7,6 +7,7 @@ import {
   updateContact, 
   deleteContact 
 } from "../repos/contacts.js";
+import { asyncHandler } from "../http.js";
 import { z } from "zod";
 
 const router = Router();
@@ -52,7 +53,7 @@ const contactSchema = z.object({
   birth_date: z.string().nullable().optional(),
   naturalness: z.string().nullable().optional(),
   parents_json: z.any().nullable().optional(),
-  contact_type: z.string().nullable().optional(),
+  contact_type: z.enum(["cliente", "fornecedor"]).nullable().optional(),
   status: z.enum(['ativo', 'inativo', 'sem_movimento']).default('ativo'),
   seller: z.string().nullable().optional(),
   operation_nature: z.string().nullable().optional(),
@@ -65,12 +66,19 @@ const contactSchema = z.object({
   observations: z.string().nullable().optional(),
 });
 
-router.get("/", requireAuth, async (req, res) => {
-  const contacts = await listContacts((req as AuthedRequest).auth.userId);
-  res.json({ contacts });
-});
+router.get("/", requireAuth, asyncHandler(async (req, res) => {
+  const q = z
+    .object({
+      contactType: z.enum(["cliente", "fornecedor"]).optional(),
+    })
+    .safeParse(req.query);
+  if (!q.success) return res.status(400).json({ error: q.error.flatten() });
 
-router.post("/", requireAuth, async (req, res) => {
+  const contacts = await listContacts((req as AuthedRequest).auth.userId, { contactType: q.data.contactType });
+  res.json({ contacts });
+}));
+
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = contactSchema.parse(req.body);
     const id = await createContact((req as AuthedRequest).auth.userId, data as any);
@@ -81,17 +89,17 @@ router.post("/", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.get("/:id", requireAuth, async (req, res) => {
+router.get("/:id", requireAuth, asyncHandler(async (req, res) => {
   const contact = await getContact((req as AuthedRequest).auth.userId, req.params.id);
   if (!contact) {
     return res.status(404).json({ error: "Contato não encontrado" });
   }
   res.json({ contact });
-});
+}));
 
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = contactSchema.partial().parse(req.body);
     await updateContact((req as AuthedRequest).auth.userId, req.params.id, data as any);
@@ -102,11 +110,11 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", requireAuth, asyncHandler(async (req, res) => {
   await deleteContact((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ success: true });
-});
+}));
 
 export default router;

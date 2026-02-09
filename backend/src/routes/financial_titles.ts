@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/requireAuth.js";
+import { asyncHandler } from "../http.js";
 import {
   cancelFinancialTitle,
   createFinancialTitle,
@@ -11,7 +12,7 @@ import {
 
 const router = Router();
 
-router.get("/titles", requireAuth, async (req, res) => {
+router.get("/titles", requireAuth, asyncHandler(async (req, res) => {
   const q = z
     .object({
       kind: z.enum(["ar", "ap"]).optional(),
@@ -22,15 +23,15 @@ router.get("/titles", requireAuth, async (req, res) => {
   if (!q.success) return res.status(400).json({ error: q.error.flatten() });
   const titles = await listFinancialTitles((req as AuthedRequest).auth.userId, q.data);
   res.json({ titles });
-});
+}));
 
-router.get("/titles/:id", requireAuth, async (req, res) => {
+router.get("/titles/:id", requireAuth, asyncHandler(async (req, res) => {
   const title = await getFinancialTitle((req as AuthedRequest).auth.userId, req.params.id);
   if (!title) return res.status(404).json({ error: "Título não encontrado" });
   res.json({ title });
-});
+}));
 
-router.post("/titles", requireAuth, async (req, res) => {
+router.post("/titles", requireAuth, asyncHandler(async (req, res) => {
   const body = z
     .object({
       kind: z.enum(["ar", "ap"]),
@@ -46,9 +47,9 @@ router.post("/titles", requireAuth, async (req, res) => {
   if (!body.success) return res.status(400).json({ error: body.error.flatten() });
   const title = await createFinancialTitle((req as AuthedRequest).auth.userId, body.data);
   res.status(201).json({ title });
-});
+}));
 
-router.post("/titles/:id/payments", requireAuth, async (req, res) => {
+router.post("/titles/:id/payments", requireAuth, asyncHandler(async (req, res) => {
   const body = z
     .object({
       amount: z.number().positive(),
@@ -63,12 +64,11 @@ router.post("/titles/:id/payments", requireAuth, async (req, res) => {
     ...body.data,
   });
   res.json({ title });
-});
+}));
 
-router.post("/titles/:id/cancel", requireAuth, async (req, res) => {
+router.post("/titles/:id/cancel", requireAuth, asyncHandler(async (req, res) => {
   const title = await cancelFinancialTitle((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ title });
-});
+}));
 
 export default router;
-

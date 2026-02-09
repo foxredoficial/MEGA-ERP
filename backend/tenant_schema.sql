@@ -296,6 +296,20 @@ CREATE INDEX idx_service_orders_user ON service_orders(user_id);
 CREATE INDEX idx_service_orders_status ON service_orders(status);
 CREATE INDEX idx_service_orders_date ON service_orders(date);
 
+CREATE TABLE IF NOT EXISTS service_order_items (
+  id CHAR(36) PRIMARY KEY,
+  order_id CHAR(36) NOT NULL,
+  kind ENUM('labor','part','service','fee') NOT NULL,
+  product_id CHAR(36) NULL,
+  description TEXT NOT NULL,
+  quantity DECIMAL(10, 3) NOT NULL,
+  unit_price DECIMAL(10, 2) NOT NULL,
+  discount DECIMAL(10, 2) NOT NULL,
+  total DECIMAL(10, 2) NOT NULL,
+  CONSTRAINT fk_service_order_items_order FOREIGN KEY (order_id) REFERENCES service_orders(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_service_order_items_order ON service_order_items(order_id);
+
 CREATE TABLE IF NOT EXISTS salespersons (
   id CHAR(36) PRIMARY KEY,
   user_id CHAR(36) NOT NULL,
@@ -346,3 +360,70 @@ CREATE TABLE IF NOT EXISTS price_list_items (
   CONSTRAINT fk_pli_list FOREIGN KEY (price_list_id) REFERENCES price_lists(id) ON DELETE CASCADE,
   CONSTRAINT fk_pli_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS biz_documents (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  type ENUM('proposal','contract','purchase_order','incoming_invoice','production_order','nfe','nfce','service_invoice') NOT NULL,
+  number VARCHAR(50) NOT NULL,
+  party_id CHAR(36) NULL,
+  party_name VARCHAR(255) NULL,
+  date DATE NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  notes TEXT NULL,
+  totals_count DECIMAL(10, 3) NOT NULL DEFAULT 0,
+  totals_subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  totals_discount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  totals_total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  payload_json JSON NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_biz_documents_user_type_number (user_id, type, number)
+);
+CREATE INDEX idx_biz_documents_user ON biz_documents(user_id);
+CREATE INDEX idx_biz_documents_type ON biz_documents(type);
+CREATE INDEX idx_biz_documents_date ON biz_documents(date);
+CREATE INDEX idx_biz_documents_status ON biz_documents(status);
+
+CREATE TABLE IF NOT EXISTS biz_document_items (
+  id CHAR(36) PRIMARY KEY,
+  document_id CHAR(36) NOT NULL,
+  product_id CHAR(36) NULL,
+  description TEXT NOT NULL,
+  quantity DECIMAL(10, 3) NOT NULL,
+  unit_price DECIMAL(10, 2) NOT NULL,
+  discount DECIMAL(10, 2) NOT NULL,
+  total DECIMAL(10, 2) NOT NULL,
+  CONSTRAINT fk_biz_doc_items_doc FOREIGN KEY (document_id) REFERENCES biz_documents(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_biz_doc_items_doc ON biz_document_items(document_id);
+
+CREATE TABLE IF NOT EXISTS bank_accounts (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  bank VARCHAR(100) NULL,
+  agency VARCHAR(50) NULL,
+  account_number VARCHAR(50) NULL,
+  initial_balance DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  balance DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);
+CREATE INDEX idx_bank_accounts_user ON bank_accounts(user_id);
+
+CREATE TABLE IF NOT EXISTS bank_transactions (
+  id CHAR(36) PRIMARY KEY,
+  account_id CHAR(36) NOT NULL,
+  user_id CHAR(36) NOT NULL,
+  type ENUM('in','out') NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  description TEXT NOT NULL,
+  occurred_at DATETIME NOT NULL,
+  matched_ref_type VARCHAR(50) NULL,
+  matched_ref_id CHAR(36) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_bank_tx_account FOREIGN KEY (account_id) REFERENCES bank_accounts(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_bank_tx_account ON bank_transactions(account_id);
+CREATE INDEX idx_bank_tx_occurred ON bank_transactions(occurred_at);

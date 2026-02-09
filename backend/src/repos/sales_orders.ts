@@ -267,3 +267,26 @@ export async function updateSalesOrder(
     conn.release();
   }
 }
+
+export async function cancelSalesOrder(userId: string, id: string) {
+  const pool = await getTenantPool(userId);
+  const conn = await pool.getConnection();
+  const now = new Date();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query<RowDataPacket[]>(
+      "SELECT id FROM sales_orders WHERE user_id = ? AND id = ? FOR UPDATE",
+      [userId, id]
+    );
+    if (!rows.length) throw new Error("Pedido não encontrado.");
+
+    await conn.query("UPDATE sales_orders SET status = 'canceled', updated_at = ? WHERE user_id = ? AND id = ?", [now, userId, id]);
+    await conn.commit();
+    return await getSalesOrder(userId, id);
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}

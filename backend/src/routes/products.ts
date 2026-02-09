@@ -10,6 +10,7 @@ import {
 } from "../repos/products.js";
 import { addStockMovement, getStockHistory } from "../repos/stock.js";
 import { createLot, updateLot, listLots, deleteLot } from "../repos/lots.js";
+import { asyncHandler } from "../http.js";
 import { z } from "zod";
 
 const router = Router();
@@ -53,12 +54,12 @@ const productSchema = z.object({
   has_lot_control: z.boolean().optional(),
 });
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, asyncHandler(async (req, res) => {
   const products = await listProducts((req as AuthedRequest).auth.userId);
   res.json({ products });
-});
+}));
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = productSchema.parse(req.body);
     const id = await createProduct((req as AuthedRequest).auth.userId, data as any);
@@ -69,22 +70,22 @@ router.post("/", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.get("/:id", requireAuth, async (req, res) => {
+router.get("/:id", requireAuth, asyncHandler(async (req, res) => {
   const product = await getProduct((req as AuthedRequest).auth.userId, req.params.id);
   if (!product) {
     return res.status(404).json({ error: "Produto não encontrado" });
   }
   res.json({ product });
-});
+}));
 
-router.get("/:id/variations", requireAuth, async (req, res) => {
+router.get("/:id/variations", requireAuth, asyncHandler(async (req, res) => {
   const variations = await getProductVariations((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ variations });
-});
+}));
 
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = productSchema.partial().parse(req.body);
     await updateProduct((req as AuthedRequest).auth.userId, req.params.id, data as any);
@@ -95,12 +96,12 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", requireAuth, asyncHandler(async (req, res) => {
   await deleteProduct((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ success: true });
-});
+}));
 
 // Stock & Lots
 
@@ -111,16 +112,16 @@ const stockMovementSchema = z.object({
   lot_id: z.string().uuid().optional()
 });
 
-router.get("/:id/stock", requireAuth, async (req, res) => {
+router.get("/:id/stock", requireAuth, asyncHandler(async (req, res) => {
   const product = await getProduct((req as AuthedRequest).auth.userId, req.params.id);
   if (!product) {
     return res.status(404).json({ error: "Produto não encontrado" });
   }
   const history = await getStockHistory((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ history });
-});
+}));
 
-router.post("/:id/stock", requireAuth, async (req, res) => {
+router.post("/:id/stock", requireAuth, asyncHandler(async (req, res) => {
   const product = await getProduct((req as AuthedRequest).auth.userId, req.params.id);
   if (!product) {
     return res.status(404).json({ error: "Produto não encontrado" });
@@ -147,7 +148,7 @@ router.post("/:id/stock", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
 // Lots Routes
 
@@ -159,13 +160,13 @@ const lotSchema = z.object({
   is_active: z.boolean().optional()
 });
 
-router.get("/:id/lots", requireAuth, async (req, res) => {
+router.get("/:id/lots", requireAuth, asyncHandler(async (req, res) => {
   const includeInactive = req.query.include_inactive === 'true';
   const lots = await listLots((req as AuthedRequest).auth.userId, req.params.id, includeInactive);
   res.json({ lots });
-});
+}));
 
-router.post("/:id/lots", requireAuth, async (req, res) => {
+router.post("/:id/lots", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = lotSchema.parse(req.body);
     const id = await createLot((req as AuthedRequest).auth.userId, {
@@ -182,9 +183,9 @@ router.post("/:id/lots", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.put("/:id/lots/:lotId", requireAuth, async (req, res) => {
+router.put("/:id/lots/:lotId", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = lotSchema.partial().parse(req.body);
     await updateLot((req as AuthedRequest).auth.userId, req.params.lotId, data);
@@ -195,11 +196,11 @@ router.put("/:id/lots/:lotId", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.delete("/:id/lots/:lotId", requireAuth, async (req, res) => {
+router.delete("/:id/lots/:lotId", requireAuth, asyncHandler(async (req, res) => {
   const result = await deleteLot((req as AuthedRequest).auth.userId, req.params.lotId);
   res.json(result);
-});
+}));
 
 export default router;

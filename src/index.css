@@ -22,3 +22,25 @@
 body {
   @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100;
 }
+
+.no-print {
+  display: block;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}

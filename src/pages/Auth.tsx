@@ -7,10 +7,10 @@ import { usePlanStore } from "@/stores/planStore";
 import { useAuthStore } from "@/stores/authStore";
 import { getPublicPlans, type Plan } from "@/lib/api";
 
-type Mode = "login" | "signup" | "forgot";
+type Mode = "login" | "signup" | "forgot" | "reset";
 
 function getMode(raw: string | null): Mode {
-  if (raw === "signup" || raw === "forgot" || raw === "login") return raw;
+  if (raw === "signup" || raw === "forgot" || raw === "login" || raw === "reset") return raw;
   return "login";
 }
 
@@ -24,6 +24,7 @@ export default function Auth() {
   const next = params.get("next") ?? "/app";
   const oauthError = params.get("oauthError");
   const planIdFromQuery = params.get("planId");
+  const resetToken = params.get("token");
   const selectedPlanId = usePlanStore((s) => s.selectedPlanId);
   const setSelectedPlanId = usePlanStore((s) => s.setSelectedPlanId);
 
@@ -55,6 +56,7 @@ export default function Auth() {
   const signUp = useAuthStore((s) => s.signUp);
   const signIn = useAuthStore((s) => s.signIn);
   const requestPasswordReset = useAuthStore((s) => s.requestPasswordReset);
+  const resetPassword = useAuthStore((s) => s.resetPassword);
   const authError = useAuthStore((s) => s.error);
 
   const [email, setEmail] = useState("");
@@ -64,16 +66,21 @@ export default function Auth() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [localMessage, setLocalMessage] = useState<string | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (!oauthError) return;
     if (oauthError === "google_config") setLocalMessage("Login com Google não está configurado.");
+    else if (oauthError === "google_state") setLocalMessage("Falha de segurança no login com Google. Tente novamente.");
+    else if (oauthError === "google_in_use") setLocalMessage("Esta conta Google já está vinculada a outro usuário.");
+    else if (oauthError === "google_email_mismatch") setLocalMessage("Este email já está vinculado a outra conta Google.");
     else setLocalMessage("Não foi possível entrar com Google. Tente novamente.");
   }, [oauthError]);
 
   const canSubmitLogin = email.includes("@");
   const canSubmitSignup =
     email.includes("@") && password.length >= 8 && fullName.trim().length >= 2 && companyName.trim().length >= 2 && acceptTerms;
+  const canSubmitReset = password.length >= 8 && password === confirmPassword && typeof resetToken === "string" && resetToken.length > 0;
 
   const handleSubmit = async () => {
     setLocalMessage(null);
@@ -99,8 +106,31 @@ export default function Auth() {
         return;
       }
 
-      const ok = await requestPasswordReset(email);
-      if (ok) setLocalMessage("Enviamos um link de recuperação para seu email.");
+      if (mode === "reset") {
+        if (!resetToken) {
+          setLocalMessage("Token de redefinição ausente.");
+          return;
+        }
+        if (password !== confirmPassword) {
+          setLocalMessage("A senha e a confirmação não coincidem.");
+          return;
+        }
+        const ok = await resetPassword({ token: resetToken, newPassword: password });
+        if (ok) {
+          setLocalMessage("Senha redefinida com sucesso. Faça login.");
+          setTimeout(() => navigate("/auth?mode=login"), 800);
+        }
+        return;
+      }
+
+      const r = await requestPasswordReset(email);
+      if (r.ok) {
+        if (r.devResetUrl) {
+          setLocalMessage(`Link gerado (modo dev): ${r.devResetUrl}`);
+        } else {
+          setLocalMessage("Enviamos um link de recuperação para seu email.");
+        }
+      }
     } finally {
       setBusy(false);
     }
@@ -109,19 +139,21 @@ export default function Auth() {
   const getTitle = () => {
     if (mode === "signup") return "Criar sua conta";
     if (mode === "forgot") return "Recuperar senha";
+    if (mode === "reset") return "Redefinir senha";
     return "Acesse sua conta";
   };
 
   const getSubtitle = () => {
     if (mode === "signup") return "Comece seus 7 dias de teste grátis.";
     if (mode === "forgot") return "Enviaremos um link para seu email.";
+    if (mode === "reset") return "Defina uma nova senha para sua conta.";
     return "Bem-vindo de volta ao MegaERP.";
   };
 
   return (
     <ModernAuthLayout title={getTitle()} subtitle={getSubtitle()}>
       <div className="space-y-6">
-        {mode !== "forgot" && (
+        {mode !== "forgot" && mode !== "reset" && (
           <Button
             variant="secondary"
             className="w-full h-11 justify-center gap-2 font-medium text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -139,7 +171,7 @@ export default function Auth() {
           </Button>
         )}
 
-        {mode !== "forgot" && (
+        {mode !== "forgot" && mode !== "reset" && (
           <div className="relative">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-slate-200 dark:border-slate-800" />
@@ -178,20 +210,22 @@ export default function Auth() {
             </>
           )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800" 
-                placeholder="voce@empresa.com" 
-              />
+          {mode !== "reset" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800" 
+                  placeholder="voce@empresa.com" 
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {mode !== "forgot" && (
+          {mode !== "forgot" && mode !== "reset" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Senha</label>
@@ -215,6 +249,37 @@ export default function Auth() {
                 />
               </div>
             </div>
+          )}
+
+          {mode === "reset" && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Nova Senha</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-900 dark:text-slate-100">Confirmar Nova Senha</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+            </>
           )}
 
           {mode === "signup" && (
@@ -259,7 +324,13 @@ export default function Auth() {
             size="lg"
             disabled={
               busy ||
-              (mode === "login" ? !canSubmitLogin : mode === "signup" ? !canSubmitSignup : !email.includes("@"))
+              (mode === "login"
+                ? !canSubmitLogin
+                : mode === "signup"
+                  ? !canSubmitSignup
+                  : mode === "reset"
+                    ? !canSubmitReset
+                    : !email.includes("@"))
             }
             onClick={handleSubmit}
           >
@@ -269,6 +340,8 @@ export default function Auth() {
               "Criar minha conta"
             ) : mode === "forgot" ? (
               "Enviar link de recuperação"
+            ) : mode === "reset" ? (
+              "Redefinir senha"
             ) : (
               "Entrar na conta"
             )}

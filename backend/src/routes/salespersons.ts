@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/requireAuth.js";
+import { asyncHandler } from "../http.js";
 import {
   createSalesperson,
   deleteSalesperson,
@@ -21,12 +22,12 @@ const schema = z.object({
   observations: z.string().nullable().optional(),
 });
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, asyncHandler(async (req, res) => {
   const salespersons = await listSalespersons((req as AuthedRequest).auth.userId);
   res.json({ salespersons });
-});
+}));
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = schema.parse(req.body);
     const id = await createSalesperson((req as AuthedRequest).auth.userId, {
@@ -40,17 +41,17 @@ router.post("/", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.get("/:id", requireAuth, async (req, res) => {
+router.get("/:id", requireAuth, asyncHandler(async (req, res) => {
   const salesperson = await getSalesperson((req as AuthedRequest).auth.userId, req.params.id);
   if (!salesperson) {
     return res.status(404).json({ error: "Vendedor não encontrado" });
   }
   res.json({ salesperson });
-});
+}));
 
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = schema.partial().parse(req.body);
     await updateSalesperson((req as AuthedRequest).auth.userId, req.params.id, {
@@ -64,12 +65,11 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", requireAuth, asyncHandler(async (req, res) => {
   await deleteSalesperson((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ success: true });
-});
+}));
 
 export default router;
-

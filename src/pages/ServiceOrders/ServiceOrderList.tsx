@@ -4,7 +4,6 @@ import {
   Plus, 
   Search, 
   Filter, 
-  MoreVertical,
   Calendar,
   Wrench
 } from "lucide-react";
@@ -13,7 +12,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatBRLFromCents } from "@/lib/money";
-import { listServiceOrders, type ServiceOrder } from "@/lib/api_service_orders";
+import { cancelServiceOrder, listServiceOrders, type ServiceOrder } from "@/lib/api_service_orders";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 const STATUS_MAP: Record<string, { label: string; tone: "blue" | "green" | "slate" | "red" }> = {
   open: { label: "Em Aberto", tone: "blue" },
@@ -27,18 +27,38 @@ export function ServiceOrderList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<ServiceOrder[]>([]);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelId, setCancelId] = useState<string | null>(null);
 
   useEffect(() => {
-    void (async () => {
-      try {
-        setLoading(true);
-        const data = await listServiceOrders({ query: search });
-        setOrders(data);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    void load();
   }, [search]);
+
+  async function load() {
+    try {
+      setLoading(true);
+      const data = await listServiceOrders({ query: search });
+      setOrders(data);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleCancelClick(id: string) {
+    setCancelId(id);
+  }
+
+  async function confirmCancel() {
+    if (!cancelId) return;
+    try {
+      setCanceling(true);
+      await cancelServiceOrder(cancelId);
+      await load();
+    } finally {
+      setCanceling(false);
+      setCancelId(null);
+    }
+  }
 
   const filteredOrders = useMemo(() => orders, [orders]);
 
@@ -138,8 +158,22 @@ export function ServiceOrderList() {
                       {formatBRLFromCents(os.totalCents)}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600">
-                        <MoreVertical className="w-4 h-4" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-slate-200"
+                        onClick={() => navigate(`/app/ordens-servico/${os.id}`)}
+                      >
+                        Abrir
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        disabled={os.status === "canceled"}
+                        onClick={() => handleCancelClick(os.id)}
+                      >
+                        Cancelar
                       </Button>
                     </td>
                   </tr>
@@ -156,6 +190,17 @@ export function ServiceOrderList() {
           </div>
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={Boolean(cancelId)}
+        onClose={() => setCancelId(null)}
+        onConfirm={() => void confirmCancel()}
+        title="Cancelar OS"
+        description="Deseja cancelar esta ordem de serviço?"
+        confirmText="Cancelar"
+        variant="danger"
+        loading={canceling}
+      />
     </BlingLayout>
   );
 }

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getMe, login, logout, register, requestPasswordReset, updateProfile, type ApiError } from "@/lib/api";
+import { getMe, login, logout, register, requestPasswordResetWithDevLink, resetPassword, updateProfile, type ApiError } from "@/lib/api";
 
 export type AuthStatus = "loading" | "signedOut" | "signedIn";
 
@@ -39,6 +39,9 @@ export type UserAuthDetails = {
 
 export type UserPreferences = {
   theme?: 'light' | 'dark';
+  fiscal?: {
+    environment?: 'homolog' | 'prod';
+  };
   [key: string]: any;
 };
 
@@ -58,7 +61,8 @@ type AuthState = {
     planId?: string | null;
   }) => Promise<boolean>;
   signIn: (args: { email: string; password: string }) => Promise<boolean>;
-  requestPasswordReset: (email: string) => Promise<boolean>;
+  requestPasswordReset: (email: string) => Promise<{ ok: boolean; devResetUrl?: string }>;
+  resetPassword: (args: { token: string; newPassword: string }) => Promise<boolean>;
   signOut: () => Promise<void>;
   updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
   updatePreferences: (patch: Partial<UserPreferences>) => Promise<void>;
@@ -142,11 +146,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   requestPasswordReset: async (email) => {
     set({ error: null });
     try {
-      await requestPasswordReset({ email });
-      return true;
+      const res = await requestPasswordResetWithDevLink({ email });
+      return { ok: true, devResetUrl: res.devResetUrl };
     } catch (e) {
       const err = e as Partial<ApiError> | null;
       set({ error: err?.message ?? "Não foi possível enviar o link de recuperação." });
+      return { ok: false };
+    }
+  },
+
+  resetPassword: async ({ token, newPassword }) => {
+    set({ error: null });
+    try {
+      await resetPassword({ token, newPassword });
+      return true;
+    } catch (e) {
+      const err = e as Partial<ApiError> | null;
+      set({ error: err?.message ?? "Não foi possível redefinir a senha." });
       return false;
     }
   },

@@ -17,12 +17,23 @@ import { POS } from "@/pages/POS/POS";
 import { CashControlList } from "@/pages/Financial/CashControlList";
 import { CashControlDetail } from "@/pages/Financial/CashControlDetail";
 import { FinancialTitlesList } from "@/pages/Financial/FinancialTitlesList";
+import { BankAccountsList } from "@/pages/Financial/BankAccountsList";
+import { BankAccountForm } from "@/pages/Financial/BankAccountForm";
 import { SalespersonList } from "@/pages/Salespersons/SalespersonList";
 import { SalespersonForm } from "@/pages/Salespersons/SalespersonForm";
 import { CategoryList } from "@/pages/Categories/CategoryList";
 import { CategoryForm } from "@/pages/Categories/CategoryForm";
 import { PriceListList } from "@/pages/PriceLists/PriceListList";
 import { PriceListForm } from "@/pages/PriceLists/PriceListForm";
+import { DocsList } from "@/pages/Docs/DocsList";
+import { DocsForm } from "@/pages/Docs/DocsForm";
+import { StockMovements } from "@/pages/Stock/StockMovements";
+import { InventoryCheck } from "@/pages/Stock/InventoryCheck";
+import { ReportsCenter } from "@/pages/Reports/ReportsCenter";
+import { ReportPrint } from "@/pages/Reports/ReportPrint";
+import { AppLauncher } from "@/pages/Apps/AppLauncher";
+import { NotificationsPage } from "@/pages/Notifications/NotificationsPage";
+import { HelpCenter } from "@/pages/Help/HelpCenter";
 import Termos from "@/pages/Termos";
 import Privacidade from "@/pages/Privacidade";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -103,11 +114,76 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/app/relatorios"
+          element={
+            <ProtectedRoute>
+              <ReportsCenter />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/relatorios/:id"
+          element={
+            <ProtectedRoute>
+              <ReportsCenter />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/relatorios/imprimir/:id"
+          element={
+            <ProtectedRoute>
+              <ReportPrint />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/atalhos"
+          element={
+            <ProtectedRoute>
+              <AppLauncher />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/notificacoes"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/ajuda"
+          element={
+            <ProtectedRoute>
+              <HelpCenter />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/app/produtos"
           element={
             <ProtectedRoute>
               <ProductList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/estoque/lancamentos"
+          element={
+            <ProtectedRoute>
+              <StockMovements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/estoque/conferencia"
+          element={
+            <ProtectedRoute>
+              <InventoryCheck />
             </ProtectedRoute>
           }
         />
@@ -276,6 +352,56 @@ export default function App() {
           element={
             <ProtectedRoute>
               <FinancialTitlesList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/bancos"
+          element={
+            <ProtectedRoute>
+              <BankAccountsList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/bancos/novo"
+          element={
+            <ProtectedRoute>
+              <BankAccountForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/bancos/:id"
+          element={
+            <ProtectedRoute>
+              <BankAccountForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/app/financeiro/conciliacao" element={<Navigate to="/app/financeiro/bancos" replace />} />
+
+        <Route
+          path="/app/docs/:type"
+          element={
+            <ProtectedRoute>
+              <DocsList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/docs/:type/novo"
+          element={
+            <ProtectedRoute>
+              <DocsForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/docs/:type/:id"
+          element={
+            <ProtectedRoute>
+              <DocsForm />
             </ProtectedRoute>
           }
         />

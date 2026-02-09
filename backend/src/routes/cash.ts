@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/requireAuth.js";
+import { asyncHandler } from "../http.js";
 import {
   addCashTransaction,
   closeCashSession,
@@ -12,23 +13,23 @@ import {
 
 const router = Router();
 
-router.get("/sessions", requireAuth, async (req, res) => {
+router.get("/sessions", requireAuth, asyncHandler(async (req, res) => {
   const sessions = await listCashSessions((req as AuthedRequest).auth.userId);
   res.json({ sessions });
-});
+}));
 
-router.get("/current", requireAuth, async (req, res) => {
+router.get("/current", requireAuth, asyncHandler(async (req, res) => {
   const session = await getCurrentOpenCashSession((req as AuthedRequest).auth.userId);
   res.json({ session });
-});
+}));
 
-router.get("/sessions/:id", requireAuth, async (req, res) => {
+router.get("/sessions/:id", requireAuth, asyncHandler(async (req, res) => {
   const session = await getCashSession((req as AuthedRequest).auth.userId, req.params.id);
   if (!session) return res.status(404).json({ error: "Sessão não encontrada" });
   res.json({ session });
-});
+}));
 
-router.post("/sessions", requireAuth, async (req, res) => {
+router.post("/sessions", requireAuth, asyncHandler(async (req, res) => {
   const body = z.object({ openingBalance: z.number().min(0), userName: z.string().nullable().optional() }).safeParse(req.body);
   if (!body.success) return res.status(400).json({ error: body.error.flatten() });
   const session = await openCashSession(
@@ -37,9 +38,9 @@ router.post("/sessions", requireAuth, async (req, res) => {
     body.data.openingBalance
   );
   res.status(201).json({ session });
-});
+}));
 
-router.post("/sessions/:id/close", requireAuth, async (req, res) => {
+router.post("/sessions/:id/close", requireAuth, asyncHandler(async (req, res) => {
   const body = z
     .object({ closingBalance: z.number().min(0), notes: z.string().nullable().optional() })
     .safeParse(req.body);
@@ -51,9 +52,9 @@ router.post("/sessions/:id/close", requireAuth, async (req, res) => {
     body.data.notes ?? null
   );
   res.json({ session });
-});
+}));
 
-router.post("/sessions/:id/transactions", requireAuth, async (req, res) => {
+router.post("/sessions/:id/transactions", requireAuth, asyncHandler(async (req, res) => {
   const body = z
     .object({
       type: z.enum(["in", "out"]),
@@ -80,7 +81,6 @@ router.post("/sessions/:id/transactions", requireAuth, async (req, res) => {
   });
 
   res.status(201).json({ transaction });
-});
+}));
 
 export default router;
-

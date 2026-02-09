@@ -12,6 +12,7 @@ import {
   Users,
   DollarSign,
   Box,
+  BarChart3,
   Shield,
   ArrowRight,
   Sun,
@@ -97,23 +98,23 @@ export function BlingHeader() {
           items: [
             { label: "Pedidos de venda", href: "/app/vendas/pedidos" },
             { label: "Produtos", href: "/app/produtos" },
-            { label: "Notas fiscais de saída", href: "#" },
-            { label: "NFC-e", href: "#" },
+            { label: "Notas fiscais de saída", href: "/app/docs/nfe" },
+            { label: "NFC-e", href: "/app/docs/nfce" },
             { label: "Frente de caixa", href: "/app/pdv" },
-            { label: "Propostas comerciais", href: "#" },
+            { label: "Propostas comerciais", href: "/app/docs/proposal" },
           ]
         },
         {
           title: "Serviços",
           items: [
-            { label: "Contratos", href: "#" },
+            { label: "Contratos", href: "/app/docs/contract" },
             { label: "Ordens de serviço", href: "/app/ordens-servico" },
-            { label: "Notas de serviço", href: "#" },
-            { label: "Cobranças", href: "#" },
+            { label: "Notas de serviço", href: "/app/docs/service_invoice" },
+            { label: "Cobranças", href: "/app/financeiro/titulos?kind=ar" },
           ]
         }
       ],
-      footerLink: { label: "Ver relatórios de vendas", href: "#" }
+      footerLink: { label: "Ver relatórios de vendas", href: "/app/relatorios/sales-orders" }
     },
     {
       label: "Estoque", // Implied Top Level Menu
@@ -122,21 +123,21 @@ export function BlingHeader() {
         {
           title: "Compras",
           items: [
-            { label: "Pedidos de compra", href: "#" },
-            { label: "Notas fiscais de entrada", href: "#" },
+            { label: "Pedidos de compra", href: "/app/docs/purchase_order" },
+            { label: "Notas fiscais de entrada", href: "/app/docs/incoming_invoice" },
             { label: "Fornecedores", href: "/app/fornecedores" },
           ]
         },
         {
           title: "Estoque",
           items: [
-            { label: "Lançamentos de estoque", href: "#" },
-            { label: "Conferência de estoque", href: "#" },
-            { label: "Ordens de produção", href: "#" },
+            { label: "Lançamentos de estoque", href: "/app/estoque/lancamentos" },
+            { label: "Conferência de estoque", href: "/app/estoque/conferencia" },
+            { label: "Ordens de produção", href: "/app/docs/production_order" },
           ]
         }
       ],
-      footerLink: { label: "Ver relatórios de compras e estoque", href: "#" }
+      footerLink: { label: "Ver relatórios de compras e estoque", href: "/app/relatorios/stock-movements" }
     },
     {
       label: "Financeiro",
@@ -145,15 +146,28 @@ export function BlingHeader() {
         {
           title: "Gestão financeira",
           items: [
-            { label: "Caixas e bancos", href: "#" },
+            { label: "Caixas e bancos", href: "/app/financeiro/bancos" },
             { label: "Contas a receber", href: "/app/financeiro/titulos?kind=ar" },
             { label: "Contas a pagar", href: "/app/financeiro/titulos?kind=ap" },
             { label: "Controle de caixa", href: "/app/financeiro/caixa" },
-            { label: "Conciliação bancária", href: "#" },
+            { label: "Conciliação bancária", href: "/app/financeiro/conciliacao" },
           ]
         }
       ],
-      footerLink: { label: "Ver relatórios financeiros", href: "#" }
+      footerLink: { label: "Ver relatórios financeiros", href: "/app/relatorios/financial-titles" }
+    },
+    {
+      label: "Relatórios",
+      icon: BarChart3,
+      items: [
+        { label: "Central de relatórios", href: "/app/relatorios" },
+        { label: "Vendas (Pedidos)", href: "/app/relatorios/sales-orders" },
+        { label: "Vendas (PDV)", href: "/app/relatorios/pdv-sales" },
+        { label: "Caixa (Transações)", href: "/app/relatorios/cash-transactions" },
+        { label: "Financeiro (Títulos)", href: "/app/relatorios/financial-titles" },
+        { label: "Estoque (Movimentações)", href: "/app/relatorios/stock-movements" },
+        { label: "Produtos", href: "/app/relatorios/products" },
+      ]
     },
   ];
 
@@ -278,19 +292,28 @@ export function BlingHeader() {
           </div>
 
           <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative">
+            <button
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative"
+              onClick={() => navigate("/app/atalhos")}
+            >
               <Grid className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative">
+            <button
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full relative"
+              onClick={() => navigate("/app/notificacoes")}
+            >
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950"></span>
             </button>
-            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+            <button
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
+              onClick={() => navigate("/app/ajuda")}
+            >
               <HelpCircle className="w-5 h-5" />
             </button>
-            <button 
+            <button
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
-              onClick={() => navigate("/app#settings")}
+              onClick={() => navigate({ pathname: "/app", hash: "#settings" })}
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -323,14 +346,14 @@ export function BlingHeader() {
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{session?.email}</p>
                 </div>
                 <Link
-                  to="/app#profile"
+                  to={{ pathname: "/app", hash: "#profile" }}
                   className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900"
                   onClick={() => setUserMenuOpen(false)}
                 >
                   Meus Dados
                 </Link>
                 <Link
-                  to="/app#plan"
+                  to={{ pathname: "/app", hash: "#plan" }}
                   className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900"
                   onClick={() => setUserMenuOpen(false)}
                 >

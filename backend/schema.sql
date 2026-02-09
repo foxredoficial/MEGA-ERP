@@ -69,3 +69,25 @@ CREATE TABLE IF NOT EXISTS security_events (
   INDEX idx_security_events_created (created_at),
   INDEX idx_security_events_kind (kind)
 );
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  ip VARCHAR(64) NULL,
+  user_agent VARCHAR(500) NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_password_reset_token_hash (token_hash),
+  INDEX idx_password_reset_user (user_id),
+  INDEX idx_password_reset_expires (expires_at)
+);
+
+CREATE TABLE IF NOT EXISTS mp_webhook_events (
+  id CHAR(36) PRIMARY KEY,
+  mp_event_key VARCHAR(255) NOT NULL,
+  payload_json JSON NOT NULL,
+  created_at DATETIME NOT NULL,
+  UNIQUE KEY uq_mp_webhook_event_key (mp_event_key)
+);

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
-import { listSalesOrders, type SalesOrder } from "@/lib/api_sales_orders";
+import { cancelSalesOrder, listSalesOrders, type SalesOrder } from "@/lib/api_sales_orders";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 const STATUS_MAP: Record<string, { label: string; tone: "blue" | "green" | "slate" | "red" }> = {
   open: { label: "Em Aberto", tone: "blue" },
@@ -17,8 +18,11 @@ const STATUS_MAP: Record<string, { label: string; tone: "blue" | "green" | "slat
 
 export function SalesOrderList() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | SalesOrder["status"]>("all");
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelId, setCancelId] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -34,13 +38,36 @@ export function SalesOrderList() {
     }
   }
 
+  function handleCancelClick(id: string) {
+    setCancelId(id);
+  }
+
+  async function confirmCancel() {
+    if (!cancelId) return;
+    try {
+      setCanceling(true);
+      await cancelSalesOrder(cancelId);
+      await load();
+    } finally {
+      setCanceling(false);
+      setCancelId(null);
+    }
+  }
+
   const filteredOrders = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return orders;
-    return orders.filter((order) =>
-      order.customerName.toLowerCase().includes(q) || order.number.toLowerCase().includes(q)
-    );
-  }, [orders, search]);
+    return orders.filter((order) => {
+      if (statusFilter !== "all" && order.status !== statusFilter) return false;
+      if (!q) return true;
+      return order.customerName.toLowerCase().includes(q) || order.number.toLowerCase().includes(q);
+    });
+  }, [orders, search, statusFilter]);
+
+  const totals = useMemo(() => {
+    const count = filteredOrders.length;
+    const total = filteredOrders.reduce((acc, o) => acc + (Number(o.totals?.total) || 0), 0);
+    return { count, total };
+  }, [filteredOrders]);
 
   return (
     <BlingLayout>
@@ -58,6 +85,31 @@ export function SalesOrderList() {
                 Novo Pedido
               </Button>
             </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pedidos</div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{totals.count}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total (filtrado)</div>
+            <div className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(totals.total)}</div>
+          </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-4">
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</div>
+            <select
+              className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+            >
+              <option value="all">Todos</option>
+              <option value="open">Em aberto</option>
+              <option value="billed">Faturado</option>
+              <option value="delivered">Entregue</option>
+              <option value="canceled">Cancelado</option>
+            </select>
           </div>
         </div>
 
@@ -142,6 +194,15 @@ export function SalesOrderList() {
                           Abrir
                         </Button>
                       </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        disabled={order.status === "canceled"}
+                        onClick={() => handleCancelClick(order.id)}
+                      >
+                        Cancelar
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -157,6 +218,17 @@ export function SalesOrderList() {
           </div>
         </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={Boolean(cancelId)}
+        onClose={() => setCancelId(null)}
+        onConfirm={() => void confirmCancel()}
+        title="Cancelar pedido"
+        description="Deseja cancelar este pedido de venda?"
+        confirmText="Cancelar"
+        variant="danger"
+        loading={canceling}
+      />
     </BlingLayout>
   );
 }

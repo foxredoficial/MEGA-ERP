@@ -1,18 +1,19 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/requireAuth.js";
+import { asyncHandler } from "../http.js";
 import { createPdvSale, listPdvSales } from "../repos/pdv_sales.js";
 
 const router = Router();
 
-router.get("/sales", requireAuth, async (req, res) => {
+router.get("/sales", requireAuth, asyncHandler(async (req, res) => {
   const q = z.object({ query: z.string().optional() }).safeParse(req.query);
   if (!q.success) return res.status(400).json({ error: q.error.flatten() });
   const sales = await listPdvSales((req as AuthedRequest).auth.userId, q.data);
   res.json({ sales });
-});
+}));
 
-router.post("/sales", requireAuth, async (req, res) => {
+router.post("/sales", requireAuth, asyncHandler(async (req, res) => {
   const itemSchema = z.object({
     id: z.string().uuid().optional(),
     productId: z.string().uuid(),
@@ -43,6 +44,6 @@ router.post("/sales", requireAuth, async (req, res) => {
   const { opts, ...payload } = body.data;
   const sale = await createPdvSale((req as AuthedRequest).auth.userId, payload as any, opts);
   res.status(201).json({ sale });
-});
+}));
 
 export default router;

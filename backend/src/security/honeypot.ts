@@ -3,6 +3,10 @@ import { asyncHandler, sendError } from "../http.js";
 import { recordSecurityEvent } from "./events.js";
 
 const DEFAULT_TARGETS = [
+  "/.env",
+  "/.git/config",
+  "/.git/HEAD",
+  "/server-status",
   "/api/.env",
   "/api/env",
   "/api/config",
@@ -17,6 +21,8 @@ const DEFAULT_TARGETS = [
   "/api/metrics",
   "/api/debug",
   "/api/console",
+  "/api/.git/config",
+  "/api/server-status",
 ];
 
 export function honeypotRouter() {
@@ -27,6 +33,7 @@ export function honeypotRouter() {
       path,
       asyncHandler(async (req, res) => {
         await recordSecurityEvent(req, "honeypot_hit");
+        await new Promise((r) => setTimeout(r, 200 + Math.floor(Math.random() * 300)));
         return sendError(res, 404, "Rota não encontrada.");
       })
     );
@@ -34,4 +41,3 @@ export function honeypotRouter() {
 
   return router;
 }
-

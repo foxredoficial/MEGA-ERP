@@ -5,6 +5,19 @@ import { getTenantPool } from "../db_tenant.js";
 
 export type ServiceOrderStatus = "open" | "in_progress" | "completed" | "canceled";
 
+export type ServiceOrderItemKind = "labor" | "part" | "service" | "fee";
+
+export type ServiceOrderItem = {
+  id: string;
+  kind: ServiceOrderItemKind;
+  productId: string | null;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  total: number;
+};
+
 export type ServiceOrder = {
   id: string;
   number: string;
@@ -14,9 +27,28 @@ export type ServiceOrder = {
   status: ServiceOrderStatus;
   description: string;
   totalCents: number;
+  items?: ServiceOrderItem[];
   createdAt: string;
   updatedAt: string;
 };
+
+async function ensureServiceOrderItemsTable(pool: mysql.Pool) {
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS service_order_items (
+      id CHAR(36) PRIMARY KEY,
+      order_id CHAR(36) NOT NULL,
+      kind ENUM('labor','part','service','fee') NOT NULL,
+      product_id CHAR(36) NULL,
+      description TEXT NOT NULL,
+      quantity DECIMAL(10, 3) NOT NULL,
+      unit_price DECIMAL(10, 2) NOT NULL,
+      discount DECIMAL(10, 2) NOT NULL,
+      total DECIMAL(10, 2) NOT NULL,
+      CONSTRAINT fk_service_order_items_order FOREIGN KEY (order_id) REFERENCES service_orders(id) ON DELETE CASCADE
+    )`
+  );
+  await pool.query("CREATE INDEX IF NOT EXISTS idx_service_order_items_order ON service_order_items(order_id)").catch(() => null);
+}
 
 async function nextNumber(conn: mysql.Connection, userId: string) {
   const year = new Date().getFullYear();
@@ -46,6 +78,24 @@ function mapRow(r: any): ServiceOrder {
   };
 }
 
+function mapItemRow(r: any): ServiceOrderItem {
+  return {
+    id: r.id,
+    kind: r.kind,
+    productId: r.product_id ?? null,
+    description: r.description,
+    quantity: Number(r.quantity),
+    unitPrice: Number(r.unit_price),
+    discount: Number(r.discount),
+    total: Number(r.total),
+  };
+}
+
+function computeTotalCents(items: Array<Pick<ServiceOrderItem, "total">>) {
+  const total = items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+  return Math.max(0, Math.round(total * 100));
+}
+
 export async function listServiceOrders(userId: string, filter?: { query?: string; status?: ServiceOrderStatus }) {
   const pool = await getTenantPool(userId);
   const where: string[] = ["user_id = ?"];
@@ -69,12 +119,18 @@ export async function listServiceOrders(userId: string, filter?: { query?: strin
 
 export async function getServiceOrder(userId: string, id: string) {
   const pool = await getTenantPool(userId);
+  await ensureServiceOrderItemsTable(pool);
   const [rows] = await pool.query<RowDataPacket[]>(
     "SELECT * FROM service_orders WHERE user_id = ? AND id = ?",
     [userId, id]
   );
   if (!rows.length) return null;
-  return mapRow(rows[0]);
+  const base = mapRow(rows[0]);
+  const [items] = await pool.query<RowDataPacket[]>(
+    "SELECT * FROM service_order_items WHERE order_id = ? ORDER BY id ASC",
+    [id]
+  );
+  return { ...base, items: items.map(mapItemRow) };
 }
 
 export async function createServiceOrder(
@@ -86,6 +142,7 @@ export async function createServiceOrder(
     status: ServiceOrderStatus;
     description: string;
     totalCents: number;
+    items?: Array<Omit<ServiceOrderItem, "id"> & { id?: string }>;
   }
 ) {
   if (!input.customerName || input.customerName.trim().length < 2) throw new Error("Cliente é obrigatório.");
@@ -93,9 +150,23 @@ export async function createServiceOrder(
   if (!Number.isFinite(input.totalCents) || input.totalCents < 0) throw new Error("Valor inválido.");
 
   const pool = await getTenantPool(userId);
+  await ensureServiceOrderItemsTable(pool);
   const conn = await pool.getConnection();
   const id = randomUUID();
   const now = new Date();
+
+  const normalizedItems: ServiceOrderItem[] = (input.items ?? []).map((it) => ({
+    id: it.id ?? randomUUID(),
+    kind: it.kind,
+    productId: it.productId ?? null,
+    description: it.description,
+    quantity: it.quantity,
+    unitPrice: it.unitPrice,
+    discount: it.discount,
+    total: it.total,
+  }));
+
+  const computedTotalCents = normalizedItems.length ? computeTotalCents(normalizedItems) : Math.trunc(input.totalCents);
 
   try {
     await conn.beginTransaction();
@@ -113,11 +184,30 @@ export async function createServiceOrder(
         input.date,
         input.status,
         input.description.trim(),
-        Math.trunc(input.totalCents),
+        computedTotalCents,
         now,
         now,
       ]
     );
+
+    if (normalizedItems.length) {
+      await conn.query(
+        `INSERT INTO service_order_items (
+          id, order_id, kind, product_id, description, quantity, unit_price, discount, total
+        ) VALUES ${normalizedItems.map(() => "(?,?,?,?,?,?,?,?,?)").join(",")}`,
+        normalizedItems.flatMap((it) => [
+          it.id,
+          id,
+          it.kind,
+          it.productId,
+          it.description,
+          it.quantity,
+          it.unitPrice,
+          it.discount,
+          it.total,
+        ])
+      );
+    }
     await conn.commit();
     return await getServiceOrder(userId, id);
   } catch (err) {
@@ -138,6 +228,7 @@ export async function updateServiceOrder(
     status: ServiceOrderStatus;
     description: string;
     totalCents: number;
+    items?: Array<Omit<ServiceOrderItem, "id"> & { id?: string }>;
   }
 ) {
   if (!input.customerName || input.customerName.trim().length < 2) throw new Error("Cliente é obrigatório.");
@@ -145,8 +236,22 @@ export async function updateServiceOrder(
   if (!Number.isFinite(input.totalCents) || input.totalCents < 0) throw new Error("Valor inválido.");
 
   const pool = await getTenantPool(userId);
+  await ensureServiceOrderItemsTable(pool);
   const conn = await pool.getConnection();
   const now = new Date();
+
+  const normalizedItems: ServiceOrderItem[] = (input.items ?? []).map((it) => ({
+    id: it.id ?? randomUUID(),
+    kind: it.kind,
+    productId: it.productId ?? null,
+    description: it.description,
+    quantity: it.quantity,
+    unitPrice: it.unitPrice,
+    discount: it.discount,
+    total: it.total,
+  }));
+
+  const computedTotalCents = normalizedItems.length ? computeTotalCents(normalizedItems) : Math.trunc(input.totalCents);
 
   try {
     await conn.beginTransaction();
@@ -166,18 +271,61 @@ export async function updateServiceOrder(
         input.date,
         input.status,
         input.description.trim(),
-        Math.trunc(input.totalCents),
+        computedTotalCents,
         now,
         userId,
         id,
       ]
     );
 
+    await conn.query("DELETE FROM service_order_items WHERE order_id = ?", [id]);
+    if (normalizedItems.length) {
+      await conn.query(
+        `INSERT INTO service_order_items (
+          id, order_id, kind, product_id, description, quantity, unit_price, discount, total
+        ) VALUES ${normalizedItems.map(() => "(?,?,?,?,?,?,?,?,?)").join(",")}`,
+        normalizedItems.flatMap((it) => [
+          it.id,
+          id,
+          it.kind,
+          it.productId,
+          it.description,
+          it.quantity,
+          it.unitPrice,
+          it.discount,
+          it.total,
+        ])
+      );
+    }
+
     await conn.commit();
     return await getServiceOrder(userId, id);
   } catch (err) {
     await conn.rollback();
     throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+export async function cancelServiceOrder(userId: string, id: string) {
+  const pool = await getTenantPool(userId);
+  const conn = await pool.getConnection();
+  const now = new Date();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.query<RowDataPacket[]>(
+      "SELECT id FROM service_orders WHERE user_id = ? AND id = ? FOR UPDATE",
+      [userId, id]
+    );
+    if (!rows.length) throw new Error("OS não encontrada.");
+
+    await conn.query("UPDATE service_orders SET status = 'canceled', updated_at = ? WHERE user_id = ? AND id = ?", [now, userId, id]);
+    await conn.commit();
+    return await getServiceOrder(userId, id);
+  } catch (e) {
+    await conn.rollback();
+    throw e;
   } finally {
     conn.release();
   }

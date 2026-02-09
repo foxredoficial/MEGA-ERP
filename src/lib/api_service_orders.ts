@@ -2,6 +2,19 @@ import { apiFetch } from "./api";
 
 export type ServiceOrderStatus = "open" | "in_progress" | "completed" | "canceled";
 
+export type ServiceOrderItemKind = "labor" | "part" | "service" | "fee";
+
+export type ServiceOrderItem = {
+  id: string;
+  kind: ServiceOrderItemKind;
+  productId: string | null;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  total: number;
+};
+
 export type ServiceOrder = {
   id: string;
   number: string;
@@ -11,6 +24,7 @@ export type ServiceOrder = {
   status: ServiceOrderStatus;
   description: string;
   totalCents: number;
+  items?: ServiceOrderItem[];
   createdAt: string;
   updatedAt: string;
 };
@@ -39,6 +53,7 @@ export async function upsertServiceOrder(input: {
   status: ServiceOrderStatus;
   description: string;
   totalCents: number;
+  items?: Array<Omit<ServiceOrderItem, "id"> & { id?: string }>;
 }) {
   if (input.id) {
     const data = await apiFetch<{ order: ServiceOrder }>(`/api/service-orders/${input.id}`, {
@@ -54,3 +69,7 @@ export async function upsertServiceOrder(input: {
   return data.order;
 }
 
+export async function cancelServiceOrder(id: string) {
+  const data = await apiFetch<{ order: ServiceOrder }>(`/api/service-orders/${id}`, { method: "DELETE" });
+  return data.order;
+}

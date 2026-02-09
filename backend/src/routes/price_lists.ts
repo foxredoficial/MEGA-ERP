@@ -8,6 +8,7 @@ import {
   updatePriceList, 
   deletePriceList 
 } from "../repos/price_lists.js";
+import { asyncHandler } from "../http.js";
 import { z } from "zod";
 
 const router = Router();
@@ -26,20 +27,20 @@ const priceListSchema = z.object({
   })).optional()
 });
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, asyncHandler(async (req, res) => {
   const lists = await listPriceLists((req as AuthedRequest).auth.userId);
   res.json({ lists });
-});
+}));
 
-router.get("/:id", requireAuth, async (req, res) => {
+router.get("/:id", requireAuth, asyncHandler(async (req, res) => {
   const list = await getPriceList((req as AuthedRequest).auth.userId, req.params.id);
   if (!list) {
     return res.status(404).json({ error: "Lista de preços não encontrada" });
   }
   res.json({ list });
-});
+}));
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = priceListSchema.parse(req.body);
     const id = await createPriceList((req as AuthedRequest).auth.userId, data as any);
@@ -50,9 +51,9 @@ router.post("/", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = priceListSchema.partial().parse(req.body);
     await updatePriceList((req as AuthedRequest).auth.userId, req.params.id, data as any);
@@ -63,11 +64,11 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", requireAuth, asyncHandler(async (req, res) => {
   await deletePriceList((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ success: true });
-});
+}));
 
 export default router;

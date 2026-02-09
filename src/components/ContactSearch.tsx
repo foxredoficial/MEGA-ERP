@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
-import { getContacts, type Contact } from "@/lib/api_contacts";
+import { getContacts, type Contact, type ContactType } from "@/lib/api_contacts";
 import { cn } from "@/lib/utils";
 
 interface ContactSearchProps {
   onSelect: (contact: Contact) => void;
   selectedContactId?: string;
   className?: string;
+  contactType?: ContactType;
+  placeholder?: string;
 }
 
-export function ContactSearch({ onSelect, selectedContactId, className }: ContactSearchProps) {
+export function ContactSearch({ onSelect, selectedContactId, className, contactType, placeholder }: ContactSearchProps) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -19,7 +21,7 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
 
   useEffect(() => {
     loadContacts();
-  }, []);
+  }, [contactType]);
 
   useEffect(() => {
     if (selectedContactId && contacts.length > 0) {
@@ -43,7 +45,7 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
   async function loadContacts() {
     try {
       setLoading(true);
-      const data = await getContacts();
+      const data = await getContacts({ contactType });
       setContacts(data);
     } catch (error) {
       console.error("Erro ao carregar contatos:", error);
@@ -51,6 +53,14 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
       setLoading(false);
     }
   }
+
+  const effectivePlaceholder =
+    placeholder ??
+    (contactType === "fornecedor"
+      ? "Buscar fornecedor (Nome, CNPJ/CPF, Telefone...)"
+      : contactType === "cliente"
+        ? "Buscar cliente (Nome, CPF/CNPJ, Telefone...)"
+        : "Buscar contato (Nome, CPF/CNPJ, Telefone...) ");
 
   const filteredContacts = contacts.filter(c => {
     const term = search.toLowerCase();
@@ -101,7 +111,7 @@ export function ContactSearch({ onSelect, selectedContactId, className }: Contac
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <Input
-          placeholder="Buscar cliente (Nome, CPF/CNPJ, Telefone...)"
+          placeholder={effectivePlaceholder}
           className="pl-10"
           value={search}
           onChange={(e) => {

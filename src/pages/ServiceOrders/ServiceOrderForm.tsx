@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Save, Wrench } from "lucide-react";
+import { ArrowLeft, Save, Wrench, Plus, Trash2 } from "lucide-react";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ContactSearch } from "@/components/ContactSearch";
 import { formatBRLFromCents } from "@/lib/money";
-import { getServiceOrder, upsertServiceOrder, type ServiceOrderStatus } from "@/lib/api_service_orders";
+import { formatCurrency } from "@/lib/utils";
+import { getServiceOrder, upsertServiceOrder, type ServiceOrderItem, type ServiceOrderItemKind, type ServiceOrderStatus } from "@/lib/api_service_orders";
 
 export function ServiceOrderForm() {
   const navigate = useNavigate();
@@ -19,8 +20,37 @@ export function ServiceOrderForm() {
   const [customerName, setCustomerName] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [status, setStatus] = useState<ServiceOrderStatus>("open");
-  const [description, setDescription] = useState("");
+  const [equipment, setEquipment] = useState("");
+  const [problem, setProblem] = useState("");
+  const [diagnosis, setDiagnosis] = useState("");
+  const [solution, setSolution] = useState("");
+  const [notes, setNotes] = useState("");
   const [totalCents, setTotalCents] = useState(0);
+  const [items, setItems] = useState<Array<Omit<ServiceOrderItem, "id">>>([]);
+
+  function buildDescription() {
+    const parts: string[] = [];
+    if (equipment.trim()) parts.push(`Equipamento: ${equipment.trim()}`);
+    if (problem.trim()) parts.push(`Problema: ${problem.trim()}`);
+    if (diagnosis.trim()) parts.push(`Diagnóstico: ${diagnosis.trim()}`);
+    if (solution.trim()) parts.push(`Solução: ${solution.trim()}`);
+    if (notes.trim()) parts.push(`Obs: ${notes.trim()}`);
+    return parts.join("\n\n");
+  }
+
+  function extractField(input: string, label: string) {
+    const re = new RegExp(`(?:^|\\n)${label}:\\s*([^\\n]*)`, "i");
+    const m = input.match(re);
+    return m ? (m[1] ?? "").trim() : "";
+  }
+
+  function recomputeItem(it: Omit<ServiceOrderItem, "id">) {
+    const qty = Number(it.quantity) || 0;
+    const unit = Number(it.unitPrice) || 0;
+    const disc = Number(it.discount) || 0;
+    const computed = Math.max(0, qty * unit - disc);
+    return { ...it, quantity: qty, unitPrice: unit, discount: disc, total: computed };
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +70,30 @@ export function ServiceOrderForm() {
         setCustomerName(existing.customerName);
         setDate(existing.date);
         setStatus(existing.status);
-        setDescription(existing.description);
+        const raw = existing.description ?? "";
+        const parsedEquipment = extractField(raw, "Equipamento");
+        const parsedProblem = extractField(raw, "Problema");
+        const parsedDiagnosis = extractField(raw, "Diagnóstico");
+        const parsedSolution = extractField(raw, "Solução");
+        const parsedNotes = extractField(raw, "Obs");
+
+        const seemsStructured = Boolean(parsedEquipment || parsedProblem || parsedDiagnosis || parsedSolution || parsedNotes);
+        setEquipment(parsedEquipment);
+        setProblem(seemsStructured ? parsedProblem : raw);
+        setDiagnosis(parsedDiagnosis);
+        setSolution(parsedSolution);
+        setNotes(parsedNotes);
+
+        const loadedItems = (existing.items ?? []).map((it) => ({
+          kind: it.kind,
+          productId: it.productId ?? null,
+          description: it.description,
+          quantity: Number(it.quantity ?? 0),
+          unitPrice: Number(it.unitPrice ?? 0),
+          discount: Number(it.discount ?? 0),
+          total: Number(it.total ?? 0),
+        }));
+        setItems(loadedItems);
         setTotalCents(existing.totalCents);
       } finally {
         if (!cancelled) setLoading(false);
@@ -54,6 +107,15 @@ export function ServiceOrderForm() {
   const header = id ? "Editar Ordem de Serviço" : "Nova Ordem de Serviço";
   const totalDisplay = useMemo(() => formatBRLFromCents(totalCents), [totalCents]);
 
+  const itemsTotal = useMemo(() => {
+    return items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+  }, [items]);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    setTotalCents(Math.round(itemsTotal * 100));
+  }, [itemsTotal]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -64,8 +126,9 @@ export function ServiceOrderForm() {
         customerName,
         date,
         status,
-        description,
+        description: buildDescription() || "OS",
         totalCents,
+        items,
       });
       navigate(`/app/ordens-servico/${order.id}`);
     } catch (err) {
@@ -115,6 +178,7 @@ export function ServiceOrderForm() {
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</label>
               <div className="mt-2">
                 <ContactSearch
+                  contactType="cliente"
                   selectedContactId={customerId ?? undefined}
                   onSelect={(c) => {
                     setCustomerId(c.id);
@@ -128,13 +192,161 @@ export function ServiceOrderForm() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</label>
-              <Input
-                className="mt-2"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex.: Troca de tela / Manutenção / Formatação"
-              />
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Equipamento</label>
+              <Input className="mt-2" value={equipment} onChange={(e) => setEquipment(e.target.value)} placeholder="Ex.: Celular / Notebook / Impressora" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Problema relatado</label>
+                <textarea
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 min-h-[110px]"
+                  value={problem}
+                  onChange={(e) => setProblem(e.target.value)}
+                  placeholder="Descreva o problema informado pelo cliente"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Diagnóstico</label>
+                <textarea
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 min-h-[110px]"
+                  value={diagnosis}
+                  onChange={(e) => setDiagnosis(e.target.value)}
+                  placeholder="Análise técnica"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Solução</label>
+                <textarea
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 min-h-[110px]"
+                  value={solution}
+                  onChange={(e) => setSolution(e.target.value)}
+                  placeholder="Serviço realizado"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Observações</label>
+                <textarea
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 min-h-[110px]"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Observações internas"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Itens (mão de obra / peças)</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setItems((prev) => [
+                      ...prev,
+                      recomputeItem({ kind: "labor", productId: null, description: "", quantity: 1, unitPrice: 0, discount: 0, total: 0 }),
+                    ])
+                  }
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar item
+                </Button>
+              </div>
+
+              <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50 text-slate-600">
+                    <tr>
+                      <th className="text-left font-semibold px-3 py-2 w-40">Tipo</th>
+                      <th className="text-left font-semibold px-3 py-2">Descrição</th>
+                      <th className="text-right font-semibold px-3 py-2 w-24">Qtd</th>
+                      <th className="text-right font-semibold px-3 py-2 w-28">Unit</th>
+                      <th className="text-right font-semibold px-3 py-2 w-28">Desc</th>
+                      <th className="text-right font-semibold px-3 py-2 w-28">Total</th>
+                      <th className="px-3 py-2 w-12" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.length === 0 ? (
+                      <tr>
+                        <td className="px-3 py-3 text-slate-500" colSpan={7}>
+                          Nenhum item adicionado.
+                        </td>
+                      </tr>
+                    ) : (
+                      items.map((it, idx) => (
+                        <tr key={idx} className="border-t border-slate-200">
+                          <td className="px-3 py-2">
+                            <select
+                              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+                              value={it.kind}
+                              onChange={(e) =>
+                                setItems((prev) => prev.map((p, i) => (i === idx ? { ...p, kind: e.target.value as ServiceOrderItemKind } : p)))
+                              }
+                            >
+                              <option value="labor">Mão de obra</option>
+                              <option value="part">Peça</option>
+                              <option value="service">Serviço</option>
+                              <option value="fee">Taxa</option>
+                            </select>
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              value={it.description}
+                              onChange={(e) =>
+                                setItems((prev) => prev.map((p, i) => (i === idx ? { ...p, description: e.target.value } : p)))
+                              }
+                              placeholder="Descrição"
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              type="number"
+                              step="0.001"
+                              value={Number.isFinite(it.quantity) ? it.quantity : 0}
+                              onChange={(e) =>
+                                setItems((prev) =>
+                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, quantity: Number(e.target.value) }) : p))
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={Number.isFinite(it.unitPrice) ? it.unitPrice : 0}
+                              onChange={(e) =>
+                                setItems((prev) =>
+                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, unitPrice: Number(e.target.value) }) : p))
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={Number.isFinite(it.discount) ? it.discount : 0}
+                              onChange={(e) =>
+                                setItems((prev) =>
+                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, discount: Number(e.target.value) }) : p))
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right font-semibold text-slate-800">{formatCurrency(it.total)}</td>
+                          <td className="px-3 py-2 text-right">
+                            <Button type="button" variant="outline" onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -165,6 +377,7 @@ export function ServiceOrderForm() {
                 type="number"
                 inputMode="decimal"
                 value={(totalCents / 100).toFixed(2)}
+                disabled={items.length > 0}
                 onChange={(e) => {
                   const v = Number(String(e.target.value).replace(",", "."));
                   const cents = Number.isFinite(v) ? Math.round(v * 100) : 0;
@@ -178,4 +391,3 @@ export function ServiceOrderForm() {
     </BlingLayout>
   );
 }
-

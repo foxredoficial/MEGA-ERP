@@ -21,6 +21,11 @@ import financialTitlesRouter from "./routes/financial_titles.js";
 import salesOrdersRouter from "./routes/sales_orders.js";
 import pdvSalesRouter from "./routes/pdv_sales.js";
 import serviceOrdersRouter from "./routes/service_orders.js";
+import analyticsRouter from "./routes/analytics.js";
+import reportsRouter from "./routes/reports.js";
+import bizDocumentsRouter from "./routes/biz_documents.js";
+import banksRouter from "./routes/banks.js";
+import mpWebhooksRouter from "./routes/webhooks_mercadopago.js";
 import { honeypotRouter } from "./security/honeypot.js";
 import { sameOriginGuard } from "./security/sameOrigin.js";
 
@@ -107,6 +112,11 @@ app.use("/api/financial", financialTitlesRouter);
 app.use("/api/sales-orders", salesOrdersRouter);
 app.use("/api/pdv", pdvSalesRouter);
 app.use("/api/service-orders", serviceOrdersRouter);
+app.use("/api/analytics", analyticsRouter);
+app.use("/api/reports", reportsRouter);
+app.use("/api/docs", bizDocumentsRouter);
+app.use("/api/banks", banksRouter);
+app.use("/api/webhooks", mpWebhooksRouter);
 
 app.use((_req, res) => {
   sendError(res, 404, "Rota não encontrada.");

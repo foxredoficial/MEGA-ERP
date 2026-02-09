@@ -5,6 +5,7 @@ import {
   User, 
   Lock, 
   CreditCard, 
+  FileText,
   Palette,
   Save,
   Check,
@@ -23,7 +24,7 @@ import { formatBRLFromCents } from "@/lib/money";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-type SettingsTab = "company" | "address" | "profile" | "security" | "preferences" | "subscription";
+type SettingsTab = "company" | "address" | "profile" | "security" | "preferences" | "fiscal" | "subscription";
 
 export function SettingsPage({ defaultTab = "company" }: { defaultTab?: SettingsTab }) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(defaultTab);
@@ -38,6 +39,8 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
   const profile = useAuthStore((s) => s.profile);
   const authDetails = useAuthStore((s) => s.authDetails);
   const updateProfile = useAuthStore((s) => s.updateProfile);
+  const preferences = useAuthStore((s) => s.preferences);
+  const updatePreferences = useAuthStore((s) => s.updatePreferences);
   
   // Local State for Forms
   const [busy, setBusy] = useState(false);
@@ -190,8 +193,37 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
     { id: "profile", label: "Meu Perfil", icon: User },
     { id: "security", label: "Segurança", icon: Lock },
     { id: "preferences", label: "Preferências", icon: Palette },
+    { id: "fiscal", label: "Fiscal (NFe)", icon: FileText },
     { id: "subscription", label: "Assinatura", icon: CreditCard },
   ];
+
+  const [fiscalEnv, setFiscalEnv] = useState<"homolog" | "prod">("homolog");
+
+  useEffect(() => {
+    const fiscal = (preferences as any)?.fiscal;
+    if (fiscal) {
+      setFiscalEnv(fiscal.environment === "prod" ? "prod" : "homolog");
+    }
+  }, [preferences]);
+
+  const handleSaveFiscal = async () => {
+    setBusy(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+    try {
+      await updatePreferences({
+        fiscal: {
+          environment: fiscalEnv,
+        },
+      });
+      setSuccessMsg("Configurações fiscais salvas com sucesso!");
+    } catch {
+      setErrorMsg("Erro ao salvar configurações fiscais.");
+    } finally {
+      setBusy(false);
+      setTimeout(() => setSuccessMsg(null), 3000);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
@@ -498,6 +530,35 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
                       </div>
                     </button>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === "fiscal" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Fiscal (NFe / NFC-e)</CardTitle>
+                <CardDescription>Emissão fiscal é feita pelo serviço do MEGA ERP. Aqui você define apenas o ambiente.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ambiente</label>
+                    <Select value={fiscalEnv} onChange={(e) => setFiscalEnv(e.target.value as any)}>
+                      <option value="homolog">Homologação</option>
+                      <option value="prod">Produção</option>
+                    </Select>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Em produção, a emissão usa seus dados cadastrados em Dados da Empresa e Endereço.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button onClick={handleSaveFiscal} disabled={busy} className="bg-blue-600 hover:bg-blue-700 min-w-[120px]">
+                    {busy ? "Salvando..." : "Salvar"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

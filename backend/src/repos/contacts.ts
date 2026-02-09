@@ -63,11 +63,24 @@ export interface Contact {
 
 export type ContactInput = Omit<Contact, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
 
-export async function listContacts(userId: string) {
+export async function listContacts(userId: string, args?: { contactType?: "cliente" | "fornecedor" }) {
   const pool = await getTenantPool(userId);
+  const where: string[] = ["user_id = ?"];
+  const params: any[] = [userId];
+
+  if (args?.contactType === "fornecedor") {
+    where.push("contact_type = ?");
+    params.push("fornecedor");
+  }
+
+  if (args?.contactType === "cliente") {
+    where.push("(contact_type IS NULL OR contact_type = ?)");
+    params.push("cliente");
+  }
+
   const [rows] = await pool.query<(Contact & RowDataPacket)[]>(
-    "SELECT * FROM contacts WHERE user_id = ? ORDER BY name ASC",
-    [userId]
+    `SELECT * FROM contacts WHERE ${where.join(" AND ")} ORDER BY name ASC`,
+    params
   );
   return rows;
 }

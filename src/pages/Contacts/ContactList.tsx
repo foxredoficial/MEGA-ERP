@@ -35,12 +35,12 @@ export function ContactList({ type }: ContactListProps) {
 
   useEffect(() => {
     loadContacts();
-  }, []);
+  }, [type]);
 
   async function loadContacts() {
     try {
       setLoading(true);
-      const data = await getContacts();
+      const data = await getContacts({ contactType: type === "supplier" ? "fornecedor" : type === "client" ? "cliente" : undefined });
       setContacts(data);
     } catch (error) {
       console.error("Erro ao carregar contatos:", error);
@@ -69,13 +69,6 @@ export function ContactList({ type }: ContactListProps) {
   }
 
   const filteredContacts = contacts.filter(c => {
-    // Filter by type if specified
-    if (type) {
-      const contactType = c.contact_type || 'cliente'; // Default to client if null
-      if (type === 'client' && contactType === 'fornecedor') return false;
-      if (type === 'supplier' && contactType !== 'fornecedor') return false;
-    }
-
     const term = search.toLowerCase();
     const cleanTerm = term.replace(/[^a-z0-9]/g, "");
 
@@ -129,7 +122,13 @@ export function ContactList({ type }: ContactListProps) {
           </div>
           <div className="flex items-center gap-3">
              <Link to={`${basePath}/novo`}>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 gap-2">
+              <Button
+                className={
+                  isSupplier
+                    ? "bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-200 gap-2"
+                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 gap-2"
+                }
+              >
                 <Plus className="w-4 h-4" />
                 Novo {isSupplier ? "Fornecedor" : "Cliente"}
               </Button>

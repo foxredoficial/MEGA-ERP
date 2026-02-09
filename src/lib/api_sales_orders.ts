@@ -64,3 +64,7 @@ export async function upsertSalesOrder(input: {
   return data.order;
 }
 
+export async function cancelSalesOrder(id: string) {
+  const data = await apiFetch<{ order: SalesOrder }>(`/api/sales-orders/${id}`, { method: "DELETE" });
+  return data.order;
+}

@@ -90,7 +90,12 @@ export function ContactForm({ type }: ContactFormProps) {
 
   const isPJ = formData.type === 'juridica';
   const isPF = formData.type === 'fisica';
-  const isEstrangeiro = formData.type === 'estrangeiro';
+
+  useEffect(() => {
+    if (isPF && formData.contributor_type != null) {
+      setFormData((prev) => ({ ...prev, contributor_type: null }));
+    }
+  }, [isPF]);
 
   useEffect(() => {
     if (isEditing) {
@@ -178,11 +183,16 @@ export function ContactForm({ type }: ContactFormProps) {
 
     try {
       setSaving(true);
+      const payload: any = { ...formData };
+      payload.contact_type = isSupplier ? "fornecedor" : "cliente";
+      if (payload.type === "fisica") {
+        payload.contributor_type = null;
+      }
       if (isEditing) {
-        await updateContact(id!, formData);
+        await updateContact(id!, payload);
         showAlert("Sucesso", "Contato atualizado com sucesso!", "success", () => navigate(basePath));
       } else {
-        await createContact(formData);
+        await createContact(payload);
         showAlert("Sucesso", "Contato criado com sucesso!", "success", () => navigate(basePath));
       }
     } catch (error: any) {
@@ -210,7 +220,14 @@ export function ContactForm({ type }: ContactFormProps) {
         <div className="flex items-center justify-between mb-0">
           <div className="flex items-center gap-4">
             <Link to={basePath}>
-              <Button variant="ghost" size="icon" type="button" className="hover:bg-blue-50 hover:text-blue-600">
+              <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                className={cn(
+                  isSupplier ? "hover:bg-amber-50 hover:text-amber-700" : "hover:bg-blue-50 hover:text-blue-600"
+                )}
+              >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
@@ -219,11 +236,17 @@ export function ContactForm({ type }: ContactFormProps) {
                 {isEditing ? (isSupplier ? "Editar Fornecedor" : "Editar Cliente") : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}
               </h1>
               <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Link to="/app" className="hover:underline hover:text-blue-600">Home</Link>
+                <Link to="/app" className={cn("hover:underline", isSupplier ? "hover:text-amber-700" : "hover:text-blue-600")}>
+                  Home
+                </Link>
                 <span>{'>'}</span>
-                <Link to={basePath} className="hover:underline hover:text-blue-600">{isSupplier ? "Fornecedores" : "Clientes"}</Link>
+                <Link to={basePath} className={cn("hover:underline", isSupplier ? "hover:text-amber-700" : "hover:text-blue-600")}>
+                  {isSupplier ? "Fornecedores" : "Clientes"}
+                </Link>
                 <span>{'>'}</span>
-                <span className="text-blue-600 font-medium">{isEditing ? formData.name : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}</span>
+                <span className={cn("font-medium", isSupplier ? "text-amber-700" : "text-blue-600")}>
+                  {isEditing ? formData.name : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}
+                </span>
               </div>
             </div>
           </div>
@@ -236,9 +259,14 @@ export function ContactForm({ type }: ContactFormProps) {
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px] shadow-lg shadow-blue-200 gap-2 font-medium"
+            <Button
+              type="submit"
+              className={cn(
+                "text-white min-w-[120px] shadow-lg gap-2 font-medium",
+                isSupplier
+                  ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200"
+                  : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+              )}
               disabled={saving}
             >
               <Save className="w-4 h-4" />
@@ -256,7 +284,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('dadosCadastrais')}
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
                   <Building2 className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Dados cadastrais</h2>
@@ -272,17 +300,16 @@ export function ContactForm({ type }: ContactFormProps) {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Tipo da Pessoa</label>
                   <Select 
                     value={formData.type}
-                    onChange={(e) => handleChange("type", e.target.value)}
+                    onChange={(e) => handleChange("type", e.target.value as any)}
                   >
                     <option value="fisica">Pessoa Física</option>
                     <option value="juridica">Pessoa Jurídica</option>
-                    <option value="estrangeiro">Estrangeiro</option>
                   </Select>
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Código <span title="Código interno"><Info className="inline w-3.5 h-3.5 text-blue-400 ml-1 cursor-help" /></span>
+                    Código <span title="Código interno"><Info className={cn("inline w-3.5 h-3.5 ml-1 cursor-help", isSupplier ? "text-amber-500" : "text-blue-400")} /></span>
                   </label>
                   <Input 
                     value={formData.code || ""} 
@@ -292,6 +319,7 @@ export function ContactForm({ type }: ContactFormProps) {
                   />
                 </div>
 
+                {isPJ && (
                 <div className="md:col-span-6">
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Contribuinte</label>
                   <Select 
@@ -303,6 +331,7 @@ export function ContactForm({ type }: ContactFormProps) {
                     <option value={9}>9 - Não contribuinte</option>
                   </Select>
                 </div>
+                )}
 
                 {/* Linha 2: Nomes */}
                 <div className="md:col-span-6">
@@ -321,7 +350,7 @@ export function ContactForm({ type }: ContactFormProps) {
                   {isPJ ? (
                     <>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Fantasia <span title="Nome fantasia da empresa"><Info className="inline w-3.5 h-3.5 text-blue-400 ml-1 cursor-help" /></span>
+                        Fantasia <span title="Nome fantasia da empresa"><Info className={cn("inline w-3.5 h-3.5 ml-1 cursor-help", isSupplier ? "text-amber-500" : "text-blue-400")} /></span>
                       </label>
                       <Input 
                         value={formData.fantasy_name || ""} 
@@ -348,42 +377,32 @@ export function ContactForm({ type }: ContactFormProps) {
                 {/* Linha 3: Documentos e Fundação (se PJ) */}
                 <div className="md:col-span-4">
                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    {isEstrangeiro ? "Documento" : (isPJ ? "CNPJ" : "CPF")}
+                    {isPJ ? "CNPJ" : "CPF"}
                   </label>
                   <Input 
                     value={formData.cpf_cnpj || ""} 
                     onChange={(e) => {
-                      if (isEstrangeiro) {
-                        handleChange("cpf_cnpj", e.target.value);
-                      } else if (isPJ) {
+                      if (isPJ) {
                         handleMaskedChange("cpf_cnpj", e.target.value, maskCNPJ);
                       } else {
                         handleMaskedChange("cpf_cnpj", e.target.value, maskCPF);
                       }
                     }}
-                    maxLength={isEstrangeiro ? undefined : (isPJ ? 18 : 14)}
+                    maxLength={isPJ ? 18 : 14}
                     className="focus-visible:ring-blue-500 border-slate-300"
-                    placeholder={
-                      isEstrangeiro 
-                        ? "Passaporte ou ID" 
-                        : (isPJ ? "00.000.000/0000-00" : "000.000.000-00")
-                    }
+                    placeholder={isPJ ? "00.000.000/0000-00" : "000.000.000-00"}
                   />
                 </div>
 
                 <div className="md:col-span-4">
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                     {isEstrangeiro ? "Identificação Adicional" : (isPJ ? "Inscrição Estadual" : "RG")}
+                     {isPJ ? "Inscrição Estadual" : "RG"}
                   </label>
                   <Input 
                     value={formData.rg_ie || ""} 
                     onChange={(e) => handleChange("rg_ie", e.target.value)}
                     className="focus-visible:ring-blue-500 border-slate-300"
-                    placeholder={
-                      isEstrangeiro 
-                        ? "Outro Documento" 
-                        : (isPJ ? "Inscrição Estadual" : "RG")
-                    }
+                    placeholder={isPJ ? "Inscrição Estadual" : "RG"}
                   />
                 </div>
 
@@ -411,7 +430,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('endereco')}
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
                   <MapPin className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Endereço</h2>
@@ -422,7 +441,15 @@ export function ContactForm({ type }: ContactFormProps) {
             {sections.endereco && (
               <div className="p-6">
                 <div className="flex border-b border-slate-200 mb-6">
-                  <button type="button" className="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Geral</button>
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium border-b-2",
+                      isSupplier ? "text-amber-700 border-amber-700" : "text-blue-600 border-blue-600"
+                    )}
+                  >
+                    Geral
+                  </button>
                   <button type="button" className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t">Cobrança</button>
                 </div>
 
@@ -432,17 +459,16 @@ export function ContactForm({ type }: ContactFormProps) {
                     <div className="relative">
                       <Input 
                         value={formData.address_zip || ""} 
-                        onChange={(e) => {
-                          if (isEstrangeiro) {
-                            handleChange("address_zip", e.target.value);
-                          } else {
-                            handleMaskedChange("address_zip", e.target.value, maskZip);
-                          }
-                        }}
+                        onChange={(e) => handleMaskedChange("address_zip", e.target.value, maskZip)}
                         className="focus-visible:ring-blue-500 border-slate-300 pr-8"
-                        placeholder={isEstrangeiro ? "Zip Code" : "00000-000"}
+                        placeholder="00000-000"
                       />
-                      <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 cursor-pointer hover:text-blue-600" />
+                      <Search
+                        className={cn(
+                          "absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 cursor-pointer",
+                          isSupplier ? "hover:text-amber-700" : "hover:text-blue-600"
+                        )}
+                      />
                     </div>
                   </div>
                   
@@ -514,7 +540,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('contato')}
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
                   <Phone className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Contato</h2>
@@ -529,15 +555,9 @@ export function ContactForm({ type }: ContactFormProps) {
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Celular / WhatsApp</label>
                     <Input 
                       value={formData.mobile || ""} 
-                      onChange={(e) => {
-                        if (isEstrangeiro) {
-                          handleChange("mobile", e.target.value);
-                        } else {
-                          handleMaskedChange("mobile", e.target.value, maskPhone);
-                        }
-                      }}
+                      onChange={(e) => handleMaskedChange("mobile", e.target.value, maskPhone)}
                       className="focus-visible:ring-blue-500 border-slate-300"
-                      placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 00000-0000"}
+                      placeholder="(00) 00000-0000"
                     />
                   </div>
 
@@ -545,15 +565,9 @@ export function ContactForm({ type }: ContactFormProps) {
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Telefone</label>
                     <Input 
                       value={formData.phone || ""} 
-                      onChange={(e) => {
-                         if (isEstrangeiro) {
-                           handleChange("phone", e.target.value);
-                         } else {
-                           handleMaskedChange("phone", e.target.value, maskPhone);
-                         }
-                      }}
+                      onChange={(e) => handleMaskedChange("phone", e.target.value, maskPhone)}
                       className="focus-visible:ring-blue-500 border-slate-300"
-                      placeholder={isEstrangeiro ? "+00 000 0000" : "(00) 0000-0000"}
+                      placeholder="(00) 0000-0000"
                     />
                   </div>
 
@@ -617,7 +631,10 @@ export function ContactForm({ type }: ContactFormProps) {
                     variant="outline" 
                     size="sm" 
                     onClick={addSubContact}
-                    className="mt-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                    className={cn(
+                      "mt-2",
+                      isSupplier ? "text-amber-700 border-amber-200 hover:bg-amber-50" : "text-blue-600 border-blue-200 hover:bg-blue-50"
+                    )}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Adicionar contato
@@ -634,7 +651,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('dadosAdicionais')}
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
                   <FileText className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Dados Adicionais</h2>
@@ -812,7 +829,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('financeiro')}
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
                   <DollarSign className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Financeiro</h2>
@@ -832,7 +849,10 @@ export function ContactForm({ type }: ContactFormProps) {
                         name="credit_limit_type"
                         checked={formData.credit_limit_type === 'ilimitado'}
                         onChange={() => handleChange("credit_limit_type", 'ilimitado')}
-                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                        className={cn(
+                          "w-4 h-4 border-slate-300",
+                          isSupplier ? "text-amber-700 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500"
+                        )}
                       />
                       <span className="text-sm text-slate-700">Ilimitado</span>
                     </label>
@@ -842,7 +862,10 @@ export function ContactForm({ type }: ContactFormProps) {
                         name="credit_limit_type"
                         checked={formData.credit_limit_type === 'limitado'}
                         onChange={() => handleChange("credit_limit_type", 'limitado')}
-                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                        className={cn(
+                          "w-4 h-4 border-slate-300",
+                          isSupplier ? "text-amber-700 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500"
+                        )}
                       />
                       <span className="text-sm text-slate-700">Limitado</span>
                     </label>
@@ -852,7 +875,10 @@ export function ContactForm({ type }: ContactFormProps) {
                         name="credit_limit_type"
                         checked={formData.credit_limit_type === 'zero'}
                         onChange={() => handleChange("credit_limit_type", 'zero')}
-                        className="w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                        className={cn(
+                          "w-4 h-4 border-slate-300",
+                          isSupplier ? "text-amber-700 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500"
+                        )}
                       />
                       <span className="text-sm text-slate-700">Limite zero</span>
                     </label>
@@ -911,7 +937,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('observacoes')}
             >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-100 rounded text-blue-600">
+                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Observações</h2>
@@ -922,7 +948,10 @@ export function ContactForm({ type }: ContactFormProps) {
             {sections.observacoes && (
               <div className="p-6">
                 <textarea 
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[120px]"
+                  className={cn(
+                    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 min-h-[120px]",
+                    isSupplier ? "focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" : "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  )}
                   value={formData.observations || ""}
                   onChange={(e) => handleChange("observations", e.target.value)}
                   placeholder="Observações internas sobre este contato..."

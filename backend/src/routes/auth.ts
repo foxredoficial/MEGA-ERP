@@ -2,14 +2,50 @@ import { Router } from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { asyncHandler, sendError } from "../http.js";
-import { createUser, findUserByEmail, findUserById, findUserByGoogleId } from "../repos/users.js";
+import { createUser, findUserByEmail, findUserByGoogleId, findUserById, updateUserPassword } from "../repos/users.js";
 import { clearSessionCookie, getSessionFromRequest, setSessionCookie, signSession } from "../auth/session.js";
 import { requireAuth, type AuthedRequest } from "../auth/requireAuth.js";
 import { env } from "../env.js";
 import { buildGoogleAuthUrl, exchangeGoogleCodeForTokens, verifyGoogleIdToken } from "../auth/google.js";
+import { signGoogleOAuthState, verifyGoogleOAuthState } from "../auth/oauthState.js";
+import { createPasswordResetToken, consumePasswordResetToken } from "../repos/password_resets.js";
+import { sanitizePreferencesForClient } from "../security/sanitize.js";
 
 export const authRouter = Router();
+
+function normalizeOrigin(value: string) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAppOrigin(req: any) {
+  const allowed = new Set([
+    env.APP_ORIGIN,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175",
+    "http://localhost:5176",
+    "http://127.0.0.1:5176",
+  ]);
+
+  const rawOrigin = req.headers?.origin;
+  const origin = typeof rawOrigin === "string" ? normalizeOrigin(rawOrigin) : null;
+  if (origin && allowed.has(origin)) return origin;
+
+  const rawReferer = req.headers?.referer;
+  const refererOrigin = typeof rawReferer === "string" ? normalizeOrigin(rawReferer) : null;
+  if (refererOrigin && allowed.has(refererOrigin)) return refererOrigin;
+
+  return env.APP_ORIGIN;
+}
 
 function buildProfile(user: any) {
   return {
@@ -59,7 +95,7 @@ authRouter.get(
         hasPassword: Boolean(user.has_password),
         googleId: user.google_id
       },
-      preferences: user.preferences
+      preferences: sanitizePreferencesForClient(user.preferences)
     });
   })
 );
@@ -68,36 +104,22 @@ authRouter.get(
   "/google/start",
   asyncHandler(async (req, res) => {
     try {
+      const appOrigin = getAppOrigin(req);
       const next = safeNextPath(req.query.next);
       const isLinking = req.query.mode === "link";
-      const state = isLinking ? `link:${randomUUID()}` : randomUUID();
-      const isProd = process.env.NODE_ENV === "production";
+      const state = await signGoogleOAuthState({ mode: isLinking ? "link" : "login", next });
 
       if (isLinking) {
         // Verificar se o usuário está logado antes de permitir iniciar vinculação
         const session = await getSessionFromRequest(req);
-        if (!session) return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=login_required`);
+        if (!session) return res.redirect(`${appOrigin}/auth?mode=login&oauthError=login_required`);
       }
-
-      res.cookie("megaerp_g_state", state, {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 1000 * 60 * 10,
-      });
-      res.cookie("megaerp_g_next", next, {
-        httpOnly: true,
-        secure: isProd,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 1000 * 60 * 10,
-      });
 
       const url = buildGoogleAuthUrl({ state });
       res.redirect(url);
     } catch {
-      res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_config`);
+      const appOrigin = getAppOrigin(req);
+      res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_config`);
     }
   })
 );
@@ -105,16 +127,21 @@ authRouter.get(
 authRouter.get(
   "/google/callback",
   asyncHandler(async (req, res) => {
-    const next = safeNextPath(req.cookies?.megaerp_g_next);
-    const stateCookie = typeof req.cookies?.megaerp_g_state === "string" ? (req.cookies.megaerp_g_state as string) : null;
-
-    res.clearCookie("megaerp_g_state", { path: "/" });
-    res.clearCookie("megaerp_g_next", { path: "/" });
-
+    const appOrigin = getAppOrigin(req);
     const code = typeof req.query.code === "string" ? req.query.code : null;
     const state = typeof req.query.state === "string" ? req.query.state : null;
-    if (!code || !state || !stateCookie || state !== stateCookie) {
-      return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_state`);
+    if (!code || !state) {
+      return res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_state`);
+    }
+
+    let next = "/app";
+    let mode: "login" | "link" = "login";
+    try {
+      const parsed = await verifyGoogleOAuthState(state);
+      next = safeNextPath(parsed.next);
+      mode = parsed.mode;
+    } catch {
+      return res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_state`);
     }
 
     try {
@@ -122,12 +149,12 @@ authRouter.get(
       const profile = await verifyGoogleIdToken(idToken);
       const googleId = profile.sub; // Google User ID
 
-      const isLinking = state.startsWith("link:");
+      const isLinking = mode === "link";
 
       if (isLinking) {
         const session = await getSessionFromRequest(req);
         
-        if (!session) return res.redirect(`${env.APP_ORIGIN}/app#security?error=link_failed_session`);
+        if (!session) return res.redirect(`${appOrigin}/app#security?error=link_failed_session`);
         
         // Verificar se já existe conta com esse googleId
         // Como findUserByEmail não busca por googleId, precisaríamos de findUserByGoogleId.
@@ -141,10 +168,10 @@ authRouter.get(
         // Vamos simplificar: vincula ao usuário logado. Se der erro de duplicate key (google_id unique), tratamos.
         try {
           await linkGoogleAccount(session.userId, googleId);
-          return res.redirect(`${env.APP_ORIGIN}/app#security?success=google_linked`);
+          return res.redirect(`${appOrigin}/app#security?success=google_linked`);
         } catch (e: any) {
            if (e.code === 'ER_DUP_ENTRY') {
-             return res.redirect(`${env.APP_ORIGIN}/app#security?error=google_in_use`);
+             return res.redirect(`${appOrigin}/app#security?error=google_in_use`);
            }
            throw e;
         }
@@ -170,7 +197,7 @@ authRouter.get(
               if (e.code === 'ER_DUP_ENTRY') {
                 // Google ID já está em uso por OUTRO usuário (race condition ou inconsistência)
                 console.error("[Google Callback] Google ID collision:", googleId);
-                return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_in_use`);
+                return res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_in_use`);
               }
               throw e;
             }
@@ -181,7 +208,7 @@ authRouter.get(
              // Se o user.google_id != googleId, então o email está vinculado a OUTRA conta Google.
              // Não podemos logar com ESTA conta Google.
              if (user.google_id !== googleId) {
-               return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_email_mismatch`);
+               return res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_email_mismatch`);
              }
           }
         } else {
@@ -202,14 +229,14 @@ authRouter.get(
         }
       }
 
-      if (!user) return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_user`);
+      if (!user) return res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_user`);
       const token = await signSession({ sub: user.id, email: user.email, role: user.role });
       
       setSessionCookie(res, token);
-      return res.redirect(`${env.APP_ORIGIN}${next}`);
+      return res.redirect(`${appOrigin}${next}`);
     } catch (err) {
       console.error("[Google Callback] Error:", err);
-      return res.redirect(`${env.APP_ORIGIN}/auth?mode=login&oauthError=google_failed`);
+      return res.redirect(`${appOrigin}/auth?mode=login&oauthError=google_failed`);
     }
   })
 );
@@ -334,8 +361,58 @@ authRouter.post(
 
 authRouter.post(
   "/password/forgot",
-  asyncHandler(async (_req, res) => {
-    return sendError(res, 501, "Recuperação de senha requer serviço de email configurado.");
+  asyncHandler(async (req, res) => {
+    const body = z.object({ email: z.string().email() }).safeParse(req.body);
+    if (!body.success) return sendError(res, 400, "Dados inválidos.", body.error.flatten());
+
+    const email = body.data.email.toLowerCase().trim();
+    const user = await findUserByEmail(email);
+
+    if (user) {
+      const token = `${randomUUID()}${randomBytes(16).toString("hex")}`;
+      const secret = env.PASSWORD_RESET_SECRET ?? env.SESSION_JWT_SECRET;
+      const tokenHash = createHash("sha256").update(`${token}.${secret}`).digest("hex");
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
+
+      await createPasswordResetToken({
+        userId: user.id,
+        tokenHash,
+        expiresAt,
+        ip: (req.headers["x-forwarded-for"] as string | undefined) ?? req.ip ?? null,
+        userAgent: (req.headers["user-agent"] as string | undefined) ?? null,
+      });
+
+      const resetUrl = `${env.APP_ORIGIN}/auth?mode=reset&token=${encodeURIComponent(token)}`;
+      if (process.env.NODE_ENV !== "production") {
+        return res.json({ ok: true, devResetUrl: resetUrl });
+      }
+    }
+
+    res.json({ ok: true });
+  })
+);
+
+authRouter.post(
+  "/password/reset",
+  asyncHandler(async (req, res) => {
+    const body = z
+      .object({
+        token: z.string().min(10),
+        newPassword: z.string().min(8),
+      })
+      .safeParse(req.body);
+
+    if (!body.success) return sendError(res, 400, "Dados inválidos.", body.error.flatten());
+
+    const secret = env.PASSWORD_RESET_SECRET ?? env.SESSION_JWT_SECRET;
+    const tokenHash = createHash("sha256").update(`${body.data.token}.${secret}`).digest("hex");
+    const consumed = await consumePasswordResetToken({ tokenHash });
+    if (!consumed) return sendError(res, 400, "Token inválido ou expirado.");
+
+    const newHash = await bcrypt.hash(body.data.newPassword, 12);
+    await updateUserPassword(consumed.userId, newHash);
+
+    res.json({ ok: true });
   })
 );
 

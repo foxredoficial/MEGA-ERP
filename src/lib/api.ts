@@ -100,6 +100,9 @@ export type MeResponse = {
   };
   preferences: {
     theme?: 'light' | 'dark';
+    fiscal?: {
+      environment?: 'homolog' | 'prod';
+    };
     [key: string]: any;
   } | null;
 };
@@ -156,6 +159,17 @@ export async function requestPasswordReset(args: { email: string }): Promise<voi
   });
 }
 
+export async function requestPasswordResetWithDevLink(args: { email: string }): Promise<{ ok: true; devResetUrl?: string }> {
+  return apiFetch<{ ok: true; devResetUrl?: string }>("/api/auth/password/forgot", {
+    method: "POST",
+    body: JSON.stringify(args),
+  });
+}
+
+export async function resetPassword(args: { token: string; newPassword: string }): Promise<void> {
+  await apiFetch<void>("/api/auth/password/reset", { method: "POST", body: JSON.stringify(args) });
+}
+
 export async function updatePassword(args: { currentPassword?: string; newPassword: string }): Promise<void> {
   await apiFetch("/api/me/password", { method: "PUT", body: JSON.stringify(args) });
 }
@@ -191,7 +205,7 @@ export async function updateProfile(args: {
   });
 }
 
-export async function updatePreferences(args: { theme?: 'light' | 'dark' }): Promise<{ ok: true; preferences: any }> {
+export async function updatePreferences(args: { theme?: 'light' | 'dark'; fiscal?: { provider?: string; baseUrl?: string; token?: string; environment?: 'homolog' | 'prod' } }): Promise<{ ok: true; preferences: any }> {
   return apiFetch("/api/me/preferences", {
     method: "PUT",
     body: JSON.stringify(args),
@@ -214,4 +228,3 @@ export * from "./api_categories";
 export * from "./api_contacts";
 export * from "./api_salespersons";
 export * from "./api_admin";
-

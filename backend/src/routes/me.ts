@@ -6,6 +6,8 @@ import { findUserById, updateUserPassword, updateUserProfile, updateUserPreferen
 import { getSubscriptionByUserId } from "../repos/subscriptions.js";
 import { findPlanById } from "../repos/plans.js";
 import bcrypt from "bcryptjs";
+import { sanitizePreferencesForClient } from "../security/sanitize.js";
+import { env } from "../env.js";
 
 export const meRouter = Router();
 
@@ -14,21 +16,31 @@ meRouter.put(
   requireAuth,
   asyncHandler(async (req, res) => {
     const r = req as AuthedRequest;
-    const body = z.object({
-      theme: z.enum(['light', 'dark']).optional(),
-    }).safeParse(req.body);
+    const body =
+      z
+        .object({
+          theme: z.enum(["light", "dark"]).optional(),
+          fiscal: z
+            .object({
+              environment: z.enum(["homolog", "prod"]).optional(),
+            })
+            .partial()
+            .optional(),
+        })
+        .safeParse(req.body);
 
     if (!body.success) return sendError(res, 400, "Dados inválidos.", body.error.flatten());
 
     const user = await findUserById(r.auth.userId);
     if (!user) return sendError(res, 401, "Usuário não encontrado.");
 
-    const currentPrefs = typeof user.preferences === 'object' ? user.preferences : {};
-    const newPrefs = { ...currentPrefs, ...body.data };
+    const currentPrefs = typeof user.preferences === "object" && user.preferences ? user.preferences : {};
+    const nextFiscal = body.data.fiscal ? { ...(currentPrefs as any).fiscal, ...body.data.fiscal } : (currentPrefs as any).fiscal;
+    const newPrefs = { ...currentPrefs, ...body.data, fiscal: nextFiscal };
 
     await updateUserPreferences(user.id, newPrefs);
 
-    res.json({ ok: true, preferences: newPrefs });
+    res.json({ ok: true, preferences: sanitizePreferencesForClient(newPrefs) });
   })
 );
 
@@ -197,3 +209,22 @@ meRouter.get(
   })
 );
 
+meRouter.get(
+  "/nfe/status",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const r = req as AuthedRequest;
+    const user = await findUserById(r.auth.userId);
+    if (!user) return sendError(res, 401, "Sessão inválida.");
+
+    const prefs = typeof user.preferences === "object" && user.preferences ? user.preferences : {};
+    const fiscal = (prefs as any).fiscal;
+    const environment = fiscal?.environment === "prod" ? "prod" : "homolog";
+    const serviceConfigured = Boolean(env.MEGA_NFE_API_URL && env.MEGA_NFE_API_KEY);
+
+    res.json({
+      enabled: serviceConfigured,
+      environment,
+    });
+  })
+);

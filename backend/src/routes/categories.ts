@@ -7,6 +7,7 @@ import {
   updateCategory, 
   deleteCategory 
 } from "../repos/categories.js";
+import { asyncHandler } from "../http.js";
 import { z } from "zod";
 
 const router = Router();
@@ -18,12 +19,12 @@ const categorySchema = z.object({
   color: z.string().nullable().optional(),
 });
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, asyncHandler(async (req, res) => {
   const categories = await listCategories((req as AuthedRequest).auth.userId);
   res.json({ categories });
-});
+}));
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = categorySchema.parse(req.body);
     // Convert empty string to null for parent_id
@@ -37,17 +38,17 @@ router.post("/", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.get("/:id", requireAuth, async (req, res) => {
+router.get("/:id", requireAuth, asyncHandler(async (req, res) => {
   const category = await getCategory((req as AuthedRequest).auth.userId, req.params.id);
   if (!category) {
     return res.status(404).json({ error: "Categoria não encontrada" });
   }
   res.json({ category });
-});
+}));
 
-router.put("/:id", requireAuth, async (req, res) => {
+router.put("/:id", requireAuth, asyncHandler(async (req, res) => {
   try {
     const data = categorySchema.partial().parse(req.body);
     // Convert empty string to null for parent_id
@@ -61,11 +62,11 @@ router.put("/:id", requireAuth, async (req, res) => {
     }
     throw e;
   }
-});
+}));
 
-router.delete("/:id", requireAuth, async (req, res) => {
+router.delete("/:id", requireAuth, asyncHandler(async (req, res) => {
   await deleteCategory((req as AuthedRequest).auth.userId, req.params.id);
   res.json({ success: true });
-});
+}));
 
 export default router;

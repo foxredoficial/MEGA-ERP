@@ -124,7 +124,7 @@ export function SiteHeader() {
                       </Link>
                       
                       <Link 
-                        to="/app#profile" 
+                        to={{ pathname: "/app", hash: "#profile" }}
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
