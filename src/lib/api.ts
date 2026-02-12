@@ -6,6 +6,11 @@ export type ApiError = {
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
+function getCookie(name: string) {
+  const m = document.cookie.match(new RegExp(`(?:^|; )${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}=([^;]*)`));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 async function readBodySafely(res: Response) {
   const contentType = res.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
@@ -25,11 +30,14 @@ async function readBodySafely(res: Response) {
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = path.startsWith("http") ? path : `${apiBaseUrl}${path}`;
+  const method = (init?.method ?? "GET").toUpperCase();
+  const csrfToken = method === "GET" || method === "HEAD" || method === "OPTIONS" ? null : getCookie("csrf_token");
   const res = await fetch(url, {
     ...init,
     credentials: "include",
     headers: {
       "content-type": "application/json",
+      ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
       ...(init?.headers ?? {}),
     },
   });
@@ -228,3 +236,4 @@ export * from "./api_categories";
 export * from "./api_contacts";
 export * from "./api_salespersons";
 export * from "./api_admin";
+export * from "./api_search";

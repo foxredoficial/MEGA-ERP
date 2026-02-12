@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Plus, 
@@ -21,6 +21,7 @@ import {
 } from "@/lib/api_categories";
 
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function CategoryList() {
   const navigate = useNavigate();
@@ -30,9 +31,16 @@ export function CategoryList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   async function loadCategories() {
     try {
@@ -83,6 +91,20 @@ export function CategoryList() {
     const hierarchy = buildCategoryTree(categories);
     displayCategories = flattenCategoryTree(hierarchy);
   }
+
+  const total = displayCategories.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedCategories = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return displayCategories.slice(start, end);
+  }, [displayCategories, page, pageSize, totalPages]);
 
   return (
     <BlingLayout>
@@ -150,7 +172,7 @@ export function CategoryList() {
                     </td>
                   </tr>
                 ) : (
-                  displayCategories.map((category) => (
+                  pagedCategories.map((category) => (
                     <tr key={category.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
@@ -215,6 +237,20 @@ export function CategoryList() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Categorias"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
         </div>
       </div>
 

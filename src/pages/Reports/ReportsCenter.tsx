@@ -6,12 +6,14 @@ import { AdvancedDateFilter } from "@/components/filters/AdvancedDateFilter";
 import { computePreset, suggestedGranularity, type DateFilterValue } from "@/components/filters/dateRange";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { cn } from "@/lib/utils";
+import { Select } from "@/components/ui/Select";
+import { Pagination } from "@/components/ui/Pagination";
+import { cn, toLocalIsoDate } from "@/lib/utils";
 import { getReport, listReportDefinitions, type ReportDefinition, type ReportResult } from "@/lib/api_reports";
 import { ReportTable } from "./ReportTable";
 
 function toIsoDate(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return toLocalIsoDate(d);
 }
 
 function groupReports(defs: ReportDefinition[]) {
@@ -48,6 +50,28 @@ export function ReportsCenter() {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter.range.end, filter.range.start, kind, query, selectedId, status]);
+
+  const total = report?.rows?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedRows = useMemo(() => {
+    const rows = report?.rows ?? [];
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return rows.slice(start, end);
+  }, [page, pageSize, report?.rows, totalPages]);
 
   useEffect(() => {
     let cancelled = false;
@@ -173,21 +197,21 @@ export function ReportsCenter() {
                   <Input className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar (opcional)" />
                 </div>
                 <div>
-                  <select className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <Select value={status} onChange={(e) => setStatus(e.target.value)}>
                     <option value="all">Status: Todos</option>
                     <option value="open">Status: Em aberto</option>
                     <option value="partial">Status: Parcial</option>
                     <option value="paid">Status: Pago</option>
                     <option value="canceled">Status: Cancelado</option>
                     <option value="completed">Status: Concluído</option>
-                  </select>
+                  </Select>
                 </div>
                 <div>
-                  <select className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm" value={kind} onChange={(e) => setKind(e.target.value as any)}>
+                  <Select value={kind} onChange={(e) => setKind(e.target.value as any)}>
                     <option value="all">Tipo: Todos</option>
                     <option value="ar">Tipo: A Receber</option>
                     <option value="ap">Tipo: A Pagar</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
 
@@ -226,7 +250,21 @@ export function ReportsCenter() {
                       <span className="font-mono text-xs">{Object.entries(report.totals).map(([k, v]) => `${k}: ${v}`).join(" | ")}</span>
                     </div>
                   )}
-                  <ReportTable columns={report.columns} rows={report.rows} />
+                  <ReportTable columns={report.columns} rows={pagedRows} />
+
+                  <div className="mt-4">
+                    <Pagination
+                      label="Linhas"
+                      page={page}
+                      pageSize={pageSize}
+                      total={total}
+                      onPageChange={setPage}
+                      onPageSizeChange={(n) => {
+                        setPageSize(n);
+                        setPage(1);
+                      }}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -236,4 +274,3 @@ export function ReportsCenter() {
     </BlingLayout>
   );
 }
-

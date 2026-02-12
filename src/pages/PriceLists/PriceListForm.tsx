@@ -15,6 +15,7 @@ import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { 
   createPriceList, 
   getPriceList, 
@@ -23,7 +24,7 @@ import {
   type PriceListItem
 } from "@/lib/api_price_lists";
 import { getProducts, type Product } from "@/lib/api_products";
-import { formatCurrency, parseCurrency, maskCurrency } from "@/lib/masks";
+import { formatCurrency } from "@/lib/masks";
 
 export function PriceListForm() {
   const navigate = useNavigate();
@@ -270,14 +271,23 @@ export function PriceListForm() {
                       <label className="block text-sm font-medium text-slate-700 mb-1">
                         Valor do Ajuste {formData.type === 'percentage' ? '(%)' : '(R$)'}
                       </label>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.adjustment_value || ""}
-                        onChange={(e) => handleChange("adjustment_value", parseFloat(e.target.value))}
-                        placeholder={formData.type === 'percentage' ? "Ex: 10" : "Ex: 50.00"}
-                      />
+                      {formData.type === "fixed_value" ? (
+                        <MoneyInput
+                          value={formData.adjustment_value ?? 0}
+                          onValueChange={(v) => handleChange("adjustment_value", Math.round(v * 100) / 100)}
+                          withSymbol={false}
+                          placeholder="0,00"
+                        />
+                      ) : (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formData.adjustment_value || ""}
+                          onChange={(e) => handleChange("adjustment_value", parseFloat(e.target.value))}
+                          placeholder="Ex: 10"
+                        />
+                      )}
                     </div>
                   </div>
                 )}
@@ -406,13 +416,12 @@ export function PriceListForm() {
                             <td className="px-4 py-3 text-right font-medium">
                               {formData.type === 'custom' ? (
                                 <div className="flex justify-end">
-                                  <Input 
+                                  <MoneyInput
                                     className="w-32 text-right h-8"
-                                    value={formatCurrency(item.price || 0)}
-                                    onChange={(e) => {
-                                      const numeric = parseCurrency(maskCurrency(e.target.value));
-                                      handleCustomPriceChange(item.product_id, numeric);
-                                    }}
+                                    value={item.price ?? 0}
+                                    onValueChange={(v) => handleCustomPriceChange(item.product_id, Math.round(v * 100) / 100)}
+                                    withSymbol={false}
+                                    emptyAsZero={false}
                                   />
                                 </div>
                               ) : (

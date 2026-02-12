@@ -7,12 +7,16 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { listBankAccounts, type BankAccount } from "@/lib/api_banks";
 import { formatCurrency } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function BankAccountsList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   async function load() {
     try {
@@ -28,11 +32,29 @@ export function BankAccountsList() {
     void load();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     if (!q) return accounts;
     return accounts.filter((a) => a.name.toLowerCase().includes(q) || (a.bank ?? "").toLowerCase().includes(q));
   }, [accounts, search]);
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedAccounts = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filtered.slice(start, end);
+  }, [filtered, page, pageSize, totalPages]);
 
   return (
     <BlingLayout>
@@ -78,7 +100,7 @@ export function BankAccountsList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filtered.map((a) => (
+                {pagedAccounts.map((a) => (
                   <tr key={a.id} className="hover:bg-blue-50/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -110,8 +132,21 @@ export function BankAccountsList() {
             </table>
           </div>
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Contas"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
     </BlingLayout>
   );
 }
-

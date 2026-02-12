@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   Plus, 
@@ -8,8 +8,7 @@ import {
   Trash2, 
   Printer,
   Download,
-  User,
-  Calendar
+  User
 } from "lucide-react";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +16,8 @@ import { Input } from "@/components/ui/Input";
 import { getContacts, deleteContact, type Contact } from "@/lib/api_contacts";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
+import { downloadCsv, toCsv } from "@/lib/csv";
+import { Pagination } from "@/components/ui/Pagination";
 
 interface ContactListProps {
   type?: 'client' | 'supplier';
@@ -28,6 +29,11 @@ export function ContactList({ type }: ContactListProps) {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const isSupplier = type === 'supplier';
   const title = isSupplier ? "Fornecedores" : "Clientes";
@@ -36,6 +42,10 @@ export function ContactList({ type }: ContactListProps) {
   useEffect(() => {
     loadContacts();
   }, [type]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, type]);
 
   async function loadContacts() {
     try {
@@ -68,7 +78,7 @@ export function ContactList({ type }: ContactListProps) {
     }
   }
 
-  const filteredContacts = contacts.filter(c => {
+  const filteredContacts = useMemo(() => contacts.filter(c => {
     const term = search.toLowerCase();
     const cleanTerm = term.replace(/[^a-z0-9]/g, "");
 
@@ -109,7 +119,84 @@ export function ContactList({ type }: ContactListProps) {
     }
 
     return false;
-  });
+  }), [contacts, search]);
+
+  const total = filteredContacts.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedContacts = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredContacts.slice(start, end);
+  }, [filteredContacts, page, pageSize, totalPages]);
+
+  const selectedCount = selectedIds.size;
+  const allVisibleSelected = pagedContacts.length > 0 && pagedContacts.every((c) => selectedIds.has(c.id));
+
+  function toggleAllVisible(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const c of pagedContacts) {
+        if (checked) next.add(c.id);
+        else next.delete(c.id);
+      }
+      return next;
+    });
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function confirmBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    try {
+      await Promise.all(ids.map((id) => deleteContact(id)));
+      setSelectedIds(new Set());
+      await loadContacts();
+    } catch (error) {
+      console.error("Erro ao excluir contatos:", error);
+    } finally {
+      setBulkDeleteOpen(false);
+    }
+  }
+
+  function handleExport() {
+    const rows = filteredContacts.map((c) => ({
+      name: c.name,
+      fantasy_name: c.fantasy_name ?? "",
+      email: c.email ?? "",
+      phone: c.phone ?? "",
+      mobile: c.mobile ?? "",
+      city: c.address_city ?? "",
+      state: c.address_state ?? "",
+      cpf_cnpj: c.cpf_cnpj ?? "",
+      status: c.status ?? "",
+    }));
+    const csv = toCsv(rows, [
+      { key: "name", label: "Nome" },
+      { key: "fantasy_name", label: "Fantasia" },
+      { key: "cpf_cnpj", label: "CPF/CNPJ" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Telefone" },
+      { key: "mobile", label: "Celular" },
+      { key: "city", label: "Cidade" },
+      { key: "state", label: "UF" },
+      { key: "status", label: "Status" },
+    ]);
+    downloadCsv(`${isSupplier ? "fornecedores" : "clientes"}.csv`, csv);
+  }
 
   return (
     <BlingLayout>
@@ -123,11 +210,7 @@ export function ContactList({ type }: ContactListProps) {
           <div className="flex items-center gap-3">
              <Link to={`${basePath}/novo`}>
               <Button
-                className={
-                  isSupplier
-                    ? "bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-200 gap-2"
-                    : "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 gap-2"
-                }
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Novo {isSupplier ? "Fornecedor" : "Cliente"}
@@ -149,25 +232,40 @@ export function ContactList({ type }: ContactListProps) {
           </div>
           <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
           <div className="flex items-center gap-2 pr-2 w-full md:w-auto justify-end">
-             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
-               <Calendar className="w-4 h-4 mr-2" />
-               <span className="text-sm">Filtrar Data</span>
-             </Button>
-             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
+             <Button variant="ghost" className="text-slate-500 hover:text-blue-600" onClick={handleExport}>
                <Download className="w-4 h-4 mr-2" />
                <span className="text-sm">Exportar</span>
              </Button>
           </div>
         </div>
 
+        {selectedCount > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between">
+            <div className="text-sm text-slate-700">Selecionados: <span className="font-semibold">{selectedCount}</span></div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setSelectedIds(new Set())}>
+                Limpar seleção
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setBulkDeleteOpen(true)}>
+                Excluir selecionados
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Table - Modern look with better spacing and typography */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
+              <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 w-14">
-                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      checked={allVisibleSelected}
+                      onChange={(e) => toggleAllVisible(e.target.checked)}
+                    />
                   </th>
                   <th className="px-6 py-4">Nome / Fantasia</th>
                   <th className="px-6 py-4">Contato</th>
@@ -202,10 +300,15 @@ export function ContactList({ type }: ContactListProps) {
                     </td>
                   </tr>
                 ) : (
-                  filteredContacts.map((contact) => (
+                  pagedContacts.map((contact) => (
                     <tr key={contact.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
-                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          checked={selectedIds.has(contact.id)}
+                          onChange={(e) => toggleOne(contact.id, e.target.checked)}
+                        />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
@@ -260,6 +363,20 @@ export function ContactList({ type }: ContactListProps) {
             </table>
           </div>
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Contatos"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       <ConfirmationDialog
@@ -268,6 +385,16 @@ export function ContactList({ type }: ContactListProps) {
         onConfirm={handleConfirmDelete}
         title={`Excluir ${isSupplier ? "Fornecedor" : "Cliente"}`}
         description={`Tem certeza que deseja excluir este ${isSupplier ? "fornecedor" : "cliente"}? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        variant="danger"
+      />
+
+      <ConfirmationDialog
+        isOpen={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={confirmBulkDelete}
+        title="Excluir selecionados"
+        description={`Deseja excluir ${selectedCount} ${isSupplier ? "fornecedor(es)" : "cliente(s)"}? Esta ação não pode ser desfeita.`}
         confirmText="Excluir"
         variant="danger"
       />

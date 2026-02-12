@@ -1,7 +1,39 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
+
+function titleCase(s: string) {
+  return s
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function stripCompareSuffix(key: string) {
+  return key.replace(/(Comp|Compare)$/i, "");
+}
+
+function labelFromKey(key: string) {
+  const base = stripCompareSuffix(key);
+  const map: Record<string, string> = {
+    revenue: "Receita",
+    users: "Usuários",
+    total: "Total",
+    orders: "Pedidos",
+    pdv: "PDV",
+    ar: "A receber",
+    ap: "A pagar",
+    in: "Entradas",
+    out: "Saídas",
+    net: "Saldo",
+    predictedNet: "Previsto",
+    realizedNet: "Realizado",
+  };
+  if (map[base]) return map[base];
+  return titleCase(base.replace(/[_-]+/g, " "));
+}
 
 function parseBucket(t: string) {
   const s = t.includes(" ") ? t.replace(" ", "T") : t;
@@ -12,6 +44,7 @@ function parseBucket(t: string) {
 export function SeriesChart(props: {
   title: string;
   subtitle: string;
+  actions?: ReactNode;
   data: Array<Record<string, any>>;
   xKey: string;
   currentKey: string;
@@ -33,6 +66,7 @@ export function SeriesChart(props: {
           <div className="text-sm font-semibold text-slate-900">{props.title}</div>
           <div className="text-xs text-slate-500 mt-1">{props.subtitle}</div>
         </div>
+        {props.actions ? <div className="flex items-center gap-2">{props.actions}</div> : null}
       </div>
 
       <div className="mt-4 h-[280px]">
@@ -42,10 +76,14 @@ export function SeriesChart(props: {
             <XAxis dataKey="__label" tick={{ fontSize: 12 }} stroke="#94A3B8" />
             <YAxis tick={{ fontSize: 12 }} stroke="#94A3B8" width={60} />
             <Tooltip
-              formatter={(v: any) => {
+              formatter={(v: any, name: any) => {
                 const n = Number(v ?? 0);
-                if (props.valueFormat === "currency") return formatCurrency(n);
-                return n;
+                const out = props.valueFormat === "currency" ? formatCurrency(n) : n;
+                const key = typeof name === "string" ? name : String(name ?? "");
+                const baseLabel = labelFromKey(key);
+                const isCompare = props.compareKey && key === props.compareKey;
+                const label = isCompare ? `${baseLabel} (comparação)` : baseLabel;
+                return [out, label];
               }}
               labelStyle={{ color: "#0F172A" }}
               contentStyle={{ borderRadius: 12, borderColor: "#E2E8F0" }}

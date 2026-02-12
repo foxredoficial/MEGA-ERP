@@ -7,7 +7,7 @@ import {
   Check,
   Palette
 } from "lucide-react";
-import { BlingHeader } from "@/components/BlingHeader";
+import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -124,12 +124,11 @@ export function CategoryForm() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col bg-white">
-        <BlingHeader />
-        <div className="flex-1 pt-14 flex items-center justify-center">
+      <BlingLayout>
+        <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </BlingLayout>
     );
   }
 
@@ -137,10 +136,8 @@ export function CategoryForm() {
   const parentOptions = categories.filter(c => c.id !== id);
 
   return (
-    <div className="h-screen w-full flex flex-col bg-white">
-      <BlingHeader />
-      
-      <main className="flex-1 pt-14 flex flex-col overflow-hidden">
+    <BlingLayout>
+      <div className="flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
@@ -298,7 +295,7 @@ export function CategoryForm() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       <ConfirmationDialog
         isOpen={cancelDialogOpen}
@@ -320,6 +317,6 @@ export function CategoryForm() {
         variant={alertState.variant}
         showCancel={false}
       />
-    </div>
+    </BlingLayout>
   );
 }

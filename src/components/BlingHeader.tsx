@@ -22,6 +22,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
+import { globalSearch } from "@/lib/api";
 
 // Helper type for Mega Menu structure
 type MenuItem = {
@@ -50,6 +51,12 @@ export function BlingHeader() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [searchActiveIndex, setSearchActiveIndex] = useState(0);
+
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
 
@@ -59,11 +66,91 @@ export function BlingHeader() {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenu(null);
         setUserMenuOpen(false);
+        setSearchOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const flatSearchItems = (() => {
+    if (!searchResults?.results) return [] as Array<{ label: string; href: string; meta?: string; kind: string }>;
+    const r = searchResults.results;
+    const items: Array<{ label: string; href: string; meta?: string; kind: string }> = [];
+
+    for (const p of (r.products ?? []) as any[]) {
+      items.push({
+        kind: "product",
+        label: p.name,
+        meta: p.sku ? `SKU: ${p.sku}` : p.type === "service" ? "Serviço" : "Produto",
+        href: `/app/produtos/${p.id}`,
+      });
+    }
+
+    for (const c of (r.contacts ?? []) as any[]) {
+      const isSupplier = String(c.contact_type ?? "").toLowerCase().includes("fornecedor");
+      items.push({
+        kind: "contact",
+        label: c.fantasy_name ? `${c.name} (${c.fantasy_name})` : c.name,
+        meta: c.cpf_cnpj || c.email || (isSupplier ? "Fornecedor" : "Cliente"),
+        href: isSupplier ? `/app/fornecedores/${c.id}` : `/app/clientes/${c.id}`,
+      });
+    }
+
+    for (const o of (r.salesOrders ?? []) as any[]) {
+      items.push({
+        kind: "salesOrder",
+        label: `Pedido ${o.number}`,
+        meta: o.customer_name,
+        href: `/app/vendas/pedidos/${o.id}`,
+      });
+    }
+
+    for (const o of (r.serviceOrders ?? []) as any[]) {
+      items.push({
+        kind: "serviceOrder",
+        label: `OS ${o.number}`,
+        meta: o.customer_name,
+        href: `/app/ordens-servico/${o.id}`,
+      });
+    }
+
+    for (const d of (r.documents ?? []) as any[]) {
+      items.push({
+        kind: "document",
+        label: `${String(d.type).toUpperCase()} ${d.number}`,
+        meta: d.party_name || d.status,
+        href: `/app/docs/${d.type}/${d.id}`,
+      });
+    }
+
+    return items.slice(0, 12);
+  })();
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      setSearchActiveIndex(0);
+      return;
+    }
+
+    setSearchLoading(true);
+    const t = window.setTimeout(() => {
+      globalSearch(q)
+        .then((data) => {
+          setSearchResults(data);
+          setSearchActiveIndex(0);
+        })
+        .catch(() => {
+          setSearchResults(null);
+        })
+        .finally(() => setSearchLoading(false));
+    }, 220);
+
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
 
   const menus: MenuSection[] = [
     {
@@ -125,7 +212,6 @@ export function BlingHeader() {
           items: [
             { label: "Pedidos de compra", href: "/app/docs/purchase_order" },
             { label: "Notas fiscais de entrada", href: "/app/docs/incoming_invoice" },
-            { label: "Fornecedores", href: "/app/fornecedores" },
           ]
         },
         {
@@ -146,11 +232,15 @@ export function BlingHeader() {
         {
           title: "Gestão financeira",
           items: [
+            { label: "Visão geral", href: "/app/financeiro" },
+            { label: "Cadastros financeiros", href: "/app/financeiro/cadastros" },
             { label: "Caixas e bancos", href: "/app/financeiro/bancos" },
             { label: "Contas a receber", href: "/app/financeiro/titulos?kind=ar" },
             { label: "Contas a pagar", href: "/app/financeiro/titulos?kind=ap" },
             { label: "Controle de caixa", href: "/app/financeiro/caixa" },
             { label: "Conciliação bancária", href: "/app/financeiro/conciliacao" },
+            { label: "Fluxo de caixa", href: "/app/financeiro/fluxo-caixa" },
+            { label: "DRE", href: "/app/financeiro/dre" },
           ]
         }
       ],
@@ -288,7 +378,71 @@ export function BlingHeader() {
               type="text"
               placeholder="Pesquisar..."
               className="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-100 dark:bg-slate-900 dark:text-slate-200 border-transparent rounded-full focus:bg-white dark:focus:bg-slate-950 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 outline-none transition-all"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSearchOpen(true);
+              }}
+              onFocus={() => setSearchOpen(true)}
+              onKeyDown={(e) => {
+                if (!searchOpen) return;
+                if (e.key === "Escape") {
+                  setSearchOpen(false);
+                  return;
+                }
+
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSearchActiveIndex((i) => Math.min(i + 1, Math.max(flatSearchItems.length - 1, 0)));
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSearchActiveIndex((i) => Math.max(i - 1, 0));
+                }
+                if (e.key === "Enter") {
+                  const item = flatSearchItems[searchActiveIndex];
+                  if (item) {
+                    e.preventDefault();
+                    setSearchOpen(false);
+                    setOpenMenu(null);
+                    setUserMenuOpen(false);
+                    navigate(item.href);
+                  }
+                }
+              }}
             />
+
+            {searchOpen && (searchQuery.trim().length > 0) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden">
+                <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                  <span>{searchLoading ? "Pesquisando..." : "Resultados"}</span>
+                  <span className="text-[11px]">Enter para abrir · Esc para fechar</span>
+                </div>
+                {flatSearchItems.length === 0 ? (
+                  <div className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">Nenhum resultado.</div>
+                ) : (
+                  <div className="max-h-80 overflow-auto">
+                    {flatSearchItems.map((item, idx) => (
+                      <button
+                        key={`${item.kind}-${item.href}`}
+                        className={cn(
+                          "w-full text-left px-3 py-2 flex flex-col gap-0.5 hover:bg-slate-50 dark:hover:bg-slate-900",
+                          idx === searchActiveIndex && "bg-slate-50 dark:bg-slate-900"
+                        )}
+                        onMouseEnter={() => setSearchActiveIndex(idx)}
+                        onClick={() => {
+                          setSearchOpen(false);
+                          navigate(item.href);
+                        }}
+                      >
+                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.label}</span>
+                        {item.meta && <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{item.meta}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">

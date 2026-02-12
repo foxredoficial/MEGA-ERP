@@ -18,6 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { ContactSearch } from "@/components/ContactSearch";
 import { ProductSearch } from "@/components/ProductSearch";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ import {
   type CashSession 
 } from "@/lib/api_cash";
 import { createPdvSale } from "@/lib/api_pdv_sales";
-import { createFinancialTitle, registerPayment, resolveFinancialMethodFromPos } from "@/lib/api_financial_titles";
+import { createFinancialTitle, resolveFinancialMethodFromPos, settleTitle } from "@/lib/api_financial_titles";
 import { useAuthStore } from "@/stores/authStore";
 
 // Types
@@ -71,7 +72,7 @@ export function POS() {
   const [session, setSession] = useState<CashSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOpenCashModal, setShowOpenCashModal] = useState(false);
-  const [openingBalance, setOpeningBalance] = useState("");
+  const [openingBalance, setOpeningBalance] = useState<number>(0);
   const [processingSale, setProcessingSale] = useState(false);
 
   useEffect(() => {
@@ -108,7 +109,7 @@ export function POS() {
         alert('Você precisa estar logado para abrir o caixa.');
         return;
       }
-      const balance = parseFloat(openingBalance.replace(',', '.')) || 0;
+      const balance = Math.round(openingBalance * 100) / 100;
       const newSession = await openCashSession(balance, auth.session.userId, auth.profile?.fullName ?? auth.session.email);
       setSession(newSession);
       setShowOpenCashModal(false);
@@ -190,22 +191,23 @@ export function POS() {
       const method = resolveFinancialMethodFromPos(selectedPayment);
       const isImmediate = method === 'money' || method === 'pix' || method === 'credit' || method === 'debit';
       if (isImmediate) {
-        await registerPayment({
-          titleId: title.id,
-          amount: total,
-          method,
-          notes: 'Baixa automática (PDV)',
-        });
-
-        await addTransaction(
+        const cashTx = await addTransaction(
           session.id,
           'in',
           'sale',
           total,
           `Venda PDV ${saleId.slice(0, 8)} - ${cart.length} itens`,
           selectedPayment,
-          { refId: saleId }
+          { refId: saleId, meta: { saleId, financialTitleId: title.id } }
         );
+
+        await settleTitle({
+          titleId: title.id,
+          amount: total,
+          method,
+          notes: 'Baixa automática (PDV)',
+          settlement: { type: 'cash', cashSessionId: session.id, cashTransactionId: cashTx.id },
+        });
       }
 
       alert("Venda finalizada com sucesso!");
@@ -466,12 +468,13 @@ export function POS() {
                <div className="flex gap-2">
                  <div className="relative flex-1">
                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
-                   <Input 
-                     type="number" 
-                     className="pl-7" 
-                     placeholder="Valor fixo" 
-                     value={globalDiscount.type === 'fixed' && globalDiscount.value > 0 ? globalDiscount.value : ''}
-                     onChange={(e) => handleDiscountChange(Number(e.target.value), 'fixed')}
+                   <MoneyInput
+                     className="pl-7"
+                     placeholder="Valor fixo"
+                     value={globalDiscount.type === "fixed" ? globalDiscount.value : 0}
+                     onValueChange={(v) => handleDiscountChange(v, "fixed")}
+                     withSymbol={false}
+                     emptyAsZero={false}
                    />
                  </div>
                  <div className="relative flex-1">
@@ -522,46 +525,57 @@ export function POS() {
 
       {/* Open Cash Modal */}
       {showOpenCashModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
-          <div className="absolute inset-0 bg-white flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">Caixa Fechado</h2>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900">Caixa Fechado</div>
+                  <div className="text-xs text-slate-500 mt-0.5">Abra o caixa para iniciar as vendas no PDV.</div>
+                </div>
+              </div>
+              <Button variant="ghost" className="text-slate-600" onClick={() => window.history.back()}>
+                Sair
+              </Button>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto p-6">
-              <div className="max-w-3xl">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
-                  <Lock className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Abrir Caixa</h3>
-                <p className="text-slate-500 mb-6">Para iniciar as vendas, é necessário abrir o caixa. Informe o saldo inicial (fundo de troco).</p>
+            <div className="p-6">
+              <div className="text-lg font-bold text-slate-900">Abrir Caixa</div>
+              <div className="text-sm text-slate-600 mt-1">
+                Informe o saldo inicial (fundo de troco). Você pode ajustar depois em movimentações.
+              </div>
 
-                <div className="text-left max-w-md">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Saldo Inicial (R$)</label>
-                  <Input 
-                    type="number" 
-                    placeholder="0,00"
-                    className="text-lg py-6"
-                    value={openingBalance}
-                    onChange={(e) => setOpeningBalance(e.target.value)}
-                    autoFocus
-                  />
+              <div className="mt-5">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Saldo Inicial (R$)</label>
+                <MoneyInput
+                  placeholder="0,00"
+                  className="h-12 text-lg"
+                  value={openingBalance}
+                  onValueChange={setOpeningBalance}
+                  withSymbol={false}
+                  autoFocus
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[0, 50, 100, 200].map((v) => (
+                    <Button
+                      key={v}
+                      type="button"
+                      variant="outline"
+                      className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                      onClick={() => setOpeningBalance(v)}
+                    >
+                      {v === 0 ? "Zerar" : `R$ ${v},00`}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3 justify-end">
-              <Button 
-                variant="ghost" 
-                onClick={() => window.history.back()}
-                className="text-slate-600"
-              >
-                Sair
-              </Button>
-              <Button 
-                onClick={handleOpenSession} 
-                className="h-12 text-lg bg-blue-600 hover:bg-blue-700 text-white"
-              >
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-2">
+              <Button onClick={handleOpenSession} className="h-11 bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
                 Abrir Caixa
               </Button>
             </div>

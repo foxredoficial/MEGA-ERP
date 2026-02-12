@@ -19,6 +19,11 @@ import { CashControlDetail } from "@/pages/Financial/CashControlDetail";
 import { FinancialTitlesList } from "@/pages/Financial/FinancialTitlesList";
 import { BankAccountsList } from "@/pages/Financial/BankAccountsList";
 import { BankAccountForm } from "@/pages/Financial/BankAccountForm";
+import FinanceOverview from "@/pages/Financial/FinanceOverview";
+import FinanceCadastros from "@/pages/Financial/FinanceCadastros";
+import ReconciliationPage from "@/pages/Financial/ReconciliationPage";
+import CashflowPage from "@/pages/Financial/CashflowPage";
+import DrePage from "@/pages/Financial/DrePage";
 import { SalespersonList } from "@/pages/Salespersons/SalespersonList";
 import { SalespersonForm } from "@/pages/Salespersons/SalespersonForm";
 import { CategoryList } from "@/pages/Categories/CategoryList";
@@ -332,6 +337,22 @@ export default function App() {
           }
         />
         <Route
+          path="/app/financeiro"
+          element={
+            <ProtectedRoute>
+              <FinanceOverview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/cadastros"
+          element={
+            <ProtectedRoute>
+              <FinanceCadastros />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/app/financeiro/caixa"
           element={
             <ProtectedRoute>
@@ -379,7 +400,30 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/app/financeiro/conciliacao" element={<Navigate to="/app/financeiro/bancos" replace />} />
+        <Route
+          path="/app/financeiro/conciliacao"
+          element={
+            <ProtectedRoute>
+              <ReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/fluxo-caixa"
+          element={
+            <ProtectedRoute>
+              <CashflowPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/financeiro/dre"
+          element={
+            <ProtectedRoute>
+              <DrePage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/app/docs/:type"

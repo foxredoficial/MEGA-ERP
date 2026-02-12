@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { 
   Plus, 
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/Input";
 import { getPriceLists, deletePriceList, type PriceList } from "@/lib/api_price_lists";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 import { format } from "date-fns";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function PriceListList() {
   const [lists, setLists] = useState<PriceList[]>([]);
@@ -25,9 +26,16 @@ export function PriceListList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   useEffect(() => {
     loadLists();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   async function loadLists() {
     try {
@@ -60,9 +68,24 @@ export function PriceListList() {
     }
   }
 
-  const filteredLists = lists.filter(l => 
-    l.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredLists = useMemo(() => {
+    const q = search.toLowerCase();
+    return lists.filter((l) => l.name.toLowerCase().includes(q));
+  }, [lists, search]);
+
+  const total = filteredLists.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedLists = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredLists.slice(start, end);
+  }, [filteredLists, page, pageSize, totalPages]);
 
   const getTypeLabel = (type: string) => {
     switch(type) {
@@ -134,7 +157,7 @@ export function PriceListList() {
                     </td>
                   </tr>
                 ) : (
-                  filteredLists.map((list) => (
+                  pagedLists.map((list) => (
                     <tr key={list.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
                         <Link to={`/app/listas-preco/${list.id}`} className="font-semibold text-slate-900 hover:text-blue-600">
@@ -203,6 +226,20 @@ export function PriceListList() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Listas"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
         </div>
       </div>
 

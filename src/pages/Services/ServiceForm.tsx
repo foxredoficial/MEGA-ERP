@@ -11,9 +11,10 @@ import {
   AlignLeft,
   Percent
 } from "lucide-react";
-import { BlingHeader } from "@/components/BlingHeader";
+import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { Select } from "@/components/ui/Select";
 import { 
   getProduct, 
@@ -89,20 +90,17 @@ export function ServiceForm() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col bg-white">
-        <BlingHeader />
-        <div className="flex-1 pt-14 flex items-center justify-center">
+      <BlingLayout>
+        <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </BlingLayout>
     );
   }
 
   return (
-    <div className="h-screen w-full flex flex-col bg-white">
-      <BlingHeader />
-      
-      <main className="flex-1 pt-14 flex flex-col overflow-hidden">
+    <BlingLayout>
+      <div className="flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
@@ -243,12 +241,12 @@ export function ServiceForm() {
                       <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Venda</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">R$</span>
-                        <Input 
+                        <MoneyInput
                           className="pl-9 font-medium text-slate-900"
-                          type="number"
                           value={formData.price || 0} 
-                          onChange={(e) => handleChange("price", parseFloat(e.target.value))}
-                          placeholder="0.00"
+                          onValueChange={(v) => handleChange("price", Math.round(v * 100) / 100)}
+                          withSymbol={false}
+                          placeholder="0,00"
                         />
                       </div>
                     </div>
@@ -257,12 +255,12 @@ export function ServiceForm() {
                       <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Custo</label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">R$</span>
-                        <Input 
+                        <MoneyInput
                           className="pl-9"
-                          type="number"
                           value={formData.cost_price || 0} 
-                          onChange={(e) => handleChange("cost_price", parseFloat(e.target.value))}
-                          placeholder="0.00"
+                          onValueChange={(v) => handleChange("cost_price", Math.round(v * 100) / 100)}
+                          withSymbol={false}
+                          placeholder="0,00"
                         />
                       </div>
                       <p className="text-xs text-slate-500 mt-1">Usado para cálculo de margem.</p>
@@ -400,7 +398,7 @@ export function ServiceForm() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </BlingLayout>
   );
 }

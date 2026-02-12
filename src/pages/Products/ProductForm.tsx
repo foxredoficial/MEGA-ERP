@@ -10,14 +10,18 @@ import {
   DollarSign,
   Plus as PlusIcon,
   UploadCloud,
-  Info
+  Info,
+  X
 } from "lucide-react";
-import { BlingHeader } from "@/components/BlingHeader";
+import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 import { Input } from "@/components/ui/Input";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { Select } from "@/components/ui/Select";
 import { 
   getProduct, 
+  getProductVariations,
   createProduct, 
   updateProduct, 
   getStockHistory, 
@@ -54,6 +58,8 @@ export function ProductForm() {
   const [variationOptions, setVariationOptions] = useState("");
   const [variationsList, setVariationsList] = useState<{name: string, options: string[]}[]>([]);
   const [generatingVariations, setGeneratingVariations] = useState(false);
+  const [childVariations, setChildVariations] = useState<Product[]>([]);
+  const [loadingChildVariations, setLoadingChildVariations] = useState(false);
 
   // Initial stock state (only for UI in this version, usually handled via separate movement API)
   const [initialStock, setInitialStock] = useState({
@@ -81,6 +87,9 @@ export function ProductForm() {
   const [loadingLots, setLoadingLots] = useState(false);
   const [showLotForm, setShowLotForm] = useState(false);
   const [editingLot, setEditingLot] = useState<ProductLot | null>(null);
+  const [deleteLotId, setDeleteLotId] = useState<string | null>(null);
+  const [isDeleteLotDialogOpen, setIsDeleteLotDialogOpen] = useState(false);
+  const [deletingLot, setDeletingLot] = useState(false);
   const [lotFormData, setLotFormData] = useState<CreateLotData>({
     code: "",
     manufacturing_date: "",
@@ -99,20 +108,44 @@ export function ProductForm() {
       .catch(console.error);
 
     if (isEditing && id) {
-      setLoading(true);
-      getProduct(id)
-        .then(product => {
+      const run = async () => {
+        setLoading(true);
+        try {
+          const product = await getProduct(id);
           setFormData(product);
-          if (product.format === 'variation') {
-            // Load variations if needed
+
+          const raw = (product as any).variations_json;
+          if (raw) {
+            try {
+              const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+              if (Array.isArray(parsed)) {
+                setVariationsList(parsed);
+                setFormData((prev) => ({ ...prev, variations_json: parsed as any }));
+              }
+            } catch {
+              void 0;
+            }
           }
-        })
-        .catch(err => console.error(err))
-        .finally(() => setLoading(false));
-        
-      getStockHistory(id)
-        .then(history => setStockHistory(history))
-        .catch(console.error);
+
+          if (product.format === "variation") {
+            setLoadingChildVariations(true);
+            try {
+              const vars = await getProductVariations(id);
+              setChildVariations(vars);
+            } finally {
+              setLoadingChildVariations(false);
+            }
+          }
+
+          const history = await getStockHistory(id);
+          setStockHistory(history);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      void run();
     }
   }, [id, isEditing]);
 
@@ -158,10 +191,17 @@ export function ProductForm() {
     }
   };
 
-  const handleDeleteLot = async (lotId: string) => {
-    if (!id || !confirm("Tem certeza que deseja excluir/inativar este lote?")) return;
+  const handleDeleteLotClick = (lotId: string) => {
+    if (!id) return;
+    setDeleteLotId(lotId);
+    setIsDeleteLotDialogOpen(true);
+  };
+
+  const handleConfirmDeleteLot = async () => {
+    if (!id || !deleteLotId) return;
+    setDeletingLot(true);
     try {
-      const result = await deleteProductLot(id, lotId);
+      const result = await deleteProductLot(id, deleteLotId);
       if (result.action === 'deactivated') {
         alert("O lote possui movimentações e foi inativado.");
       }
@@ -169,6 +209,10 @@ export function ProductForm() {
     } catch (error) {
       console.error("Erro ao excluir lote:", error);
       alert("Erro ao excluir lote");
+    } finally {
+      setDeletingLot(false);
+      setIsDeleteLotDialogOpen(false);
+      setDeleteLotId(null);
     }
   };
 
@@ -192,12 +236,91 @@ export function ProductForm() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const normalizePayload = (input: Partial<Product>) => {
+    const out: Record<string, any> = { ...input };
+
+    const nullIfEmpty = (v: any) => {
+      if (v === undefined) return undefined;
+      if (v === null) return null;
+      if (typeof v === "string" && v.trim() === "") return null;
+      return v;
+    };
+
+    const numberOrNull = (v: any) => {
+      const n = typeof v === "string" && v.trim() === "" ? null : v;
+      if (n === undefined) return undefined;
+      if (n === null) return null;
+      const num = Number(n);
+      return Number.isFinite(num) ? num : null;
+    };
+
+    const numberOrZero = (v: any) => {
+      if (v === undefined) return undefined;
+      if (v === null) return 0;
+      const s = typeof v === "string" ? v.trim() : v;
+      if (s === "") return 0;
+      const num = Number(s);
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    const booleanCoerce = (v: any) => {
+      if (v === undefined) return undefined;
+      if (typeof v === "boolean") return v;
+      if (typeof v === "number") return v !== 0;
+      if (typeof v === "string") {
+        const s = v.trim().toLowerCase();
+        if (s === "true") return true;
+        if (s === "false") return false;
+        const n = Number(s);
+        if (Number.isFinite(n)) return n !== 0;
+      }
+      return Boolean(v);
+    };
+
+    out.sku = nullIfEmpty(out.sku);
+    out.brand = nullIfEmpty(out.brand);
+    out.gtin = nullIfEmpty(out.gtin);
+    out.gtin_tax = nullIfEmpty(out.gtin_tax);
+    out.description_short = nullIfEmpty(out.description_short);
+    out.description_complementary = nullIfEmpty(out.description_complementary);
+    out.image_url = nullIfEmpty(out.image_url);
+    out.video_url = nullIfEmpty(out.video_url);
+    out.external_link = nullIfEmpty(out.external_link);
+    out.observations = nullIfEmpty(out.observations);
+    out.location = nullIfEmpty(out.location);
+    out.ncm = nullIfEmpty(out.ncm);
+    out.cest = nullIfEmpty(out.cest);
+    out.origin = nullIfEmpty(out.origin);
+    out.item_type = nullIfEmpty(out.item_type);
+    out.category_id = nullIfEmpty(out.category_id);
+    out.parent_id = nullIfEmpty(out.parent_id);
+
+    out.price = numberOrZero(out.price);
+    out.cost_price = numberOrZero(out.cost_price);
+    out.stock = numberOrZero(out.stock);
+    out.stock_min = numberOrZero(out.stock_min);
+    out.stock_max = numberOrZero(out.stock_max);
+    out.crossdocking = numberOrZero(out.crossdocking);
+
+    out.weight_net = numberOrNull(out.weight_net);
+    out.weight_gross = numberOrNull(out.weight_gross);
+    out.width = numberOrNull(out.width);
+    out.height = numberOrNull(out.height);
+    out.depth = numberOrNull(out.depth);
+    out.volumes = numberOrNull(out.volumes);
+    out.items_per_box = numberOrNull(out.items_per_box);
+
+    out.has_lot_control = booleanCoerce(out.has_lot_control);
+
+    return out;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
       if (isEditing && id) {
-        await updateProduct(id, formData);
+        await updateProduct(id, normalizePayload(formData));
       } else {
         // If we have initial stock, we might want to set it in formData.stock before creating
         // or handle it as a separate movement after creation.
@@ -207,7 +330,7 @@ export function ProductForm() {
           stock: initialStock.quantity > 0 ? initialStock.quantity : formData.stock,
           cost_price: initialStock.unitCost > 0 ? initialStock.unitCost : formData.cost_price
         };
-        const newProductId = await createProduct(dataToSubmit);
+        const newProductId = await createProduct(normalizePayload(dataToSubmit));
 
         // Handle Variations Creation
         if (formData.format === 'variation' && variationsList.length > 0) {
@@ -222,7 +345,7 @@ export function ProductForm() {
                 const varSku = formData.sku ? `${formData.sku}-${combo.join("-")}` : null;
                 
                 await createProduct({
-                    ...dataToSubmit,
+                    ...normalizePayload(dataToSubmit),
                     name: varName,
                     sku: varSku,
                     format: 'simple',
@@ -241,32 +364,38 @@ export function ProductForm() {
     }
   };
 
+  const applyVariationsList = (next: Array<{ name: string; options: string[] }>) => {
+    setVariationsList(next);
+    handleChange("variations_json" as any, next);
+  };
+
   const handleAddVariations = () => {
     if (!variationName || !variationOptions) return;
     const options = variationOptions.split(/[\n\t,]+/).map(o => o.trim()).filter(Boolean);
     if (options.length === 0) return;
     
-    setVariationsList(prev => [...prev, { name: variationName, options }]);
+    applyVariationsList([...variationsList, { name: variationName, options }]);
     setVariationName("");
     setVariationOptions("");
   };
 
+  const handleRemoveVariation = (index: number) => {
+    applyVariationsList(variationsList.filter((_, i) => i !== index));
+  };
+
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col bg-white">
-        <BlingHeader />
-        <div className="flex-1 pt-14 flex items-center justify-center">
+      <BlingLayout>
+        <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      </BlingLayout>
     );
   }
 
   return (
-    <div className="h-screen w-full flex flex-col bg-white">
-      <BlingHeader />
-      
-      <main className="flex-1 pt-14 flex flex-col overflow-hidden">
+    <BlingLayout>
+      <div className="flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-none px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white z-10">
           <div className="flex items-center gap-4">
@@ -372,12 +501,12 @@ export function ProductForm() {
                     <label className="block text-sm font-medium text-slate-700 mb-1">Preço de Venda</label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input 
+                      <MoneyInput
                         className="pl-9"
-                        type="number"
                         value={formData.price || 0} 
-                        onChange={(e) => handleChange("price", parseFloat(e.target.value))}
-                        placeholder="0.00"
+                        onValueChange={(v) => handleChange("price", Math.round(v * 100) / 100)}
+                        withSymbol={false}
+                        placeholder="0,00"
                       />
                     </div>
                   </div>
@@ -450,7 +579,7 @@ export function ProductForm() {
                         <label className="block text-sm font-medium text-slate-700 mb-1">Origem</label>
                         <Select 
                             value={formData.origin || ""}
-                            onChange={(e) => handleChange("origin", e.target.value)}
+                            onChange={(e) => handleChange("origin", e.target.value || null)}
                         >
                             <option value="">Selecione a origem</option>
                             <option value="0">0 - Nacional, exceto as indicadas nos códigos 3, 4, 5 e 8</option>
@@ -468,7 +597,7 @@ export function ProductForm() {
                         <label className="block text-sm font-medium text-slate-700 mb-1">NCM</label>
                         <Input 
                             value={formData.ncm || ""} 
-                            onChange={(e) => handleChange("ncm", e.target.value)}
+                            onChange={(e) => handleChange("ncm", e.target.value || null)}
                             placeholder="0000.00.00"
                         />
                     </div>
@@ -476,7 +605,7 @@ export function ProductForm() {
                         <label className="block text-sm font-medium text-slate-700 mb-1">CEST</label>
                         <Input 
                             value={formData.cest || ""} 
-                            onChange={(e) => handleChange("cest", e.target.value)}
+                            onChange={(e) => handleChange("cest", e.target.value || null)}
                             placeholder="00.000.00"
                         />
                     </div>
@@ -484,7 +613,7 @@ export function ProductForm() {
                         <label className="block text-sm font-medium text-slate-700 mb-1">Tipo do item</label>
                         <Select 
                             value={formData.item_type || ""}
-                            onChange={(e) => handleChange("item_type", e.target.value)}
+                            onChange={(e) => handleChange("item_type", e.target.value || null)}
                         >
                             <option value="">Selecione</option>
                             <option value="merchandise">Mercadoria para Revenda</option>
@@ -529,11 +658,18 @@ export function ProductForm() {
                           </div>
                           <div>
                               <label className="block text-sm font-medium text-slate-700 mb-1">Opções</label>
-                              <div className="flex gap-2">
-                                <Input 
-                                    placeholder="Separe as opções com Enter ou Tab" 
-                                    value={variationOptions}
-                                    onChange={(e) => setVariationOptions(e.target.value)}
+                              <div className="flex gap-2 items-start">
+                                <textarea
+                                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 min-h-[44px]"
+                                  placeholder="Uma opção por linha (Enter). Use Tab para quebrar linha também."
+                                  value={variationOptions}
+                                  onChange={(e) => setVariationOptions(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Tab") {
+                                      e.preventDefault();
+                                      setVariationOptions((prev) => (prev.endsWith("\n") || prev.length === 0 ? prev : `${prev}\n`));
+                                    }
+                                  }}
                                 />
                                 <Button 
                                     onClick={handleAddVariations}
@@ -545,7 +681,7 @@ export function ProductForm() {
                                 </Button>
                               </div>
                               <p className="text-xs text-blue-500 mt-1 flex items-center gap-1">
-                                <Info className="w-3 h-3" /> Separe as diferentes opções pressionando tab ou enter
+                                <Info className="w-3 h-3" /> Enter cria uma opção por linha. Tab também quebra linha.
                               </p>
                           </div>
                         </div>
@@ -574,17 +710,72 @@ export function ProductForm() {
                                       </div>
                                     </td>
                                     <td className="px-4 py-2 text-right">
-                                      <button 
-                                        onClick={() => setVariationsList(prev => prev.filter((_, idx) => idx !== i))}
-                                        className="text-red-500 hover:text-red-700"
-                                      >
-                                        Excluir
+                                      <button onClick={() => handleRemoveVariation(i)} className="text-slate-500 hover:text-red-600">
+                                        <X className="w-4 h-4" />
                                       </button>
                                     </td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
+                          </div>
+                        )}
+
+                        {isEditing && formData.format === "variation" && (
+                          <div className="mt-6 border border-slate-200 rounded-lg overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+                              <div className="text-sm font-medium text-slate-700">Variações geradas</div>
+                              <Button
+                                variant="outline"
+                                className="h-8 text-slate-700 border-slate-200 hover:bg-slate-100"
+                                onClick={async () => {
+                                  if (!id) return;
+                                  setLoadingChildVariations(true);
+                                  try {
+                                    const vars = await getProductVariations(id);
+                                    setChildVariations(vars);
+                                  } finally {
+                                    setLoadingChildVariations(false);
+                                  }
+                                }}
+                              >
+                                Atualizar
+                              </Button>
+                            </div>
+                            {loadingChildVariations ? (
+                              <div className="px-4 py-6 text-sm text-slate-500">Carregando variações...</div>
+                            ) : childVariations.length === 0 ? (
+                              <div className="px-4 py-6 text-sm text-slate-500">Nenhuma variação gerada ainda.</div>
+                            ) : (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                  <thead className="bg-white border-b border-slate-100">
+                                    <tr>
+                                      <th className="px-4 py-2 font-medium text-slate-700">Nome</th>
+                                      <th className="px-4 py-2 font-medium text-slate-700">SKU</th>
+                                      <th className="px-4 py-2 font-medium text-slate-700">Estoque</th>
+                                      <th className="px-4 py-2 font-medium text-slate-700">Preço</th>
+                                      <th className="px-4 py-2 font-medium text-slate-700 text-right"></th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-50">
+                                    {childVariations.map((p) => (
+                                      <tr key={p.id} className="hover:bg-slate-50">
+                                        <td className="px-4 py-2">{p.name}</td>
+                                        <td className="px-4 py-2 text-slate-600 font-mono text-xs">{p.sku || "-"}</td>
+                                        <td className="px-4 py-2">{p.stock ?? 0}</td>
+                                        <td className="px-4 py-2">{p.price ?? 0}</td>
+                                        <td className="px-4 py-2 text-right">
+                                          <Link to={`/app/produtos/${p.id}`} className="text-blue-600 hover:text-blue-800">
+                                            Editar
+                                          </Link>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
                           </div>
                         )}
                     </div>
@@ -622,7 +813,7 @@ export function ProductForm() {
                       <Input 
                         type="number"
                         value={formData.stock_min || 0}
-                        onChange={(e) => handleChange("stock_min", parseFloat(e.target.value))}
+                        onChange={(e) => handleChange("stock_min", Number(e.target.value || 0))}
                       />
                     </div>
                     <div>
@@ -630,7 +821,7 @@ export function ProductForm() {
                       <Input 
                         type="number"
                         value={formData.stock_max || 0}
-                        onChange={(e) => handleChange("stock_max", parseFloat(e.target.value))}
+                        onChange={(e) => handleChange("stock_max", Number(e.target.value || 0))}
                       />
                     </div>
                     <div>
@@ -638,14 +829,14 @@ export function ProductForm() {
                       <Input 
                         type="number"
                         value={formData.crossdocking || 0}
-                        onChange={(e) => handleChange("crossdocking", parseFloat(e.target.value))}
+                        onChange={(e) => handleChange("crossdocking", Number(e.target.value || 0))}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Localização</label>
                       <Input 
                         value={formData.location || ""}
-                        onChange={(e) => handleChange("location", e.target.value)}
+                        onChange={(e) => handleChange("location", e.target.value || null)}
                       />
                     </div>
                   </div>
@@ -731,7 +922,7 @@ export function ProductForm() {
                                                                     <td className="px-4 py-2 text-right">
                                                                         <div className="flex justify-end gap-2">
                                                                             <button onClick={() => openLotForm(lot)} className="text-blue-600 hover:text-blue-800">Editar</button>
-                                                                            <button onClick={() => handleDeleteLot(lot.id)} className="text-red-600 hover:text-red-800">Excluir</button>
+                                                                            <button onClick={() => handleDeleteLotClick(lot.id)} className="text-red-600 hover:text-red-800">Excluir</button>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -825,7 +1016,7 @@ export function ProductForm() {
                           <Input 
                             type="number"
                             value={initialStock.quantity}
-                            onChange={(e) => setInitialStock({...initialStock, quantity: parseFloat(e.target.value)})}
+                            onChange={(e) => setInitialStock({...initialStock, quantity: Number(e.target.value || 0)})}
                           />
                         </div>
                       </div>
@@ -835,11 +1026,11 @@ export function ProductForm() {
                           <label className="block text-sm font-medium text-slate-700 mb-1">Preço de compra unitário</label>
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <Input 
+                            <MoneyInput
                               className="pl-9"
-                              type="number"
                               value={initialStock.unitPrice}
-                              onChange={(e) => setInitialStock({...initialStock, unitPrice: parseFloat(e.target.value)})}
+                              onValueChange={(v) => setInitialStock({ ...initialStock, unitPrice: Math.round(v * 100) / 100 })}
+                              withSymbol={false}
                             />
                           </div>
                         </div>
@@ -847,11 +1038,11 @@ export function ProductForm() {
                           <label className="block text-sm font-medium text-slate-700 mb-1">Custo de compra Un</label>
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <Input 
+                            <MoneyInput
                               className="pl-9"
-                              type="number"
                               value={initialStock.unitCost}
-                              onChange={(e) => setInitialStock({...initialStock, unitCost: parseFloat(e.target.value)})}
+                              onValueChange={(v) => setInitialStock({ ...initialStock, unitCost: Math.round(v * 100) / 100 })}
+                              withSymbol={false}
                             />
                           </div>
                         </div>
@@ -913,7 +1104,18 @@ export function ProductForm() {
             
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={isDeleteLotDialogOpen}
+        onClose={() => setIsDeleteLotDialogOpen(false)}
+        onConfirm={handleConfirmDeleteLot}
+        title="Excluir / Inativar lote"
+        description="Tem certeza que deseja excluir/inativar este lote? Se houver movimentações, ele será inativado."
+        confirmText="Confirmar"
+        variant="warning"
+        loading={deletingLot}
+      />
+    </BlingLayout>
   );
 }

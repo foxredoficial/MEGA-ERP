@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { Request, Response } from "express";
 import { env } from "../env.js";
+import { clearCsrfCookie, setCsrfCookie } from "../security/csrf.js";
 
 type SessionPayload = {
   sub: string;
@@ -40,10 +41,13 @@ export function setSessionCookie(res: Response, token: string) {
     // Em desenvolvimento (localhost/127.0.0.1), não setar domínio permite compartilhamento entre portas no mesmo hostname
     // Se setar domain: 'localhost', só funciona em localhost. Se não setar, funciona no host atual.
   });
+
+  setCsrfCookie(res);
 }
 
 export function clearSessionCookie(res: Response) {
   res.clearCookie(env.SESSION_COOKIE_NAME, { path: "/" });
+  clearCsrfCookie(res);
 }
 
 export async function getSessionFromRequest(req: Request) {

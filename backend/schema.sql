@@ -35,8 +35,12 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS plans (
   id CHAR(36) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  description TEXT NULL,
   price_cents INT NOT NULL,
   features_json JSON NOT NULL,
+  max_users INT NOT NULL DEFAULT 1,
+  max_products INT NOT NULL DEFAULT 100,
+  max_invoices INT NOT NULL DEFAULT 50,
   is_featured TINYINT(1) NOT NULL DEFAULT 0,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL,

@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const isProd = process.env.NODE_ENV === "production";
+
 const emptyStringToUndefined = (value: unknown) => {
   if (typeof value !== "string") return value;
   const trimmed = value.trim();
@@ -13,7 +15,7 @@ const schema = z.object({
   PORT: z.coerce.number().default(3000),
   APP_ORIGIN: z.string().url().default("http://127.0.0.1:5173"),
   SESSION_COOKIE_NAME: z.string().min(1).default("megaerp_session"),
-  SESSION_JWT_SECRET: z.string().min(32),
+  SESSION_JWT_SECRET: isProd ? z.string().min(32) : z.string().min(32).default("dev-session-secret-change-me-32-chars-0001"),
   PASSWORD_RESET_SECRET: z.preprocess(emptyStringToUndefined, z.string().min(16).optional()),
 
   MYSQL_HOST: z.string().min(1).default("localhost"),

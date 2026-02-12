@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 import { cancelDoc, listDocs, type BizDocument, type BizDocumentType } from "@/lib/api_docs";
 import { formatCurrency } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 
 const TYPE_LABEL: Record<BizDocumentType, string> = {
   proposal: "Propostas",
@@ -37,6 +38,9 @@ export function DocsList() {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   async function load() {
     if (!docType) return;
     try {
@@ -52,9 +56,27 @@ export function DocsList() {
     void load();
   }, [docType, search]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [docType, search]);
+
   const title = TYPE_LABEL[docType] ?? "Documentos";
 
   const filtered = useMemo(() => docs, [docs]);
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedDocs = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filtered.slice(start, end);
+  }, [filtered, page, pageSize, totalPages]);
 
   async function confirmCancel() {
     if (!cancelId) return;
@@ -112,7 +134,7 @@ export function DocsList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filtered.map((d) => (
+                {pagedDocs.map((d) => (
                   <tr key={d.id} className="hover:bg-blue-50/30 transition-colors">
                     <td className="px-6 py-4 font-mono text-slate-600 font-medium">{d.number}</td>
                     <td className="px-6 py-4 text-slate-900">{d.partyName ?? "-"}</td>
@@ -150,6 +172,20 @@ export function DocsList() {
             </table>
           </div>
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Documentos"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       <ConfirmationDialog
@@ -165,4 +201,3 @@ export function DocsList() {
     </BlingLayout>
   );
 }
-

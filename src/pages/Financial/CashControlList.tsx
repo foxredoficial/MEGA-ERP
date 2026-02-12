@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { 
   DollarSign, 
   Calendar, 
@@ -11,9 +11,13 @@ import {
 import { useNavigate } from "react-router-dom";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { getCashSessions, getCurrentOpenSession, type CashSession } from "@/lib/api_cash";
 import { formatCurrency } from "@/lib/utils";
+import { AdvancedDateFilter } from "@/components/filters/AdvancedDateFilter";
+import { computePreset, inRange, suggestedGranularity, type DateFilterValue } from "@/components/filters/dateRange";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function CashControlList() {
   const navigate = useNavigate();
@@ -21,6 +25,13 @@ export function CashControlList() {
   const [loading, setLoading] = useState(true);
   const [currentSession, setCurrentSession] = useState<CashSession | null>(null);
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>(() => {
+    const r = computePreset("this_month");
+    return { preset: "this_month", range: r, granularity: suggestedGranularity(r), compare: { mode: "previous_period" } };
+  });
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     loadData();
@@ -41,6 +52,38 @@ export function CashControlList() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, dateFilter.range.start.getTime(), dateFilter.range.end.getTime()]);
+
+  const filteredSessions = useMemo(() => {
+    return sessions.filter((s) => {
+      const d = new Date(s.openedAt);
+      if (!Number.isNaN(d.getTime()) && !inRange(d, dateFilter.range)) return false;
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      const opened = new Date(s.openedAt).toLocaleString().toLowerCase();
+      const closed = s.closedAt ? new Date(s.closedAt).toLocaleString().toLowerCase() : "";
+      const userName = (s.userName || "").toLowerCase();
+      const status = (s.status || "").toLowerCase();
+      return opened.includes(q) || closed.includes(q) || userName.includes(q) || status.includes(q);
+    });
+  }, [sessions, search, dateFilter.range]);
+
+  const total = filteredSessions.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedSessions = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredSessions.slice(start, end);
+  }, [filteredSessions, page, pageSize, totalPages]);
 
   return (
     <BlingLayout>
@@ -124,14 +167,17 @@ export function CashControlList() {
               <Calendar className="w-5 h-5 text-slate-500" />
               Histórico de Caixas
             </h2>
-            <div className="relative w-64">
+            <div className="flex items-center gap-3">
+              <AdvancedDateFilter label="Data" value={dateFilter} onChange={setDateFilter} />
+              <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
-                className="w-full pl-9 pr-4 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <Input
                 placeholder="Buscar por data ou operador..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
               />
+              </div>
             </div>
           </div>
 
@@ -151,17 +197,7 @@ export function CashControlList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {sessions
-                  .filter((s) => {
-                    const q = search.trim().toLowerCase();
-                    if (!q) return true;
-                    const opened = new Date(s.openedAt).toLocaleString().toLowerCase();
-                    const closed = s.closedAt ? new Date(s.closedAt).toLocaleString().toLowerCase() : "";
-                    const userName = (s.userName || "").toLowerCase();
-                    const status = (s.status || "").toLowerCase();
-                    return opened.includes(q) || closed.includes(q) || userName.includes(q) || status.includes(q);
-                  })
-                  .map((session) => (
+                {pagedSessions.map((session) => (
                   <tr key={session.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 text-slate-600">
                       {new Date(session.openedAt).toLocaleString()}
@@ -200,8 +236,8 @@ export function CashControlList() {
                       </Button>
                     </td>
                   </tr>
-                ))}
-                {sessions.length === 0 && !loading && (
+                  ))}
+                {filteredSessions.length === 0 && !loading && (
                   <tr>
                     <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
                       Nenhum registro de caixa encontrado.
@@ -211,6 +247,20 @@ export function CashControlList() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Sessões"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
         </div>
       </div>
     </BlingLayout>

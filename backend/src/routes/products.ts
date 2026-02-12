@@ -51,6 +51,15 @@ const productSchema = z.object({
   origin: z.string().nullable().optional(),
   item_type: z.string().nullable().optional(),
   parent_id: z.string().uuid().nullable().optional(),
+  variations_json: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        options: z.array(z.string().min(1)).min(1),
+      })
+    )
+    .nullable()
+    .optional(),
   has_lot_control: z.boolean().optional(),
 });
 

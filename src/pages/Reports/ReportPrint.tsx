@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getReport, type ReportResult } from "@/lib/api_reports";
+import { toLocalIsoDate } from "@/lib/utils";
 import { ReportTable } from "./ReportTable";
 
 export function ReportPrint() {
@@ -8,8 +9,8 @@ export function ReportPrint() {
   const [searchParams] = useSearchParams();
 
   const reportId = String(id ?? "");
-  const start = searchParams.get("start") ?? new Date().toISOString().slice(0, 10);
-  const end = searchParams.get("end") ?? new Date().toISOString().slice(0, 10);
+  const start = searchParams.get("start") ?? toLocalIsoDate(new Date());
+  const end = searchParams.get("end") ?? toLocalIsoDate(new Date());
   const status = searchParams.get("status") ?? undefined;
   const kind = searchParams.get("kind") ?? undefined;
   const query = searchParams.get("query") ?? undefined;
@@ -73,4 +74,3 @@ export function ReportPrint() {
     </div>
   );
 }
-

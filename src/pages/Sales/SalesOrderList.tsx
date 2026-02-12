@@ -4,10 +4,14 @@ import { Plus, Search, Filter, Calendar, ShoppingCart } from "lucide-react";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { AdvancedDateFilter } from "@/components/filters/AdvancedDateFilter";
+import { computePreset, inRange, suggestedGranularity, type DateFilterValue } from "@/components/filters/dateRange";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import { cancelSalesOrder, listSalesOrders, type SalesOrder } from "@/lib/api_sales_orders";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
+import { Pagination } from "@/components/ui/Pagination";
 
 const STATUS_MAP: Record<string, { label: string; tone: "blue" | "green" | "slate" | "red" }> = {
   open: { label: "Em Aberto", tone: "blue" },
@@ -23,10 +27,24 @@ export function SalesOrderList() {
   const [orders, setOrders] = useState<SalesOrder[]>([]);
   const [canceling, setCanceling] = useState(false);
   const [cancelId, setCancelId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>(() => {
+    const r = computePreset("this_month");
+    return { preset: "this_month", range: r, granularity: suggestedGranularity(r), compare: { mode: "previous_period" } };
+  });
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, dateFilter.range.start.getTime(), dateFilter.range.end.getTime()]);
 
   async function load() {
     try {
@@ -54,14 +72,67 @@ export function SalesOrderList() {
     }
   }
 
+  async function confirmBulkCancel() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    try {
+      setCanceling(true);
+      await Promise.all(ids.map((id) => cancelSalesOrder(id)));
+      setSelectedIds(new Set());
+      await load();
+    } finally {
+      setCanceling(false);
+      setBulkCancelOpen(false);
+    }
+  }
+
   const filteredOrders = useMemo(() => {
     const q = search.toLowerCase().trim();
     return orders.filter((order) => {
+      const d = new Date(order.date);
+      if (!Number.isNaN(d.getTime()) && !inRange(d, dateFilter.range)) return false;
       if (statusFilter !== "all" && order.status !== statusFilter) return false;
       if (!q) return true;
       return order.customerName.toLowerCase().includes(q) || order.number.toLowerCase().includes(q);
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, dateFilter.range]);
+
+  const total = filteredOrders.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedOrders = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredOrders.slice(start, end);
+  }, [filteredOrders, page, pageSize, totalPages]);
+
+  const selectedCount = selectedIds.size;
+  const allVisibleSelected = pagedOrders.length > 0 && pagedOrders.every((o) => selectedIds.has(o.id));
+
+  function toggleAllVisible(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const o of pagedOrders) {
+        if (checked) next.add(o.id);
+        else next.delete(o.id);
+      }
+      return next;
+    });
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
 
   const totals = useMemo(() => {
     const count = filteredOrders.length;
@@ -99,17 +170,13 @@ export function SalesOrderList() {
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</div>
-            <select
-              className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-            >
+            <Select className="mt-2" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
               <option value="all">Todos</option>
               <option value="open">Em aberto</option>
               <option value="billed">Faturado</option>
               <option value="delivered">Entregue</option>
               <option value="canceled">Cancelado</option>
-            </select>
+            </Select>
           </div>
         </div>
 
@@ -126,12 +193,23 @@ export function SalesOrderList() {
           </div>
           <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
           <div className="flex items-center gap-2 pr-2 w-full md:w-auto justify-end">
-             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
-               <Filter className="w-4 h-4 mr-2" />
-               <span className="text-sm">Filtros</span>
-             </Button>
+             <AdvancedDateFilter label="Data" value={dateFilter} onChange={setDateFilter} />
           </div>
         </div>
+
+        {selectedCount > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between">
+            <div className="text-sm text-slate-700">Selecionados: <span className="font-semibold">{selectedCount}</span></div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setSelectedIds(new Set())}>
+                Limpar seleção
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setBulkCancelOpen(true)}>
+                Cancelar selecionados
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -140,7 +218,12 @@ export function SalesOrderList() {
               <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 w-14">
-                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      checked={allVisibleSelected}
+                      onChange={(e) => toggleAllVisible(e.target.checked)}
+                    />
                   </th>
                   <th className="px-6 py-4">Número</th>
                   <th className="px-6 py-4">Cliente</th>
@@ -152,10 +235,15 @@ export function SalesOrderList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredOrders.map((order) => (
+                {pagedOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-6 py-4">
-                      <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        checked={selectedIds.has(order.id)}
+                        onChange={(e) => toggleOne(order.id, e.target.checked)}
+                      />
                     </td>
                     <td className="px-6 py-4 font-mono text-slate-600 font-medium">
                       {order.number}
@@ -217,6 +305,20 @@ export function SalesOrderList() {
             </table>
           </div>
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Pedidos"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
 
       <ConfirmationDialog
@@ -225,6 +327,17 @@ export function SalesOrderList() {
         onConfirm={() => void confirmCancel()}
         title="Cancelar pedido"
         description="Deseja cancelar este pedido de venda?"
+        confirmText="Cancelar"
+        variant="danger"
+        loading={canceling}
+      />
+
+      <ConfirmationDialog
+        isOpen={bulkCancelOpen}
+        onClose={() => setBulkCancelOpen(false)}
+        onConfirm={() => void confirmBulkCancel()}
+        title="Cancelar selecionados"
+        description={`Deseja cancelar ${selectedCount} pedido(s)?`}
         confirmText="Cancelar"
         variant="danger"
         loading={canceling}

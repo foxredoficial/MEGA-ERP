@@ -40,6 +40,7 @@ export type Product = {
   origin: string | null;
   item_type: string | null;
   parent_id: string | null;
+  variations_json: Array<{ name: string; options: string[] }> | null;
   has_lot_control?: boolean;
   created_at: Date;
   updated_at: Date;
@@ -57,9 +58,9 @@ export async function createProduct(userId: string, data: Partial<Product>) {
       volumes, items_per_box, gtin, gtin_tax, description_short, 
       description_complementary, image_url, video_url, external_link, 
       observations, stock, stock_min, stock_max, crossdocking, location,
-      ncm, cest, origin, item_type, parent_id, has_lot_control,
+      ncm, cest, origin, item_type, parent_id, variations_json, has_lot_control,
       created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       userId,
@@ -97,6 +98,7 @@ export async function createProduct(userId: string, data: Partial<Product>) {
       data.origin || null,
       data.item_type || null,
       data.parent_id || null,
+      data.variations_json ? JSON.stringify(data.variations_json) : null,
       data.has_lot_control || false,
       now,
       now,
@@ -148,13 +150,17 @@ export async function updateProduct(userId: string, productId: string, data: Par
     'description_complementary', 'image_url', 'video_url', 'external_link',
     'observations', 'stock',
     'stock_min', 'stock_max', 'crossdocking', 'location',
-    'ncm', 'cest', 'origin', 'item_type', 'parent_id', 'has_lot_control'
+    'ncm', 'cest', 'origin', 'item_type', 'parent_id', 'variations_json', 'has_lot_control'
   ];
 
   for (const key of allowList) {
     if (data[key as keyof Product] !== undefined) {
       fields.push(`${key} = ?`);
-      values.push(data[key as keyof Product]);
+      if (key === "variations_json") {
+        values.push(data.variations_json ? JSON.stringify(data.variations_json) : null);
+      } else {
+        values.push(data[key as keyof Product]);
+      }
     }
   }
 

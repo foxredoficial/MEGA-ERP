@@ -14,12 +14,22 @@ function normalizeOrigin(value: string) {
 
 export function sameOriginGuard(allowedOrigins: string[]): RequestHandler {
   const allowed = new Set(allowedOrigins.map((o) => o.trim()).filter(Boolean));
+  const isProd = process.env.NODE_ENV === "production";
 
   return (req, res, next) => {
     if (SAFE_METHODS.has(req.method)) return next();
 
     const rawOrigin = req.headers.origin;
     const origin = typeof rawOrigin === "string" ? normalizeOrigin(rawOrigin) : null;
+
+    if (isProd && (!origin || origin === "null")) {
+      const rawReferer = req.headers.referer;
+      const refererOrigin = typeof rawReferer === "string" ? normalizeOrigin(rawReferer) : null;
+      if (!refererOrigin) {
+        void recordSecurityEvent(req, "origin_missing");
+        return sendError(res, 403, "Requisição bloqueada.");
+      }
+    }
 
     if (origin && !allowed.has(origin)) {
       void recordSecurityEvent(req, "origin_block");
@@ -36,4 +46,3 @@ export function sameOriginGuard(allowedOrigins: string[]): RequestHandler {
     return next();
   };
 }
-

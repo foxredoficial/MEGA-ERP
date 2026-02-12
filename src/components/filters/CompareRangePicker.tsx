@@ -1,4 +1,4 @@
-import { addDays, format, startOfMonth } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { CalendarMonth } from "./CalendarMonth";
@@ -11,12 +11,10 @@ type Props = {
 
 export function CompareRangePicker({ value, onChange }: Props) {
   const [picking, setPicking] = useState<"start" | "end">("start");
-  const [monthLeft, setMonthLeft] = useState<Date>(() => startOfMonth(value.start));
-  const [monthRight, setMonthRight] = useState<Date>(() => startOfMonth(addDays(value.start, 32)));
+  const [month, setMonth] = useState<Date>(() => startOfMonth(value.start));
 
   useEffect(() => {
-    setMonthLeft(startOfMonth(value.start));
-    setMonthRight(startOfMonth(addDays(value.start, 32)));
+    setMonth(startOfMonth(value.start));
     setPicking("start");
   }, [value.start]);
 
@@ -36,19 +34,16 @@ export function CompareRangePicker({ value, onChange }: Props) {
         <div>
           <div className="text-xs text-slate-500 mb-1">Início</div>
           <Input value={format(value.start, "dd/MM/yyyy")} onChange={() => null} className="h-10" readOnly />
-          <div className="mt-3">
-            <CalendarMonth month={monthLeft} selected={value} picking={picking} onPick={pick} onMonthChange={setMonthLeft} />
-          </div>
         </div>
         <div>
           <div className="text-xs text-slate-500 mb-1">Fim</div>
           <Input value={format(value.end, "dd/MM/yyyy")} onChange={() => null} className="h-10" readOnly />
-          <div className="mt-3">
-            <CalendarMonth month={monthRight} selected={value} picking={picking} onPick={pick} onMonthChange={setMonthRight} />
-          </div>
         </div>
+      </div>
+
+      <div className="mt-3">
+        <CalendarMonth month={month} selected={value} picking={picking} onPick={pick} onMonthChange={setMonth} />
       </div>
     </div>
   );
 }
-

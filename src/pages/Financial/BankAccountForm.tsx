@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Plus } from "lucide-react";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { addBankTransaction, createBankAccount, deleteBankAccount, getBankAccount, listBankTransactions, updateBankAccount, type BankTransaction } from "@/lib/api_banks";
 import { formatCurrency } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function BankAccountForm() {
   const navigate = useNavigate();
@@ -27,11 +30,32 @@ export function BankAccountForm() {
   const [balance, setBalance] = useState<number>(0);
 
   const [transactions, setTransactions] = useState<BankTransaction[]>([]);
+
+  const [txPage, setTxPage] = useState(1);
+  const [txPageSize, setTxPageSize] = useState(25);
   const [txType, setTxType] = useState<"in" | "out">("in");
   const [txAmount, setTxAmount] = useState<number>(0);
   const [txDescription, setTxDescription] = useState("");
   const [txDate, setTxDate] = useState(() => new Date().toISOString().slice(0, 16));
   const [txBusy, setTxBusy] = useState(false);
+
+  useEffect(() => {
+    setTxPage(1);
+  }, [accountId]);
+
+  const txTotal = transactions.length;
+  const txTotalPages = Math.max(1, Math.ceil(txTotal / Math.max(1, txPageSize)));
+
+  useEffect(() => {
+    if (txPage > txTotalPages) setTxPage(txTotalPages);
+  }, [txPage, txTotalPages]);
+
+  const pagedTransactions = useMemo(() => {
+    const safePage = Math.min(Math.max(1, txPage), txTotalPages);
+    const start = (safePage - 1) * txPageSize;
+    const end = start + txPageSize;
+    return transactions.slice(start, end);
+  }, [transactions, txPage, txPageSize, txTotalPages]);
 
   async function load() {
     if (!accountId) {
@@ -93,7 +117,7 @@ export function BankAccountForm() {
       setTxBusy(true);
       await addBankTransaction(accountId, {
         type: txType,
-        amount: txAmount,
+        amount: Math.round(txAmount * 100) / 100,
         description: txDescription,
         occurredAt: new Date(txDate).toISOString(),
       });
@@ -165,7 +189,7 @@ export function BankAccountForm() {
             {isNew && (
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Saldo Inicial</label>
-                <Input className="mt-2" type="number" step="0.01" value={initialBalance} onChange={(e) => setInitialBalance(Number(e.target.value))} />
+                <MoneyInput className="mt-2" value={initialBalance} onValueChange={setInitialBalance} withSymbol={false} />
               </div>
             )}
           </div>
@@ -177,11 +201,11 @@ export function BankAccountForm() {
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
-                  <select className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm" value={txType} onChange={(e) => setTxType(e.target.value as any)}>
+                  <Select className="h-11" value={txType} onChange={(e) => setTxType(e.target.value as any)}>
                     <option value="in">Entrada</option>
                     <option value="out">Saída</option>
-                  </select>
-                  <Input type="number" step="0.01" value={txAmount} onChange={(e) => setTxAmount(Number(e.target.value))} placeholder="0,00" />
+                  </Select>
+                  <MoneyInput value={txAmount} onValueChange={setTxAmount} withSymbol={false} placeholder="0,00" />
                 </div>
                 <Input value={txDescription} onChange={(e) => setTxDescription(e.target.value)} placeholder="Descrição" />
                 <Input type="datetime-local" value={txDate} onChange={(e) => setTxDate(e.target.value)} />
@@ -195,39 +219,55 @@ export function BankAccountForm() {
         </div>
 
         {accountId && (
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 font-semibold text-slate-900">Extrato</div>
-            <div className="overflow-auto max-h-[420px]">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-6 py-3">Data</th>
-                    <th className="px-6 py-3">Descrição</th>
-                    <th className="px-6 py-3 text-right">Valor</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {transactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="px-6 py-3 text-slate-600">{new Date(t.occurredAt).toLocaleString()}</td>
-                      <td className="px-6 py-3 text-slate-900">{t.description}</td>
-                      <td className={`px-6 py-3 text-right font-medium ${t.type === "in" ? "text-green-600" : "text-red-600"}`}>
-                        {t.type === "in" ? "+" : "-"}
-                        {formatCurrency(t.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                  {transactions.length === 0 && (
+          <>
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 font-semibold text-slate-900">Extrato</div>
+              <div className="overflow-auto max-h-[420px]">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100 sticky top-0 z-10">
                     <tr>
-                      <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
-                        Nenhuma movimentação.
-                      </td>
+                      <th className="px-6 py-3">Data</th>
+                      <th className="px-6 py-3">Descrição</th>
+                      <th className="px-6 py-3 text-right">Valor</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {pagedTransactions.map((t) => (
+                      <tr key={t.id} className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-6 py-3 text-slate-600">{new Date(t.occurredAt).toLocaleString()}</td>
+                        <td className="px-6 py-3 text-slate-900">{t.description}</td>
+                        <td className={`px-6 py-3 text-right font-medium ${t.type === "in" ? "text-green-600" : "text-red-600"}`}>
+                          {t.type === "in" ? "+" : "-"}
+                          {formatCurrency(t.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                    {transactions.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-10 text-center text-slate-500">
+                          Nenhuma movimentação.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 mt-4">
+              <Pagination
+                label="Movimentações"
+                page={txPage}
+                pageSize={txPageSize}
+                total={txTotal}
+                onPageChange={setTxPage}
+                onPageSizeChange={(n) => {
+                  setTxPageSize(n);
+                  setTxPage(1);
+                }}
+              />
+            </div>
+          </>
         )}
       </form>
 
@@ -244,4 +284,3 @@ export function BankAccountForm() {
     </BlingLayout>
   );
 }
-

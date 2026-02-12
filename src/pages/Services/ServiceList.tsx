@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   Plus, 
@@ -13,17 +13,38 @@ import {
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 import { getProducts, deleteProduct, type Product } from "@/lib/api";
 import { formatBRLFromCents } from "@/lib/money";
+import { downloadCsv, toCsv } from "@/lib/csv";
+import { AdvancedDateFilter } from "@/components/filters/AdvancedDateFilter";
+import { computePreset, inRange, suggestedGranularity, type DateFilterValue } from "@/components/filters/dateRange";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function ServiceList() {
   const [services, setServices] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>(() => {
+    const r = computePreset("this_month");
+    return { preset: "this_month", range: r, granularity: suggestedGranularity(r), compare: { mode: "previous_period" } };
+  });
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     loadServices();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, dateFilter.range.start.getTime(), dateFilter.range.end.getTime()]);
 
   async function loadServices() {
     try {
@@ -38,20 +59,101 @@ export function ServiceList() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
+  function handleDeleteClick(id: string) {
+    setDeleteId(id);
+    setIsDeleteDialogOpen(true);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteId) return;
     try {
-      await deleteProduct(id);
-      loadServices();
+      await deleteProduct(deleteId);
+      await loadServices();
     } catch (error) {
       console.error("Erro ao excluir serviço:", error);
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setDeleteId(null);
     }
   }
 
-  const filteredServices = services.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.sku && s.sku.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredServices = useMemo(() =>
+    services.filter((s) => {
+      const dt = new Date(((s as any).updated_at || (s as any).created_at) as any);
+      if (!Number.isNaN(dt.getTime()) && !inRange(dt, dateFilter.range)) return false;
+      const term = search.toLowerCase();
+      return s.name.toLowerCase().includes(term) || (s.sku && s.sku.toLowerCase().includes(term));
+    }),
+  [services, search, dateFilter.range]);
+
+  const total = filteredServices.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedServices = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredServices.slice(start, end);
+  }, [filteredServices, page, pageSize, totalPages]);
+
+  const selectedCount = selectedIds.size;
+  const allVisibleSelected = pagedServices.length > 0 && pagedServices.every((s) => selectedIds.has(s.id));
+
+  function toggleAllVisible(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const s of pagedServices) {
+        if (checked) next.add(s.id);
+        else next.delete(s.id);
+      }
+      return next;
+    });
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  async function confirmBulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    try {
+      await Promise.all(ids.map((id) => deleteProduct(id)));
+      setSelectedIds(new Set());
+      await loadServices();
+    } catch (error) {
+      console.error("Erro ao excluir serviços:", error);
+    } finally {
+      setBulkDeleteOpen(false);
+    }
+  }
+
+  function handleExport() {
+    const rows = filteredServices.map((s) => ({
+      name: s.name,
+      sku: s.sku ?? "",
+      price: (s.price ?? 0).toFixed(2),
+      iss_rate: (s as any).iss_rate ?? "",
+      lc116: (s as any).service_code_lc116 ?? "",
+    }));
+    const csv = toCsv(rows, [
+      { key: "name", label: "Nome" },
+      { key: "sku", label: "SKU" },
+      { key: "price", label: "Preço" },
+      { key: "lc116", label: "Cód. LC 116" },
+      { key: "iss_rate", label: "ISS (%)" },
+    ]);
+    downloadCsv("servicos.csv", csv);
+  }
 
   return (
     <BlingLayout>
@@ -85,16 +187,27 @@ export function ServiceList() {
           </div>
           <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
           <div className="flex items-center gap-2 pr-2 w-full md:w-auto justify-end">
-             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
-               <Filter className="w-4 h-4 mr-2" />
-               <span className="text-sm">Filtros</span>
-             </Button>
-             <Button variant="ghost" className="text-slate-500 hover:text-blue-600">
+             <AdvancedDateFilter label="Data" value={dateFilter} onChange={setDateFilter} />
+             <Button variant="ghost" className="text-slate-500 hover:text-blue-600" onClick={handleExport}>
                <Download className="w-4 h-4 mr-2" />
                <span className="text-sm">Exportar</span>
              </Button>
           </div>
         </div>
+
+        {selectedCount > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex items-center justify-between">
+            <div className="text-sm text-slate-700">Selecionados: <span className="font-semibold">{selectedCount}</span></div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setSelectedIds(new Set())}>
+                Limpar seleção
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setBulkDeleteOpen(true)}>
+                Excluir selecionados
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -103,7 +216,12 @@ export function ServiceList() {
               <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
                 <tr>
                   <th className="px-6 py-4 w-14">
-                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      checked={allVisibleSelected}
+                      onChange={(e) => toggleAllVisible(e.target.checked)}
+                    />
                   </th>
                   <th className="px-6 py-4">Serviço</th>
                   <th className="px-6 py-4">Cód. LC 116</th>
@@ -138,10 +256,15 @@ export function ServiceList() {
                     </td>
                   </tr>
                 ) : (
-                  filteredServices.map((service) => (
+                  pagedServices.map((service) => (
                     <tr key={service.id} className="hover:bg-blue-50/30 transition-colors group">
                       <td className="px-6 py-4">
-                        <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          checked={selectedIds.has(service.id)}
+                          onChange={(e) => toggleOne(service.id, e.target.checked)}
+                        />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
@@ -179,7 +302,7 @@ export function ServiceList() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                            onClick={() => handleDelete(service.id)}
+                            onClick={() => handleDeleteClick(service.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -192,7 +315,41 @@ export function ServiceList() {
             </table>
           </div>
         </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Serviços"
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => {
+              setPageSize(n);
+              setPage(1);
+            }}
+          />
+        </div>
       </div>
+
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Serviço"
+        description="Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="danger"
+      />
+
+      <ConfirmationDialog
+        isOpen={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={confirmBulkDelete}
+        title="Excluir selecionados"
+        description={`Deseja excluir ${selectedCount} serviço(s)? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        variant="danger"
+      />
     </BlingLayout>
   );
 }

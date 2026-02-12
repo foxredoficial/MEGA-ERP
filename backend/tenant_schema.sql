@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS products (
   origin VARCHAR(20),
   item_type VARCHAR(50),
   parent_id CHAR(36),
+  variations_json JSON,
   has_lot_control BOOLEAN DEFAULT 0,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL
@@ -170,6 +171,7 @@ CREATE TABLE IF NOT EXISTS cash_transactions (
   amount DECIMAL(10, 2) NOT NULL,
   description TEXT NOT NULL,
   payment_method VARCHAR(50) NOT NULL,
+  ref_type VARCHAR(50) NULL,
   ref_id CHAR(36) NULL,
   meta_json JSON NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -177,6 +179,45 @@ CREATE TABLE IF NOT EXISTS cash_transactions (
 );
 CREATE INDEX idx_cash_tx_session ON cash_transactions(session_id);
 CREATE INDEX idx_cash_tx_created ON cash_transactions(created_at);
+
+CREATE TABLE IF NOT EXISTS fin_categories (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  type ENUM('income','expense','transfer','other') NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_fin_categories_user_name (user_id, name)
+);
+CREATE INDEX idx_fin_categories_user ON fin_categories(user_id);
+CREATE INDEX idx_fin_categories_type ON fin_categories(type);
+
+CREATE TABLE IF NOT EXISTS fin_cost_centers (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_fin_cost_centers_user_name (user_id, name)
+);
+CREATE INDEX idx_fin_cost_centers_user ON fin_cost_centers(user_id);
+
+CREATE TABLE IF NOT EXISTS fin_coa_accounts (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  code VARCHAR(50) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  nature ENUM('revenue','expense','asset','liability','equity') NOT NULL,
+  parent_id CHAR(36) NULL,
+  active BOOLEAN NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  UNIQUE KEY uq_fin_coa_accounts_user_code (user_id, code)
+);
+CREATE INDEX idx_fin_coa_accounts_user ON fin_coa_accounts(user_id);
+CREATE INDEX idx_fin_coa_accounts_nature ON fin_coa_accounts(nature);
 
 CREATE TABLE IF NOT EXISTS financial_titles (
   id CHAR(36) PRIMARY KEY,
@@ -191,6 +232,11 @@ CREATE TABLE IF NOT EXISTS financial_titles (
   amount DECIMAL(10, 2) NOT NULL,
   paid_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
   due_date DATE NOT NULL,
+  competence_date DATE NULL,
+  category_id CHAR(36) NULL,
+  cost_center_id CHAR(36) NULL,
+  coa_account_id CHAR(36) NULL,
+  document_number VARCHAR(50) NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL
 );
@@ -207,6 +253,12 @@ CREATE TABLE IF NOT EXISTS financial_payments (
   method VARCHAR(20) NOT NULL,
   paid_at DATETIME NOT NULL,
   notes TEXT NULL,
+  settlement_account_type ENUM('none','cash','bank') NOT NULL DEFAULT 'none',
+  cash_session_id CHAR(36) NULL,
+  cash_transaction_id CHAR(36) NULL,
+  bank_account_id CHAR(36) NULL,
+  bank_transaction_id CHAR(36) NULL,
+  reconciled_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_fin_pay_title FOREIGN KEY (title_id) REFERENCES financial_titles(id) ON DELETE CASCADE
 );
@@ -422,8 +474,42 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
   occurred_at DATETIME NOT NULL,
   matched_ref_type VARCHAR(50) NULL,
   matched_ref_id CHAR(36) NULL,
+  source ENUM('manual','import','settlement') NOT NULL DEFAULT 'manual',
+  external_id VARCHAR(128) NULL,
+  import_batch_id CHAR(36) NULL,
+  raw_json JSON NULL,
+  reconciled_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_bank_tx_account FOREIGN KEY (account_id) REFERENCES bank_accounts(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_bank_tx_account ON bank_transactions(account_id);
 CREATE INDEX idx_bank_tx_occurred ON bank_transactions(occurred_at);
+
+CREATE TABLE IF NOT EXISTS bank_reconciliations (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  bank_transaction_id CHAR(36) NOT NULL,
+  matched_ref_type VARCHAR(50) NOT NULL,
+  matched_ref_id CHAR(36) NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
+  memo TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_bank_recon (bank_transaction_id, matched_ref_type, matched_ref_id),
+  CONSTRAINT fk_bank_recon_tx FOREIGN KEY (bank_transaction_id) REFERENCES bank_transactions(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_bank_recon_user ON bank_reconciliations(user_id);
+CREATE INDEX idx_bank_recon_tx ON bank_reconciliations(bank_transaction_id);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  actor_user_id CHAR(36) NOT NULL,
+  entity VARCHAR(100) NOT NULL,
+  entity_id CHAR(36) NOT NULL,
+  action VARCHAR(50) NOT NULL,
+  before_json JSON NULL,
+  after_json JSON NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_audit_user ON audit_log(user_id);
+CREATE INDEX idx_audit_entity ON audit_log(entity, entity_id);

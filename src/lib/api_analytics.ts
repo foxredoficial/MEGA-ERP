@@ -9,13 +9,22 @@ export type DashboardAnalytics = {
     current: {
       salesTotal: number;
       salesCount: number;
+      avgTicket: number;
+      salesOrdersTotal: number;
+      salesOrdersCount: number;
+      pdvTotal: number;
+      pdvCount: number;
       cashIn: number;
       cashOut: number;
+      cashNet: number;
       cashTransactions: number;
       receivableOpen: number;
       payableOpen: number;
+      receivableOverdue: number;
+      payableOverdue: number;
       stockInQty: number;
       stockOutQty: number;
+      stockNetQty: number;
       productsCount: number;
       lowStockCount: number;
     };
@@ -23,8 +32,25 @@ export type DashboardAnalytics = {
   };
   series: {
     sales: Array<{ t: string; current: number; compare: number | null }>;
+    salesDetail: Array<{
+      t: string;
+      ordersTotal: number;
+      pdvTotal: number;
+      ordersCount: number;
+      pdvCount: number;
+      ordersTotalCompare: number | null;
+      pdvTotalCompare: number | null;
+      ordersCountCompare: number | null;
+      pdvCountCompare: number | null;
+    }>;
     cash: Array<{ t: string; inCurrent: number; outCurrent: number; inCompare: number | null; outCompare: number | null }>;
     stock: Array<{ t: string; inCurrent: number; outCurrent: number; inCompare: number | null; outCompare: number | null }>;
+    financialOpen: Array<{ t: string; arOpenCurrent: number; apOpenCurrent: number; arOpenCompare: number | null; apOpenCompare: number | null }>;
+    financialPaid: Array<{ t: string; arPaidCurrent: number; apPaidCurrent: number; arPaidCompare: number | null; apPaidCompare: number | null }>;
+  };
+  lists: {
+    topSalesProducts: Array<{ productId: string; name: string; qty: number; total: number }>;
+    lowStockProducts: Array<{ id: string; name: string; sku: string | null; stock: number; stockMin: number }>;
   };
 };
 
@@ -46,4 +72,3 @@ export async function getDashboardAnalytics(args: {
 
   return apiFetch<DashboardAnalytics>(`/api/analytics/dashboard?${params.toString()}`, { method: "GET" });
 }
-

@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { 
   Save, 
-  ArrowLeft,
   ChevronDown,
   ChevronRight,
   Plus,
@@ -20,15 +19,13 @@ import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { getContact, createContact, updateContact, type ContactInput } from "@/lib/api_contacts";
 import { maskCpfCnpj, 
   maskCPF,
   maskCNPJ,
   maskPhone, 
   maskZip,
-  formatCurrency,
-  maskCurrency,
-  parseCurrency
 } from "@/lib/masks";
 import { cn } from "@/lib/utils";
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
@@ -218,37 +215,11 @@ export function ContactForm({ type }: ContactFormProps) {
       <form onSubmit={handleSubmit} className="pb-20">
         {/* Header */}
         <div className="flex items-center justify-between mb-0">
-          <div className="flex items-center gap-4">
-            <Link to={basePath}>
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className={cn(
-                  isSupplier ? "hover:bg-amber-50 hover:text-amber-700" : "hover:bg-blue-50 hover:text-blue-600"
-                )}
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">
-                {isEditing ? (isSupplier ? "Editar Fornecedor" : "Editar Cliente") : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}
-              </h1>
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Link to="/app" className={cn("hover:underline", isSupplier ? "hover:text-amber-700" : "hover:text-blue-600")}>
-                  Home
-                </Link>
-                <span>{'>'}</span>
-                <Link to={basePath} className={cn("hover:underline", isSupplier ? "hover:text-amber-700" : "hover:text-blue-600")}>
-                  {isSupplier ? "Fornecedores" : "Clientes"}
-                </Link>
-                <span>{'>'}</span>
-                <span className={cn("font-medium", isSupplier ? "text-amber-700" : "text-blue-600")}>
-                  {isEditing ? formData.name : (isSupplier ? "Novo Fornecedor" : "Novo Cliente")}
-                </span>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800">
+              {isEditing ? (isSupplier ? "Editar Fornecedor" : "Editar Cliente") : isSupplier ? "Novo Fornecedor" : "Novo Cliente"}
+            </h1>
+            <div className="text-sm text-slate-500 mt-1">Cadastros</div>
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -263,9 +234,7 @@ export function ContactForm({ type }: ContactFormProps) {
               type="submit"
               className={cn(
                 "text-white min-w-[120px] shadow-lg gap-2 font-medium",
-                isSupplier
-                  ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200"
-                  : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
+                "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
               )}
               disabled={saving}
             >
@@ -284,7 +253,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('dadosCadastrais')}
             >
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
+                <div className="p-1.5 rounded bg-blue-100 text-blue-600">
                   <Building2 className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Dados cadastrais</h2>
@@ -309,7 +278,7 @@ export function ContactForm({ type }: ContactFormProps) {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Código <span title="Código interno"><Info className={cn("inline w-3.5 h-3.5 ml-1 cursor-help", isSupplier ? "text-amber-500" : "text-blue-400")} /></span>
+                    Código <span title="Código interno"><Info className="inline w-3.5 h-3.5 ml-1 cursor-help text-blue-400" /></span>
                   </label>
                   <Input 
                     value={formData.code || ""} 
@@ -350,7 +319,7 @@ export function ContactForm({ type }: ContactFormProps) {
                   {isPJ ? (
                     <>
                       <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Fantasia <span title="Nome fantasia da empresa"><Info className={cn("inline w-3.5 h-3.5 ml-1 cursor-help", isSupplier ? "text-amber-500" : "text-blue-400")} /></span>
+                        Fantasia <span title="Nome fantasia da empresa"><Info className="inline w-3.5 h-3.5 ml-1 cursor-help text-blue-400" /></span>
                       </label>
                       <Input 
                         value={formData.fantasy_name || ""} 
@@ -423,116 +392,6 @@ export function ContactForm({ type }: ContactFormProps) {
             )}
           </div>
 
-          {/* Endereço */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-            <div 
-              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
-              onClick={() => toggleSection('endereco')}
-            >
-              <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <h2 className="font-semibold text-slate-800">Endereço</h2>
-              </div>
-              {sections.endereco ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
-            </div>
-            
-            {sections.endereco && (
-              <div className="p-6">
-                <div className="flex border-b border-slate-200 mb-6">
-                  <button
-                    type="button"
-                    className={cn(
-                      "px-4 py-2 text-sm font-medium border-b-2",
-                      isSupplier ? "text-amber-700 border-amber-700" : "text-blue-600 border-blue-600"
-                    )}
-                  >
-                    Geral
-                  </button>
-                  <button type="button" className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t">Cobrança</button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">CEP</label>
-                    <div className="relative">
-                      <Input 
-                        value={formData.address_zip || ""} 
-                        onChange={(e) => handleMaskedChange("address_zip", e.target.value, maskZip)}
-                        className="focus-visible:ring-blue-500 border-slate-300 pr-8"
-                        placeholder="00000-000"
-                      />
-                      <Search
-                        className={cn(
-                          "absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 cursor-pointer",
-                          isSupplier ? "hover:text-amber-700" : "hover:text-blue-600"
-                        )}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-5">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Endereço</label>
-                    <Input 
-                      value={formData.address_street || ""} 
-                      onChange={(e) => handleChange("address_street", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-slate-300"
-                      placeholder="Rua, Avenida, etc"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Número</label>
-                    <Input 
-                      value={formData.address_number || ""} 
-                      onChange={(e) => handleChange("address_number", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-slate-300"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Complemento</label>
-                    <Input 
-                      value={formData.address_complement || ""} 
-                      onChange={(e) => handleChange("address_complement", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-slate-300"
-                      placeholder="Apto, Bloco, Sala"
-                    />
-                  </div>
-
-                  <div className="md:col-span-5">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Bairro</label>
-                    <Input 
-                      value={formData.address_neighborhood || ""} 
-                      onChange={(e) => handleChange("address_neighborhood", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-slate-300"
-                    />
-                  </div>
-
-                  <div className="md:col-span-5">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Cidade</label>
-                    <Input 
-                      value={formData.address_city || ""} 
-                      onChange={(e) => handleChange("address_city", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-slate-300"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">UF</label>
-                    <Input 
-                      value={formData.address_state || ""} 
-                      onChange={(e) => handleChange("address_state", e.target.value)}
-                      className="focus-visible:ring-blue-500 border-slate-300"
-                      maxLength={2}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Contato */}
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
             <div 
@@ -540,7 +399,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('contato')}
             >
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
+                <div className="p-1.5 rounded bg-blue-100 text-blue-600">
                   <Phone className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Contato</h2>
@@ -633,12 +492,122 @@ export function ContactForm({ type }: ContactFormProps) {
                     onClick={addSubContact}
                     className={cn(
                       "mt-2",
-                      isSupplier ? "text-amber-700 border-amber-200 hover:bg-amber-50" : "text-blue-600 border-blue-200 hover:bg-blue-50"
+                      "text-blue-600 border-blue-200 hover:bg-blue-50"
                     )}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Adicionar contato
                   </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Endereço */}
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <div 
+              className="flex items-center justify-between px-6 py-4 bg-slate-50/50 border-b border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+              onClick={() => toggleSection('endereco')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded bg-blue-100 text-blue-600">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <h2 className="font-semibold text-slate-800">Endereço</h2>
+              </div>
+              {sections.endereco ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+            </div>
+            
+            {sections.endereco && (
+              <div className="p-6">
+                <div className="flex border-b border-slate-200 mb-6">
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium border-b-2",
+                      "text-blue-600 border-blue-600"
+                    )}
+                  >
+                    Geral
+                  </button>
+                  <button type="button" className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t">Cobrança</button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">CEP</label>
+                    <div className="relative">
+                      <Input 
+                        value={formData.address_zip || ""} 
+                        onChange={(e) => handleMaskedChange("address_zip", e.target.value, maskZip)}
+                        className="focus-visible:ring-blue-500 border-slate-300 pr-8"
+                        placeholder="00000-000"
+                      />
+                      <Search
+                        className={cn(
+                          "absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 cursor-pointer",
+                          "hover:text-blue-600"
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="md:col-span-5">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Endereço</label>
+                    <Input 
+                      value={formData.address_street || ""} 
+                      onChange={(e) => handleChange("address_street", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-slate-300"
+                      placeholder="Rua, Avenida, etc"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Número</label>
+                    <Input 
+                      value={formData.address_number || ""} 
+                      onChange={(e) => handleChange("address_number", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-slate-300"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Complemento</label>
+                    <Input 
+                      value={formData.address_complement || ""} 
+                      onChange={(e) => handleChange("address_complement", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-slate-300"
+                      placeholder="Apto, Bloco, Sala"
+                    />
+                  </div>
+
+                  <div className="md:col-span-5">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Bairro</label>
+                    <Input 
+                      value={formData.address_neighborhood || ""} 
+                      onChange={(e) => handleChange("address_neighborhood", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-slate-300"
+                    />
+                  </div>
+
+                  <div className="md:col-span-5">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Cidade</label>
+                    <Input 
+                      value={formData.address_city || ""} 
+                      onChange={(e) => handleChange("address_city", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-slate-300"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">UF</label>
+                    <Input 
+                      value={formData.address_state || ""} 
+                      onChange={(e) => handleChange("address_state", e.target.value)}
+                      className="focus-visible:ring-blue-500 border-slate-300"
+                      maxLength={2}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -651,7 +620,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('dadosAdicionais')}
             >
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
+                <div className="p-1.5 rounded bg-blue-100 text-blue-600">
                   <FileText className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Dados Adicionais</h2>
@@ -829,7 +798,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('financeiro')}
             >
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
+                <div className="p-1.5 rounded bg-blue-100 text-blue-600">
                   <DollarSign className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Financeiro</h2>
@@ -851,7 +820,7 @@ export function ContactForm({ type }: ContactFormProps) {
                         onChange={() => handleChange("credit_limit_type", 'ilimitado')}
                         className={cn(
                           "w-4 h-4 border-slate-300",
-                          isSupplier ? "text-amber-700 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500"
+                          "text-blue-600 focus:ring-blue-500"
                         )}
                       />
                       <span className="text-sm text-slate-700">Ilimitado</span>
@@ -864,7 +833,7 @@ export function ContactForm({ type }: ContactFormProps) {
                         onChange={() => handleChange("credit_limit_type", 'limitado')}
                         className={cn(
                           "w-4 h-4 border-slate-300",
-                          isSupplier ? "text-amber-700 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500"
+                          "text-blue-600 focus:ring-blue-500"
                         )}
                       />
                       <span className="text-sm text-slate-700">Limitado</span>
@@ -877,7 +846,7 @@ export function ContactForm({ type }: ContactFormProps) {
                         onChange={() => handleChange("credit_limit_type", 'zero')}
                         className={cn(
                           "w-4 h-4 border-slate-300",
-                          isSupplier ? "text-amber-700 focus:ring-amber-500" : "text-blue-600 focus:ring-blue-500"
+                          "text-blue-600 focus:ring-blue-500"
                         )}
                       />
                       <span className="text-sm text-slate-700">Limite zero</span>
@@ -887,13 +856,10 @@ export function ContactForm({ type }: ContactFormProps) {
                   {formData.credit_limit_type === 'limitado' && (
                     <div className="max-w-xs">
                       <div className="relative">
-                        <Input 
-                          value={formatCurrency(formData.credit_limit || 0)} 
-                          onChange={(e) => {
-                            const masked = maskCurrency(e.target.value);
-                            const numeric = parseCurrency(masked);
-                            handleChange("credit_limit", numeric);
-                          }}
+                        <MoneyInput
+                          value={formData.credit_limit || 0}
+                          onValueChange={(v) => handleChange("credit_limit", Math.round(v * 100) / 100)}
+                          withSymbol
                           className="pl-3 focus-visible:ring-blue-500 border-slate-300"
                           placeholder="R$ 0,00"
                         />
@@ -937,7 +903,7 @@ export function ContactForm({ type }: ContactFormProps) {
               onClick={() => toggleSection('observacoes')}
             >
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded", isSupplier ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-600")}>
+                <div className="p-1.5 rounded bg-blue-100 text-blue-600">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <h2 className="font-semibold text-slate-800">Observações</h2>
@@ -950,7 +916,7 @@ export function ContactForm({ type }: ContactFormProps) {
                 <textarea 
                   className={cn(
                     "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 min-h-[120px]",
-                    isSupplier ? "focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20" : "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   )}
                   value={formData.observations || ""}
                   onChange={(e) => handleChange("observations", e.target.value)}

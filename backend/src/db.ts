@@ -9,6 +9,7 @@ export const pool = mysql.createPool({
   password: env.MYSQL_PASSWORD,
   database: env.MYSQL_DATABASE,
   connectionLimit: 10,
+  decimalNumbers: true,
   namedPlaceholders: true,
   multipleStatements: false,
 });
@@ -50,6 +51,18 @@ export async function ensureDatabaseAndSchema() {
     const schemaUrl = new URL("../schema.sql", import.meta.url);
     const schema = await readFile(schemaUrl, "utf8");
     await executeSqlScript(conn, schema);
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN description TEXT NULL");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN max_users INT NOT NULL DEFAULT 1");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN max_products INT NOT NULL DEFAULT 100");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN max_invoices INT NOT NULL DEFAULT 50");
+    } catch {}
   } finally {
     await conn.end();
   }

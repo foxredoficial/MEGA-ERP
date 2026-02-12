@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAdminStats } from '@/lib/api_admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Users, CreditCard, TrendingUp, Activity } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import {
   AreaChart,
   Area,
@@ -121,7 +122,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
                 <AreaChart data={dummyChartData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -145,6 +146,12 @@ export function Dashboard() {
                   />
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                   <Tooltip 
+                    formatter={(value: any, name: any) => {
+                      const k = typeof name === 'string' ? name : String(name ?? '');
+                      if (k === 'revenue') return [formatCurrency(Number(value ?? 0)), 'Receita'];
+                      if (k === 'users') return [Number(value ?? 0), 'Usuários'];
+                      return [value, k];
+                    }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Area 
@@ -165,7 +172,7 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
              <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
                 <BarChart data={dummyChartData}>
                   <XAxis 
                     dataKey="name" 
@@ -176,6 +183,11 @@ export function Dashboard() {
                   />
                   <Tooltip 
                     cursor={{fill: 'transparent'}}
+                    formatter={(value: any, name: any) => {
+                      const k = typeof name === 'string' ? name : String(name ?? '');
+                      if (k === 'users') return [Number(value ?? 0), 'Usuários'];
+                      return [value, k];
+                    }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
                   <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} />

@@ -13,6 +13,7 @@ import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { ContactSearch } from "@/components/ContactSearch";
 import { ProductSearch } from "@/components/ProductSearch";
 import { formatCurrency } from "@/lib/utils";
@@ -338,23 +339,19 @@ export function SalesOrderForm() {
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
+                              <MoneyInput
                                 className="h-8 w-28"
                                 value={item.unitPrice}
-                                onChange={(e) => handleUpdateItem(item.id, 'unitPrice', Number(e.target.value))}
+                                onValueChange={(v) => handleUpdateItem(item.id, "unitPrice", Math.round(v * 100) / 100)}
+                                withSymbol={false}
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
+                              <MoneyInput
                                 className="h-8 w-28"
                                 value={item.discount}
-                                onChange={(e) => handleUpdateItem(item.id, 'discount', Number(e.target.value))}
+                                onValueChange={(v) => handleUpdateItem(item.id, "discount", Math.round(v * 100) / 100)}
+                                withSymbol={false}
                               />
                             </td>
                             <td className="px-4 py-3 text-right font-medium text-slate-900">
@@ -423,8 +420,8 @@ export function SalesOrderForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                  <select 
-                    className="w-full rounded-lg border-slate-200 text-sm focus:ring-blue-500 focus:border-blue-500"
+                  <Select
+                    className="w-full"
                     value={formData.status}
                     onChange={(e) => handleChange("status", e.target.value)}
                   >
@@ -432,7 +429,7 @@ export function SalesOrderForm() {
                     <option value="billed">Faturado</option>
                     <option value="delivered">Entregue</option>
                     <option value="canceled">Cancelado</option>
-                  </select>
+                  </Select>
                 </div>
 
                 <div>

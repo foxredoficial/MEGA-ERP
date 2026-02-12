@@ -4,6 +4,8 @@ import { ArrowLeft, Save, Wrench, Plus, Trash2 } from "lucide-react";
 import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { ContactSearch } from "@/components/ContactSearch";
 import { formatBRLFromCents } from "@/lib/money";
 import { formatCurrency } from "@/lib/utils";
@@ -277,8 +279,8 @@ export function ServiceOrderForm() {
                       items.map((it, idx) => (
                         <tr key={idx} className="border-t border-slate-200">
                           <td className="px-3 py-2">
-                            <select
-                              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
+                            <Select
+                              className="h-10"
                               value={it.kind}
                               onChange={(e) =>
                                 setItems((prev) => prev.map((p, i) => (i === idx ? { ...p, kind: e.target.value as ServiceOrderItemKind } : p)))
@@ -288,7 +290,7 @@ export function ServiceOrderForm() {
                               <option value="part">Peça</option>
                               <option value="service">Serviço</option>
                               <option value="fee">Taxa</option>
-                            </select>
+                            </Select>
                           </td>
                           <td className="px-3 py-2">
                             <Input
@@ -312,27 +314,21 @@ export function ServiceOrderForm() {
                             />
                           </td>
                           <td className="px-3 py-2">
-                            <Input
-                              type="number"
-                              step="0.01"
+                            <MoneyInput
                               value={Number.isFinite(it.unitPrice) ? it.unitPrice : 0}
-                              onChange={(e) =>
-                                setItems((prev) =>
-                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, unitPrice: Number(e.target.value) }) : p))
-                                )
+                              onValueChange={(v) =>
+                                setItems((prev) => prev.map((p, i) => (i === idx ? recomputeItem({ ...p, unitPrice: Math.round(v * 100) / 100 }) : p)))
                               }
+                              withSymbol={false}
                             />
                           </td>
                           <td className="px-3 py-2">
-                            <Input
-                              type="number"
-                              step="0.01"
+                            <MoneyInput
                               value={Number.isFinite(it.discount) ? it.discount : 0}
-                              onChange={(e) =>
-                                setItems((prev) =>
-                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, discount: Number(e.target.value) }) : p))
-                                )
+                              onValueChange={(v) =>
+                                setItems((prev) => prev.map((p, i) => (i === idx ? recomputeItem({ ...p, discount: Math.round(v * 100) / 100 }) : p)))
                               }
+                              withSymbol={false}
                             />
                           </td>
                           <td className="px-3 py-2 text-right font-semibold text-slate-800">{formatCurrency(it.total)}</td>
@@ -358,31 +354,22 @@ export function ServiceOrderForm() {
 
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</label>
-              <select
-                className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as ServiceOrderStatus)}
-              >
+              <Select className="mt-2" value={status} onChange={(e) => setStatus(e.target.value as ServiceOrderStatus)}>
                 <option value="open">Em aberto</option>
                 <option value="in_progress">Em andamento</option>
                 <option value="completed">Concluída</option>
                 <option value="canceled">Cancelada</option>
-              </select>
+              </Select>
             </div>
 
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor (R$)</label>
-              <Input
+              <MoneyInput
                 className="mt-2"
-                type="number"
-                inputMode="decimal"
-                value={(totalCents / 100).toFixed(2)}
+                value={totalCents / 100}
+                onValueChange={(v) => setTotalCents(Math.max(0, Math.round(v * 100)))}
+                withSymbol={false}
                 disabled={items.length > 0}
-                onChange={(e) => {
-                  const v = Number(String(e.target.value).replace(",", "."));
-                  const cents = Number.isFinite(v) ? Math.round(v * 100) : 0;
-                  setTotalCents(Math.max(0, cents));
-                }}
               />
             </div>
           </div>

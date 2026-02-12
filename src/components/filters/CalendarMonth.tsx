@@ -68,8 +68,8 @@ export function CalendarMonth(props: {
               className={cn(
                 "h-9 rounded-lg text-sm transition",
                 inMonth ? "text-slate-700 hover:bg-slate-100" : "text-slate-300",
-                active && "bg-emerald-50",
-                (isStart || isEnd) && "bg-emerald-600 text-white hover:bg-emerald-600"
+                active && "bg-blue-50",
+                (isStart || isEnd) && "bg-blue-600 text-white hover:bg-blue-600"
               )}
               onClick={() => props.onPick(d)}
               title={format(d, "dd/MM/yyyy")}
@@ -83,4 +83,3 @@ export function CalendarMonth(props: {
     </div>
   );
 }
-

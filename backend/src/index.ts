@@ -25,11 +25,25 @@ import analyticsRouter from "./routes/analytics.js";
 import reportsRouter from "./routes/reports.js";
 import bizDocumentsRouter from "./routes/biz_documents.js";
 import banksRouter from "./routes/banks.js";
+import { financeRouter } from "./routes/finance.js";
 import mpWebhooksRouter from "./routes/webhooks_mercadopago.js";
+import searchRouter from "./routes/search.js";
 import { honeypotRouter } from "./security/honeypot.js";
 import { sameOriginGuard } from "./security/sameOrigin.js";
+import { csrfGuard } from "./security/csrf.js";
 
 const app = express();
+
+function stripPoisonKeys(value: any): any {
+  if (!value || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(stripPoisonKeys);
+  const out: any = {};
+  for (const [k, v] of Object.entries(value)) {
+    if (k === "__proto__" || k === "constructor" || k === "prototype") continue;
+    out[k] = stripPoisonKeys(v);
+  }
+  return out;
+}
 
 app.disable("x-powered-by");
 
@@ -78,10 +92,15 @@ app.use(
 );
 
 app.use(express.json({ limit: "1mb" }));
+app.use((req, _res, next) => {
+  if (req.body) req.body = stripPoisonKeys(req.body);
+  next();
+});
 app.use(cookieParser());
 app.use("/api", apiLimiter);
 app.use(honeypotRouter());
 app.use("/api", sameOriginGuard(allowedOrigins));
+app.use("/api", csrfGuard());
 
 app.get("/api/health", async (_req, res) => {
   const isProd = process.env.NODE_ENV === "production";
@@ -102,6 +121,7 @@ app.use("/api/auth", authLimiter, authRouter);
 app.use("/api/me", meRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/search", searchRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/contacts", contactsRouter);
 app.use("/api/categories", categoriesRouter);
@@ -116,6 +136,7 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/docs", bizDocumentsRouter);
 app.use("/api/banks", banksRouter);
+app.use("/api/finance", financeRouter);
 app.use("/api/webhooks", mpWebhooksRouter);
 
 app.use((_req, res) => {

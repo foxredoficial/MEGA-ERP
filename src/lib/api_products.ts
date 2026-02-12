@@ -38,6 +38,7 @@ export type Product = {
   origin: string | null;
   item_type: string | null;
   parent_id: string | null;
+  variations_json?: Array<{ name: string; options: string[] }> | null;
   has_lot_control?: boolean;
   
   // Service specific fields

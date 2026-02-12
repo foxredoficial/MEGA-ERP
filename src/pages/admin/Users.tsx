@@ -1,16 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getAdminUsers, updateUserRole } from '@/lib/api_admin';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { Input } from '@/components/ui/Input';
 import { Search, UserCog } from 'lucide-react';
+import { Pagination } from '@/components/ui/Pagination';
 
 export function Users() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [roleTargetUser, setRoleTargetUser] = useState<any | null>(null);
+  const [roleTarget, setRoleTarget] = useState<'admin' | 'user' | null>(null);
+  const [roleUpdating, setRoleUpdating] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     getAdminUsers()
@@ -19,22 +28,51 @@ export function Users() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleToggleRole = async (user: any) => {
+  const handleToggleRoleClick = (user: any) => {
     const newRole = user.role === 'admin' ? 'user' : 'admin';
-    if (!confirm(`Tem certeza que deseja alterar o cargo de ${user.full_name} para ${newRole}?`)) return;
+    setRoleTargetUser(user);
+    setRoleTarget(newRole);
+    setRoleDialogOpen(true);
+  };
 
+  const handleConfirmToggleRole = async () => {
+    if (!roleTargetUser || !roleTarget) return;
+    setRoleUpdating(true);
     try {
-      await updateUserRole(user.id, newRole);
-      setUsers(users.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+      await updateUserRole(roleTargetUser.id, roleTarget);
+      setUsers((prev) => prev.map((u) => (u.id === roleTargetUser.id ? { ...u, role: roleTarget } : u)));
     } catch (err: any) {
       alert(err.message || "Erro ao atualizar cargo");
+    } finally {
+      setRoleUpdating(false);
+      setRoleDialogOpen(false);
+      setRoleTargetUser(null);
+      setRoleTarget(null);
     }
   };
 
-  const filteredUsers = users.filter(user => 
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  const filteredUsers = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return users.filter((user) => user.full_name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q));
+  }, [users, searchTerm]);
+
+  const total = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedUsers = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredUsers.slice(start, end);
+  }, [filteredUsers, page, pageSize, totalPages]);
 
   if (loading) {
     return (
@@ -87,7 +125,7 @@ export function Users() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
-                {filteredUsers.map((user) => (
+                {pagedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -118,7 +156,7 @@ export function Users() {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleToggleRole(user)}
+                        onClick={() => handleToggleRoleClick(user)}
                         title={user.role === 'admin' ? 'Remover Admin' : 'Tornar Admin'}
                       >
                         <UserCog className="h-4 w-4" />
@@ -134,8 +172,37 @@ export function Users() {
               </div>
             )}
           </div>
+
+          <div className="mt-4">
+            <Pagination
+              label="Usuários"
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={(n) => {
+                setPageSize(n);
+                setPage(1);
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
+
+      <ConfirmationDialog
+        isOpen={roleDialogOpen}
+        onClose={() => setRoleDialogOpen(false)}
+        onConfirm={handleConfirmToggleRole}
+        title="Alterar cargo do usuário"
+        description={
+          roleTargetUser && roleTarget
+            ? `Tem certeza que deseja alterar o cargo de ${roleTargetUser.full_name} para ${roleTarget}?`
+            : undefined
+        }
+        confirmText="Confirmar"
+        variant="warning"
+        loading={roleUpdating}
+      />
     </div>
   );
 }

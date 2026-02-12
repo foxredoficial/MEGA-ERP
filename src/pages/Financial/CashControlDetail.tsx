@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -13,6 +13,7 @@ import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { 
   getSessionDetails, 
   closeCashSession, 
@@ -20,6 +21,7 @@ import {
   type CashSession,
 } from "@/lib/api_cash";
 import { formatCurrency } from "@/lib/utils";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function CashControlDetail() {
   const { id } = useParams();
@@ -33,8 +35,30 @@ export function CashControlDetail() {
   // Transaction Modal State
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [transactionType, setTransactionType] = useState<'supply' | 'bleed'>('supply');
-  const [transactionAmount, setTransactionAmount] = useState("");
+  const [transactionAmount, setTransactionAmount] = useState<number>(0);
   const [transactionDesc, setTransactionDesc] = useState("");
+
+  const [txPage, setTxPage] = useState(1);
+  const [txPageSize, setTxPageSize] = useState(25);
+
+  useEffect(() => {
+    setTxPage(1);
+  }, [id]);
+
+  const txTotal = session?.transactions?.length ?? 0;
+  const txTotalPages = Math.max(1, Math.ceil(txTotal / Math.max(1, txPageSize)));
+
+  useEffect(() => {
+    if (txPage > txTotalPages) setTxPage(txTotalPages);
+  }, [txPage, txTotalPages]);
+
+  const pagedTransactions = useMemo(() => {
+    const list = session?.transactions ?? [];
+    const safePage = Math.min(Math.max(1, txPage), txTotalPages);
+    const start = (safePage - 1) * txPageSize;
+    const end = start + txPageSize;
+    return list.slice(start, end);
+  }, [session?.transactions, txPage, txPageSize, txTotalPages]);
 
   const loadSession = useCallback(async (sessionId: string) => {
     try {
@@ -70,19 +94,19 @@ export function CashControlDetail() {
   }
 
   async function handleAddTransaction() {
-    if (!session || !transactionAmount) return;
+    if (!session || transactionAmount <= 0) return;
     try {
       await addTransaction(
         session.id,
         transactionType === 'supply' ? 'in' : 'out',
         transactionType,
-        Number(transactionAmount),
+        Math.round(transactionAmount * 100) / 100,
         transactionDesc || (transactionType === 'supply' ? 'Suprimento Manual' : 'Sangria Manual'),
         'money'
       );
       await loadSession(session.id);
       setShowTransactionModal(false);
-      setTransactionAmount("");
+      setTransactionAmount(0);
       setTransactionDesc("");
     } catch {
       alert("Erro ao adicionar movimentação");
@@ -196,7 +220,7 @@ export function CashControlDetail() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {session.transactions.map((t) => (
+              {pagedTransactions.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50">
                   <td className="px-6 py-3 text-slate-600">
                     {new Date(t.createdAt).toLocaleTimeString()}
@@ -231,6 +255,20 @@ export function CashControlDetail() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+          <Pagination
+            label="Movimentações"
+            page={txPage}
+            pageSize={txPageSize}
+            total={txTotal}
+            onPageChange={setTxPage}
+            onPageSizeChange={(n) => {
+              setTxPageSize(n);
+              setTxPage(1);
+            }}
+          />
         </div>
       </div>
 
@@ -290,12 +328,11 @@ export function CashControlDetail() {
               <div className="space-y-4 max-w-3xl">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Valor</label>
-                  <Input 
-                    type="number" 
-                    step="0.01"
+                  <MoneyInput
                     placeholder="0,00"
                     value={transactionAmount}
-                    onChange={(e) => setTransactionAmount(e.target.value)}
+                    onValueChange={setTransactionAmount}
+                    withSymbol={false}
                     autoFocus
                   />
                 </div>

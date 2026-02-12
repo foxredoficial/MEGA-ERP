@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getAdminSubscriptions } from '@/lib/api_admin';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Search } from 'lucide-react';
+import { Pagination } from '@/components/ui/Pagination';
 
 export function Subscriptions() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
     getAdminSubscriptions()
@@ -18,11 +22,33 @@ export function Subscriptions() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredSubscriptions = subscriptions.filter(sub => 
-    sub.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.plan_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  const filteredSubscriptions = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return subscriptions.filter(
+      (sub) =>
+        sub.user_name?.toLowerCase().includes(q) ||
+        sub.user_email?.toLowerCase().includes(q) ||
+        sub.plan_name?.toLowerCase().includes(q)
+    );
+  }, [subscriptions, searchTerm]);
+
+  const total = filteredSubscriptions.length;
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedSubs = useMemo(() => {
+    const safePage = Math.min(Math.max(1, page), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredSubscriptions.slice(start, end);
+  }, [filteredSubscriptions, page, pageSize, totalPages]);
 
   if (loading) {
     return (
@@ -75,7 +101,7 @@ export function Subscriptions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
-                {filteredSubscriptions.map((sub) => (
+                {pagedSubs.map((sub) => (
                   <tr key={sub.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                     <td className="px-6 py-4">
                       <div className="font-medium text-slate-900 dark:text-slate-100">{sub.user_name}</div>
@@ -104,6 +130,20 @@ export function Subscriptions() {
                 Nenhuma assinatura encontrada.
               </div>
             )}
+          </div>
+
+          <div className="mt-4">
+            <Pagination
+              label="Assinaturas"
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={(n) => {
+                setPageSize(n);
+                setPage(1);
+              }}
+            />
           </div>
         </CardContent>
       </Card>

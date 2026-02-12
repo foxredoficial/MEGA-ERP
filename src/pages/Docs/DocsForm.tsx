@@ -5,6 +5,7 @@ import { BlingLayout } from "@/components/BlingLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { MoneyInput } from "@/components/ui/MoneyInput";
 import { ContactSearch } from "@/components/ContactSearch";
 import { createDoc, getDoc, issueDoc, updateDoc, type BizDocumentItem, type BizDocumentType } from "@/lib/api_docs";
 import { formatCurrency } from "@/lib/utils";
@@ -305,27 +306,23 @@ export function DocsForm() {
                             />
                           </td>
                           <td className="px-3 py-2">
-                            <Input
-                              type="number"
-                              step="0.01"
+                            <MoneyInput
                               value={Number.isFinite(it.unitPrice) ? it.unitPrice : 0}
-                              onChange={(e) =>
+                              onValueChange={(v) =>
                                 setItems((prev) =>
-                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, unitPrice: Number(e.target.value) }) : p))
-                                )
-                              }
+                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, unitPrice: Math.round(v * 100) / 100 }) : p))
+                                )}
+                              withSymbol={false}
                             />
                           </td>
                           <td className="px-3 py-2">
-                            <Input
-                              type="number"
-                              step="0.01"
+                            <MoneyInput
                               value={Number.isFinite(it.discount) ? it.discount : 0}
-                              onChange={(e) =>
+                              onValueChange={(v) =>
                                 setItems((prev) =>
-                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, discount: Number(e.target.value) }) : p))
-                                )
-                              }
+                                  prev.map((p, i) => (i === idx ? recomputeItem({ ...p, discount: Math.round(v * 100) / 100 }) : p))
+                                )}
+                              withSymbol={false}
                             />
                           </td>
                           <td className="px-3 py-2 text-right font-semibold text-slate-800">{formatCurrency(it.total)}</td>
@@ -350,12 +347,11 @@ export function DocsForm() {
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total (R$)</label>
-              <Input
+              <MoneyInput
                 className="mt-2"
-                type="number"
-                step="0.01"
                 value={Number.isFinite(total) ? total : 0}
-                onChange={(e) => setTotal(Number(e.target.value))}
+                onValueChange={(v) => setTotal(Math.round(v * 100) / 100)}
+                withSymbol={false}
               />
             </div>
 
