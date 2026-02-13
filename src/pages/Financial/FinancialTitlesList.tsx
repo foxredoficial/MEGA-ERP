@@ -36,6 +36,7 @@ export function FinancialTitlesList() {
 
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FinancialTitle["status"] | "all">("all");
   const [titles, setTitles] = useState<FinancialTitle[]>([]);
   const [paying, setPaying] = useState(false);
   const [showPayModal, setShowPayModal] = useState(false);
@@ -101,19 +102,20 @@ export function FinancialTitlesList() {
 
   useEffect(() => {
     setPage(1);
-  }, [kind, query]);
+  }, [kind, query, statusFilter]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return titles;
-    return titles.filter((t) => {
+    const byStatus = statusFilter === "all" ? titles : titles.filter((t) => t.status === statusFilter);
+    if (!q) return byStatus;
+    return byStatus.filter((t) => {
       return (
         t.description.toLowerCase().includes(q) ||
         (t.partyName ?? "").toLowerCase().includes(q) ||
         t.dueDate.includes(q)
       );
     });
-  }, [query, titles]);
+  }, [query, statusFilter, titles]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
@@ -319,6 +321,16 @@ export function FinancialTitlesList() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
+          </div>
+          <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
+          <div className="w-full md:w-56 pr-2">
+            <Select className="h-11" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+              <option value="all">Status: Todos</option>
+              <option value="open">Status: Em aberto</option>
+              <option value="partial">Status: Parcial</option>
+              <option value="paid">Status: Pago</option>
+              <option value="canceled">Status: Cancelado</option>
+            </Select>
           </div>
         </div>
 

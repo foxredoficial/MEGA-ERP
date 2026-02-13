@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getAdminUsers, updateUserRole } from '@/lib/api_admin';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -20,13 +20,30 @@ export function Users() {
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    getAdminUsers()
-      .then(setUsers)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    void getAdminUsers({ page, pageSize, q: searchTerm.trim() || undefined })
+      .then((r) => {
+        if (cancelled) return;
+        setUsers(r.items);
+        setTotal(r.total);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, pageSize, searchTerm]);
 
   const handleToggleRoleClick = (user: any) => {
     const newRole = user.role === 'admin' ? 'user' : 'admin';
@@ -54,25 +71,6 @@ export function Users() {
   useEffect(() => {
     setPage(1);
   }, [searchTerm]);
-
-  const filteredUsers = useMemo(() => {
-    const q = searchTerm.toLowerCase();
-    return users.filter((user) => user.full_name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q));
-  }, [users, searchTerm]);
-
-  const total = filteredUsers.length;
-  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  const pagedUsers = useMemo(() => {
-    const safePage = Math.min(Math.max(1, page), totalPages);
-    const start = (safePage - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredUsers.slice(start, end);
-  }, [filteredUsers, page, pageSize, totalPages]);
 
   if (loading) {
     return (
@@ -125,7 +123,7 @@ export function Users() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
-                {pagedUsers.map((user) => (
+                {users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -166,7 +164,7 @@ export function Users() {
                 ))}
               </tbody>
             </table>
-            {filteredUsers.length === 0 && (
+            {users.length === 0 && (
               <div className="p-6 text-center text-slate-500">
                 Nenhum usuário encontrado.
               </div>

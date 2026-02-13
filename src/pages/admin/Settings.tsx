@@ -3,12 +3,36 @@ import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Moon, Sun, Laptop } from 'lucide-react';
+import { getAdminMercadoPagoConfig } from '@/lib/api_admin';
 
 export function Settings() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
+  const [mpConfig, setMpConfig] = useState<{ accessToken: boolean; publicKey: boolean; webhookBaseUrl: boolean; signatureSecret: boolean } | null>(null);
+  const [mpLoading, setMpLoading] = useState(false);
 
   useEffect(() => {
     setTheme('system');
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setMpLoading(true);
+    void getAdminMercadoPagoConfig()
+      .then((r) => {
+        if (cancelled) return;
+        setMpConfig(r.configured);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMpConfig(null);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setMpLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
@@ -87,6 +111,54 @@ export function Settings() {
                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
                  </div>
              </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Mercado Pago</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-slate-600 dark:text-slate-300">
+            Integração preparada para Checkout Transparente (pagamentos) e Orders. Para ativar, configure as variáveis no backend.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+              <div>
+                <div className="font-medium text-slate-900 dark:text-slate-100">MP_ACCESS_TOKEN</div>
+                <div className="text-xs text-slate-500">Chave privada do Mercado Pago</div>
+              </div>
+              <Badge tone={mpConfig?.accessToken ? 'green' : 'slate'}>{mpConfig?.accessToken ? 'OK' : 'Pendente'}</Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+              <div>
+                <div className="font-medium text-slate-900 dark:text-slate-100">MP_PUBLIC_KEY</div>
+                <div className="text-xs text-slate-500">Chave pública (front/Bricks)</div>
+              </div>
+              <Badge tone={mpConfig?.publicKey ? 'green' : 'slate'}>{mpConfig?.publicKey ? 'OK' : 'Opcional'}</Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+              <div>
+                <div className="font-medium text-slate-900 dark:text-slate-100">WEBHOOK_BASE_URL</div>
+                <div className="text-xs text-slate-500">URL pública para webhooks</div>
+              </div>
+              <Badge tone={mpConfig?.webhookBaseUrl ? 'green' : 'slate'}>{mpConfig?.webhookBaseUrl ? 'OK' : 'Pendente'}</Badge>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-4">
+              <div>
+                <div className="font-medium text-slate-900 dark:text-slate-100">MP_WEBHOOK_SIGNATURE_SECRET</div>
+                <div className="text-xs text-slate-500">Assinatura do webhook</div>
+              </div>
+              <Badge tone={mpConfig?.signatureSecret ? 'green' : 'slate'}>{mpConfig?.signatureSecret ? 'OK' : 'Opcional'}</Badge>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()} disabled={mpLoading}>
+              Recarregar status
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

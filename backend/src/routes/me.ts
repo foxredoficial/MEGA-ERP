@@ -8,6 +8,7 @@ import { findPlanById } from "../repos/plans.js";
 import bcrypt from "bcryptjs";
 import { sanitizePreferencesForClient } from "../security/sanitize.js";
 import { env } from "../env.js";
+import { isEntitlementKey } from "../billing/featureKeys.js";
 
 export const meRouter = Router();
 
@@ -183,11 +184,17 @@ meRouter.get(
     if (!plan) return res.json({ subscription: null });
 
     let features: string[] = [];
+    let entitlements: string[] = [];
     try {
       const parsed = JSON.parse(plan.features_json);
-      if (Array.isArray(parsed)) features = parsed.filter((x) => typeof x === "string");
+      if (Array.isArray(parsed)) {
+        const all = parsed.filter((x) => typeof x === "string") as string[];
+        entitlements = all.filter((x) => isEntitlementKey(x)).map((x) => x.trim().toLowerCase());
+        features = all.filter((x) => !isEntitlementKey(x));
+      }
     } catch {
       features = [];
+      entitlements = [];
     }
 
     res.json({
@@ -202,6 +209,7 @@ meRouter.get(
           priceCents: plan.price_cents,
           billingInterval: "month" as const,
           features,
+          entitlements,
           isFeatured: Boolean(plan.is_featured),
         },
       },

@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useAuthStore } from '@/stores/authStore';
 
 type SidebarProps = {
   className?: string;
@@ -17,6 +18,8 @@ type SidebarProps = {
 
 export function AdminSidebar({ className }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const signOut = useAuthStore((s) => s.signOut);
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
@@ -74,9 +77,9 @@ export function AdminSidebar({ className }: SidebarProps) {
         <Button 
           variant="ghost" 
           className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-          onClick={() => {
-            // Logout logic if needed, or just redirect
-             window.location.href = '/auth?mode=login';
+          onClick={async () => {
+            await signOut();
+            navigate('/auth?mode=login', { replace: true });
           }}
         >
           <LogOut className="mr-2 h-4 w-4" />

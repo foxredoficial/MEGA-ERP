@@ -64,22 +64,49 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
       { key: "paymentMethod", label: "Pagamento" },
       { key: "amount", label: "Valor", align: "right" },
       { key: "description", label: "Descrição" },
-      { key: "sessionId", label: "Sessão" },
+      { key: "session", label: "Sessão" },
     ];
 
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT
-        DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as createdAt,
-        type,
-        category,
-        payment_method as paymentMethod,
+        DATE_FORMAT(cash_transactions.created_at, '%Y-%m-%d %H:%i:%s') as createdAt,
+        CASE type
+          WHEN 'in' THEN 'Entrada'
+          WHEN 'out' THEN 'Saída'
+          ELSE type
+        END as type,
+        CASE category
+          WHEN 'opening' THEN 'Abertura'
+          WHEN 'closing' THEN 'Fechamento'
+          WHEN 'sale' THEN 'Venda'
+          WHEN 'receipt' THEN 'Recebimento'
+          WHEN 'payment' THEN 'Pagamento'
+          WHEN 'supply' THEN 'Suprimento'
+          WHEN 'bleed' THEN 'Sangria'
+          WHEN 'expense' THEN 'Despesa'
+          ELSE category
+        END as category,
+        CASE payment_method
+          WHEN 'money' THEN 'Dinheiro'
+          WHEN 'pix' THEN 'Pix'
+          WHEN 'debit' THEN 'Débito'
+          WHEN 'credit' THEN 'Crédito'
+          WHEN 'boleto' THEN 'Boleto'
+          WHEN 'crediario' THEN 'Crediário'
+          ELSE payment_method
+        END as paymentMethod,
         amount,
         description,
-        session_id as sessionId
+        CONCAT(
+          COALESCE(cs.user_name, 'Caixa'),
+          ' • ',
+          DATE_FORMAT(cs.opened_at, '%Y-%m-%d %H:%i')
+        ) as session
       FROM cash_transactions
-      WHERE user_id = ?
-        AND created_at BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)
-      ORDER BY created_at DESC
+      INNER JOIN cash_sessions cs ON cs.id = cash_transactions.session_id
+      WHERE cash_transactions.user_id = ?
+        AND cash_transactions.created_at BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)
+      ORDER BY cash_transactions.created_at DESC
       LIMIT 5000`,
       [userId, f.start, f.end]
     );
@@ -118,7 +145,11 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
         id,
         DATE_FORMAT(opened_at, '%Y-%m-%d %H:%i:%s') as openedAt,
         DATE_FORMAT(closed_at, '%Y-%m-%d %H:%i:%s') as closedAt,
-        status,
+        CASE status
+          WHEN 'open' THEN 'Aberto'
+          WHEN 'closed' THEN 'Fechado'
+          ELSE status
+        END as status,
         user_name as userName,
         opening_balance as openingBalance,
         closing_balance as closingBalance,
@@ -163,7 +194,13 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
         DATE_FORMAT(date, '%Y-%m-%d') as date,
         number,
         customer_name as customerName,
-        status,
+        CASE status
+          WHEN 'open' THEN 'Aberto'
+          WHEN 'billed' THEN 'Faturado'
+          WHEN 'delivered' THEN 'Entregue'
+          WHEN 'canceled' THEN 'Cancelado'
+          ELSE status
+        END as status,
         totals_total as total,
         totals_discount as discount,
         totals_count as items
@@ -203,11 +240,23 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
       `SELECT
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as createdAt,
         COALESCE(customer_name,'-') as customerName,
-        payment_method as paymentMethod,
+        CASE payment_method
+          WHEN 'money' THEN 'Dinheiro'
+          WHEN 'pix' THEN 'Pix'
+          WHEN 'debit' THEN 'Débito'
+          WHEN 'credit' THEN 'Crédito'
+          WHEN 'boleto' THEN 'Boleto'
+          WHEN 'crediario' THEN 'Crediário'
+          ELSE payment_method
+        END as paymentMethod,
         subtotal,
         discount,
         total,
-        status
+        CASE status
+          WHEN 'completed' THEN 'Concluída'
+          WHEN 'canceled' THEN 'Cancelada'
+          ELSE status
+        END as status
       FROM pdv_sales
       WHERE user_id = ? AND created_at BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)
       ORDER BY created_at DESC
@@ -260,14 +309,25 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT
         DATE_FORMAT(due_date, '%Y-%m-%d') as dueDate,
-        kind,
-        status,
+        CASE kind WHEN 'ar' THEN 'A Receber' WHEN 'ap' THEN 'A Pagar' ELSE kind END as kind,
+        CASE status
+          WHEN 'open' THEN 'Em aberto'
+          WHEN 'partial' THEN 'Parcial'
+          WHEN 'paid' THEN 'Pago'
+          WHEN 'canceled' THEN 'Cancelado'
+          ELSE status
+        END as status,
         COALESCE(party_name,'-') as partyName,
         description,
         amount,
         paid_amount as paidAmount,
         (amount - paid_amount) as openAmount,
-        origin
+        CASE origin
+          WHEN 'sales' THEN 'Vendas'
+          WHEN 'pdv' THEN 'PDV'
+          WHEN 'manual' THEN 'Manual'
+          ELSE origin
+        END as origin
       FROM financial_titles
       WHERE ${where.join(" AND ")}
       ORDER BY due_date DESC
@@ -307,8 +367,16 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT
         DATE_FORMAT(p.paid_at, '%Y-%m-%d %H:%i:%s') as paidAt,
-        t.kind as titleKind,
-        p.method,
+        CASE t.kind WHEN 'ar' THEN 'A Receber' WHEN 'ap' THEN 'A Pagar' ELSE t.kind END as titleKind,
+        CASE p.method
+          WHEN 'money' THEN 'Dinheiro'
+          WHEN 'pix' THEN 'Pix'
+          WHEN 'debit' THEN 'Débito'
+          WHEN 'credit' THEN 'Crédito'
+          WHEN 'boleto' THEN 'Boleto'
+          WHEN 'crediario' THEN 'Crediário'
+          ELSE p.method
+        END as method,
         p.amount,
         COALESCE(t.party_name,'-') as partyName,
         t.description,
@@ -348,7 +416,7 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT
         DATE_FORMAT(m.created_at, '%Y-%m-%d %H:%i:%s') as createdAt,
-        m.type,
+        CASE m.type WHEN 'in' THEN 'Entrada' WHEN 'out' THEN 'Saída' ELSE m.type END as type,
         p.name as product,
         m.quantity,
         m.reason,
@@ -391,7 +459,11 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
       `SELECT
         sku,
         name,
-        type,
+        CASE type
+          WHEN 'product' THEN 'Produto'
+          WHEN 'service' THEN 'Serviço'
+          ELSE type
+        END as type,
         stock,
         stock_min as stockMin,
         stock_max as stockMax,
@@ -413,4 +485,3 @@ export async function runReport(userId: string, reportId: string, f: CommonFilte
 
   throw new Error("Relatório não encontrado.");
 }
-

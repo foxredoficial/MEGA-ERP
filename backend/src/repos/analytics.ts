@@ -12,11 +12,67 @@ export type DashboardQuery = {
   range: AnalyticsRange;
   compare?: AnalyticsRange;
   granularity: AnalyticsGranularity;
+  topProducts?: {
+    metric: "total" | "qty";
+    order: "top" | "bottom";
+    limit: number;
+  };
 };
 
 type SeriesRow = { t: string; total: number };
 
 type SalesDetailRow = { t: string; ordersTotal: number; ordersCount: number; pdvTotal: number; pdvCount: number };
+
+function parseIsoDateOnly(s: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s.trim());
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d, 0, 0, 0, 0);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function parseBucketDate(t: string) {
+  const s = String(t ?? "").trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/.test(s)) {
+    const iso = s.replace(" ", "T");
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return parseIsoDateOnly(s);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return parseIsoDateOnly(s);
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function fmt2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function formatBucketDate(d: Date, granularity: AnalyticsGranularity) {
+  const y = d.getFullYear();
+  const m = fmt2(d.getMonth() + 1);
+  const day = fmt2(d.getDate());
+  if (granularity === "hour") return `${y}-${m}-${day} ${fmt2(d.getHours())}:00:00`;
+  if (granularity === "month") return `${y}-${m}-01`;
+  return `${y}-${m}-${day}`;
+}
+
+function alignCompareT(t: string, deltaMs: number, granularity: AnalyticsGranularity) {
+  const d = parseBucketDate(t);
+  if (!d) return String(t ?? "");
+  const shifted = new Date(d.getTime() + deltaMs);
+  return formatBucketDate(shifted, granularity);
+}
+
+function deltaStartMs(current: AnalyticsRange, compare: AnalyticsRange) {
+  const c1 = parseIsoDateOnly(current.start);
+  const c2 = parseIsoDateOnly(compare.start);
+  if (!c1 || !c2) return 0;
+  return c1.getTime() - c2.getTime();
+}
 
 function bucketExpr(col: string, granularity: AnalyticsGranularity) {
   if (granularity === "hour") return `DATE_FORMAT(${col}, '%Y-%m-%d %H:00:00')`;
@@ -174,56 +230,54 @@ async function financialPaidSeries(userId: string, range: AnalyticsRange, granul
   return (rows as any[]).map((r) => ({ t: String(r.t), arPaid: Number(r.ar_paid ?? 0), apPaid: Number(r.ap_paid ?? 0) }));
 }
 
-async function topSalesProducts(userId: string, range: AnalyticsRange) {
+async function topSalesProducts(
+  userId: string,
+  range: AnalyticsRange,
+  opts: { metric: "total" | "qty"; order: "top" | "bottom"; limit: number }
+) {
   const pool = await getTenantPool(userId);
-  const [orderRows] = await pool.query<RowDataPacket[]>(
-    `SELECT soi.product_id as product_id,
-      MAX(soi.description) as name,
-      SUM(soi.quantity) as qty,
-      SUM(soi.total) as total
-     FROM sales_order_items soi
-     JOIN sales_orders so ON so.id = soi.order_id
-     WHERE so.user_id = ? AND so.date BETWEEN ? AND ? AND so.status <> 'canceled'
-     GROUP BY soi.product_id
-     ORDER BY total DESC
-     LIMIT 10`,
-    [userId, range.start, range.end]
+  const metric = opts.metric === "qty" ? "qty" : "total";
+  const dir = opts.order === "bottom" ? "ASC" : "DESC";
+  const limit = Math.max(1, Math.min(200, Math.trunc(Number(opts.limit) || 10)));
+
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT
+      product_id as productId,
+      MAX(name) as name,
+      SUM(qty) as qty,
+      SUM(total) as total
+     FROM (
+       SELECT soi.product_id as product_id,
+         MAX(soi.description) as name,
+         SUM(soi.quantity) as qty,
+         SUM(soi.total) as total
+       FROM sales_order_items soi
+       JOIN sales_orders so ON so.id = soi.order_id
+       WHERE so.user_id = ? AND so.date BETWEEN ? AND ? AND so.status <> 'canceled'
+       GROUP BY soi.product_id
+       UNION ALL
+       SELECT psi.product_id as product_id,
+         MAX(psi.name) as name,
+         SUM(psi.quantity) as qty,
+         SUM(psi.line_total) as total
+       FROM pdv_sale_items psi
+       JOIN pdv_sales ps ON ps.id = psi.sale_id
+       WHERE ps.user_id = ? AND ps.created_at BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY) AND ps.status='completed'
+       GROUP BY psi.product_id
+     ) x
+     WHERE product_id IS NOT NULL AND product_id <> ''
+     GROUP BY product_id
+     ORDER BY ${metric} ${dir}
+     LIMIT ${limit}`,
+    [userId, range.start, range.end, userId, range.start, range.end]
   );
 
-  const [pdvRows] = await pool.query<RowDataPacket[]>(
-    `SELECT psi.product_id as product_id,
-      MAX(psi.name) as name,
-      SUM(psi.quantity) as qty,
-      SUM(psi.line_total) as total
-     FROM pdv_sale_items psi
-     JOIN pdv_sales ps ON ps.id = psi.sale_id
-     WHERE ps.user_id = ? AND ps.created_at BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY) AND ps.status='completed'
-     GROUP BY psi.product_id
-     ORDER BY total DESC
-     LIMIT 10`,
-    [userId, range.start, range.end]
-  );
-
-  const map = new Map<string, { productId: string; name: string; qty: number; total: number }>();
-  for (const r of orderRows as any[]) {
-    const id = String(r.product_id ?? "");
-    if (!id) continue;
-    map.set(id, { productId: id, name: String(r.name ?? ""), qty: Number(r.qty ?? 0), total: Number(r.total ?? 0) });
-  }
-  for (const r of pdvRows as any[]) {
-    const id = String(r.product_id ?? "");
-    if (!id) continue;
-    const prev = map.get(id);
-    if (prev) {
-      prev.qty += Number(r.qty ?? 0);
-      prev.total += Number(r.total ?? 0);
-      if (!prev.name) prev.name = String(r.name ?? "");
-    } else {
-      map.set(id, { productId: id, name: String(r.name ?? ""), qty: Number(r.qty ?? 0), total: Number(r.total ?? 0) });
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => b.total - a.total).slice(0, 10);
+  return (rows as any[]).map((r) => ({
+    productId: String(r.productId ?? ""),
+    name: String(r.name ?? ""),
+    qty: Number(r.qty ?? 0),
+    total: Number(r.total ?? 0),
+  }));
 }
 
 async function lowStockProducts(userId: string) {
@@ -353,6 +407,7 @@ export async function getDashboardAnalytics(userId: string, q: DashboardQuery) {
   const current = q.range;
   const compare = q.compare;
 
+  const topProductsOpts = q.topProducts ?? { metric: "total" as const, order: "top" as const, limit: 10 };
   const [kpiCurrent, salesCurrent, salesDetailCurrent, cashCurrent, stockCurrent, finOpenCurrent, finPaidCurrent, topSalesCurrent, lowStock] = await Promise.all([
     kpis(userId, current),
     salesSeries(userId, current, q.granularity),
@@ -361,7 +416,7 @@ export async function getDashboardAnalytics(userId: string, q: DashboardQuery) {
     stockSeries(userId, current, q.granularity),
     financialOpenSeries(userId, current, q.granularity),
     financialPaidSeries(userId, current, q.granularity),
-    topSalesProducts(userId, current),
+    topSalesProducts(userId, current, topProductsOpts),
     lowStockProducts(userId),
   ]);
 
@@ -385,12 +440,20 @@ export async function getDashboardAnalytics(userId: string, q: DashboardQuery) {
     ]);
   }
 
-  const compareSalesMap = new Map((salesCompare ?? []).map((r) => [r.t, Number(r.total ?? 0)]));
-  const compareSalesDetailMap = new Map((salesDetailCompare ?? []).map((r) => [r.t, r]));
-  const compareCashMap = new Map((cashCompare ?? []).map((r) => [r.t, r]));
-  const compareStockMap = new Map((stockCompare ?? []).map((r) => [r.t, r]));
-  const compareFinOpenMap = new Map((finOpenCompare ?? []).map((r) => [r.t, r]));
-  const compareFinPaidMap = new Map((finPaidCompare ?? []).map((r) => [r.t, r]));
+  const shiftMs = compare ? deltaStartMs(current, compare) : 0;
+  const salesCompareAligned = compare ? (salesCompare ?? []).map((r) => ({ ...r, t: alignCompareT(r.t, shiftMs, q.granularity) })) : [];
+  const salesDetailCompareAligned = compare ? (salesDetailCompare ?? []).map((r) => ({ ...r, t: alignCompareT(r.t, shiftMs, q.granularity) })) : [];
+  const cashCompareAligned = compare ? (cashCompare ?? []).map((r) => ({ ...r, t: alignCompareT(r.t, shiftMs, q.granularity) })) : [];
+  const stockCompareAligned = compare ? (stockCompare ?? []).map((r) => ({ ...r, t: alignCompareT(r.t, shiftMs, q.granularity) })) : [];
+  const finOpenCompareAligned = compare ? (finOpenCompare ?? []).map((r) => ({ ...r, t: alignCompareT(r.t, shiftMs, q.granularity) })) : [];
+  const finPaidCompareAligned = compare ? (finPaidCompare ?? []).map((r) => ({ ...r, t: alignCompareT(r.t, shiftMs, q.granularity) })) : [];
+
+  const compareSalesMap = new Map(salesCompareAligned.map((r) => [r.t, Number(r.total ?? 0)]));
+  const compareSalesDetailMap = new Map(salesDetailCompareAligned.map((r) => [r.t, r]));
+  const compareCashMap = new Map(cashCompareAligned.map((r) => [r.t, r]));
+  const compareStockMap = new Map(stockCompareAligned.map((r) => [r.t, r]));
+  const compareFinOpenMap = new Map(finOpenCompareAligned.map((r) => [r.t, r]));
+  const compareFinPaidMap = new Map(finPaidCompareAligned.map((r) => [r.t, r]));
 
   const salesSeriesMerged = salesCurrent.map((r) => ({
     t: r.t,
@@ -474,4 +537,8 @@ export async function getDashboardAnalytics(userId: string, q: DashboardQuery) {
       lowStockProducts: lowStock,
     },
   };
+}
+
+export async function getTopProducts(userId: string, q: { range: AnalyticsRange; topProducts: { metric: "total" | "qty"; order: "top" | "bottom"; limit: number } }) {
+  return topSalesProducts(userId, q.range, q.topProducts);
 }

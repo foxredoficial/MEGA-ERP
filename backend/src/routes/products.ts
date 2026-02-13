@@ -12,6 +12,7 @@ import { addStockMovement, getStockHistory } from "../repos/stock.js";
 import { createLot, updateLot, listLots, deleteLot } from "../repos/lots.js";
 import { asyncHandler } from "../http.js";
 import { z } from "zod";
+import { requireEntitlement } from "../billing/requireEntitlement.js";
 
 const router = Router();
 
@@ -68,7 +69,7 @@ router.get("/", requireAuth, asyncHandler(async (req, res) => {
   res.json({ products });
 }));
 
-router.post("/", requireAuth, asyncHandler(async (req, res) => {
+router.post("/", requireAuth, requireEntitlement({ limit: "products" }), asyncHandler(async (req, res) => {
   try {
     const data = productSchema.parse(req.body);
     const id = await createProduct((req as AuthedRequest).auth.userId, data as any);

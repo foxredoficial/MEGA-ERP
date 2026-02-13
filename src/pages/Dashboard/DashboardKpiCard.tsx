@@ -30,8 +30,12 @@ export function DashboardKpiCard({ label, value, hint, icon: Icon, tone = "blue"
         </div>
       </div>
       <div className="mt-3 text-2xl font-bold text-slate-900 tracking-tight">{value}</div>
-      {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
+      <div
+        className="mt-1 text-xs text-slate-500 h-4 overflow-hidden text-ellipsis whitespace-nowrap"
+        title={hint ?? undefined}
+      >
+        {hint ?? ""}
+      </div>
     </div>
   );
 }
-

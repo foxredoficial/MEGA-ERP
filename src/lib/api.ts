@@ -75,6 +75,7 @@ export type Plan = {
   priceCents: number;
   billingInterval: "month";
   features: string[];
+  entitlements?: string[];
   isFeatured: boolean;
 };
 

@@ -15,7 +15,6 @@ export function CompareRangePicker({ value, onChange }: Props) {
 
   useEffect(() => {
     setMonth(startOfMonth(value.start));
-    setPicking("start");
   }, [value.start]);
 
   function pick(day: Date) {
@@ -33,11 +32,29 @@ export function CompareRangePicker({ value, onChange }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
         <div>
           <div className="text-xs text-slate-500 mb-1">Início</div>
-          <Input value={format(value.start, "dd/MM/yyyy")} onChange={() => null} className="h-10" readOnly />
+          <Input
+            value={format(value.start, "dd/MM/yyyy")}
+            onChange={() => null}
+            className="h-10"
+            readOnly
+            onClick={() => {
+              setPicking("start");
+              setMonth(startOfMonth(value.start));
+            }}
+          />
         </div>
         <div>
           <div className="text-xs text-slate-500 mb-1">Fim</div>
-          <Input value={format(value.end, "dd/MM/yyyy")} onChange={() => null} className="h-10" readOnly />
+          <Input
+            value={format(value.end, "dd/MM/yyyy")}
+            onChange={() => null}
+            className="h-10"
+            readOnly
+            onClick={() => {
+              setPicking("end");
+              setMonth(startOfMonth(value.end));
+            }}
+          />
         </div>
       </div>
 

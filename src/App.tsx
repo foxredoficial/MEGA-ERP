@@ -43,6 +43,7 @@ import Termos from "@/pages/Termos";
 import Privacidade from "@/pages/Privacidade";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuthInit } from "@/hooks/useAuthInit";
+import { FeatureGate } from "@/components/FeatureGate";
 
 import AdminRoute from "@/components/AdminRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -124,7 +125,9 @@ export default function App() {
           path="/app/relatorios"
           element={
             <ProtectedRoute>
-              <ReportsCenter />
+              <FeatureGate feature="reports">
+                <ReportsCenter />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -132,7 +135,9 @@ export default function App() {
           path="/app/relatorios/:id"
           element={
             <ProtectedRoute>
-              <ReportsCenter />
+              <FeatureGate feature="reports">
+                <ReportsCenter />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -140,7 +145,9 @@ export default function App() {
           path="/app/relatorios/imprimir/:id"
           element={
             <ProtectedRoute>
-              <ReportPrint />
+              <FeatureGate feature="reports">
+                <ReportPrint />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -148,7 +155,9 @@ export default function App() {
           path="/app/atalhos"
           element={
             <ProtectedRoute>
-              <AppLauncher />
+              <FeatureGate feature="apps">
+                <AppLauncher />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -156,7 +165,9 @@ export default function App() {
           path="/app/notificacoes"
           element={
             <ProtectedRoute>
-              <NotificationsPage />
+              <FeatureGate feature="notifications">
+                <NotificationsPage />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -164,7 +175,9 @@ export default function App() {
           path="/app/ajuda"
           element={
             <ProtectedRoute>
-              <HelpCenter />
+              <FeatureGate feature="help">
+                <HelpCenter />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -172,7 +185,9 @@ export default function App() {
           path="/app/produtos"
           element={
             <ProtectedRoute>
-              <ProductList />
+              <FeatureGate feature="products">
+                <ProductList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -180,7 +195,9 @@ export default function App() {
           path="/app/estoque/lancamentos"
           element={
             <ProtectedRoute>
-              <StockMovements />
+              <FeatureGate feature="stock">
+                <StockMovements />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -188,7 +205,9 @@ export default function App() {
           path="/app/estoque/conferencia"
           element={
             <ProtectedRoute>
-              <InventoryCheck />
+              <FeatureGate feature="stock">
+                <InventoryCheck />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -196,7 +215,9 @@ export default function App() {
           path="/app/produtos/novo"
           element={
             <ProtectedRoute>
-              <ProductForm />
+              <FeatureGate feature="products">
+                <ProductForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -204,7 +225,9 @@ export default function App() {
           path="/app/produtos/:id"
           element={
             <ProtectedRoute>
-              <ProductForm />
+              <FeatureGate feature="products">
+                <ProductForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -212,7 +235,9 @@ export default function App() {
           path="/app/servicos"
           element={
             <ProtectedRoute>
-              <ServiceList />
+              <FeatureGate feature="services">
+                <ServiceList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -220,7 +245,9 @@ export default function App() {
           path="/app/servicos/novo"
           element={
             <ProtectedRoute>
-              <ServiceForm />
+              <FeatureGate feature="services">
+                <ServiceForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -228,7 +255,9 @@ export default function App() {
           path="/app/servicos/:id"
           element={
             <ProtectedRoute>
-              <ServiceForm />
+              <FeatureGate feature="services">
+                <ServiceForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -236,7 +265,9 @@ export default function App() {
           path="/app/vendas/pedidos"
           element={
             <ProtectedRoute>
-              <SalesOrderList />
+              <FeatureGate feature="sales_orders">
+                <SalesOrderList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -244,7 +275,9 @@ export default function App() {
           path="/app/vendas/pedidos/novo"
           element={
             <ProtectedRoute>
-              <SalesOrderForm />
+              <FeatureGate feature="sales_orders">
+                <SalesOrderForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -252,7 +285,9 @@ export default function App() {
           path="/app/vendas/pedidos/:id"
           element={
             <ProtectedRoute>
-              <SalesOrderForm />
+              <FeatureGate feature="sales_orders">
+                <SalesOrderForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -260,7 +295,9 @@ export default function App() {
           path="/app/pdv"
           element={
             <ProtectedRoute>
-              <POS />
+              <FeatureGate feature="pdv">
+                <POS />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -268,7 +305,9 @@ export default function App() {
           path="/app/ordens-servico"
           element={
             <ProtectedRoute>
-              <ServiceOrderList />
+              <FeatureGate feature="service_orders">
+                <ServiceOrderList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -276,7 +315,9 @@ export default function App() {
           path="/app/ordens-servico/novo"
           element={
             <ProtectedRoute>
-              <ServiceOrderForm />
+              <FeatureGate feature="service_orders">
+                <ServiceOrderForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -284,7 +325,9 @@ export default function App() {
           path="/app/ordens-servico/:id"
           element={
             <ProtectedRoute>
-              <ServiceOrderForm />
+              <FeatureGate feature="service_orders">
+                <ServiceOrderForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -292,7 +335,9 @@ export default function App() {
           path="/app/clientes"
           element={
             <ProtectedRoute>
-              <ContactList type="client" />
+              <FeatureGate feature="contacts">
+                <ContactList type="client" />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -300,7 +345,9 @@ export default function App() {
           path="/app/clientes/novo"
           element={
             <ProtectedRoute>
-              <ContactForm type="client" />
+              <FeatureGate feature="contacts">
+                <ContactForm type="client" />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -308,7 +355,9 @@ export default function App() {
           path="/app/clientes/:id"
           element={
             <ProtectedRoute>
-              <ContactForm type="client" />
+              <FeatureGate feature="contacts">
+                <ContactForm type="client" />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -316,7 +365,9 @@ export default function App() {
           path="/app/fornecedores"
           element={
             <ProtectedRoute>
-              <ContactList type="supplier" />
+              <FeatureGate feature="contacts">
+                <ContactList type="supplier" />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -324,7 +375,9 @@ export default function App() {
           path="/app/fornecedores/novo"
           element={
             <ProtectedRoute>
-              <ContactForm type="supplier" />
+              <FeatureGate feature="contacts">
+                <ContactForm type="supplier" />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -332,7 +385,9 @@ export default function App() {
           path="/app/fornecedores/:id"
           element={
             <ProtectedRoute>
-              <ContactForm type="supplier" />
+              <FeatureGate feature="contacts">
+                <ContactForm type="supplier" />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -340,7 +395,9 @@ export default function App() {
           path="/app/financeiro"
           element={
             <ProtectedRoute>
-              <FinanceOverview />
+              <FeatureGate feature="finance">
+                <FinanceOverview />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -348,7 +405,9 @@ export default function App() {
           path="/app/financeiro/cadastros"
           element={
             <ProtectedRoute>
-              <FinanceCadastros />
+              <FeatureGate feature="finance">
+                <FinanceCadastros />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -356,7 +415,9 @@ export default function App() {
           path="/app/financeiro/caixa"
           element={
             <ProtectedRoute>
-              <CashControlList />
+              <FeatureGate feature="cash">
+                <CashControlList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -364,7 +425,9 @@ export default function App() {
           path="/app/financeiro/caixa/:id"
           element={
             <ProtectedRoute>
-              <CashControlDetail />
+              <FeatureGate feature="cash">
+                <CashControlDetail />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -372,7 +435,9 @@ export default function App() {
           path="/app/financeiro/titulos"
           element={
             <ProtectedRoute>
-              <FinancialTitlesList />
+              <FeatureGate feature="finance">
+                <FinancialTitlesList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -380,7 +445,9 @@ export default function App() {
           path="/app/financeiro/bancos"
           element={
             <ProtectedRoute>
-              <BankAccountsList />
+              <FeatureGate feature="banks">
+                <BankAccountsList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -388,7 +455,9 @@ export default function App() {
           path="/app/financeiro/bancos/novo"
           element={
             <ProtectedRoute>
-              <BankAccountForm />
+              <FeatureGate feature="banks">
+                <BankAccountForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -396,7 +465,9 @@ export default function App() {
           path="/app/financeiro/bancos/:id"
           element={
             <ProtectedRoute>
-              <BankAccountForm />
+              <FeatureGate feature="banks">
+                <BankAccountForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -404,7 +475,9 @@ export default function App() {
           path="/app/financeiro/conciliacao"
           element={
             <ProtectedRoute>
-              <ReconciliationPage />
+              <FeatureGate feature="banks">
+                <ReconciliationPage />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -412,7 +485,9 @@ export default function App() {
           path="/app/financeiro/fluxo-caixa"
           element={
             <ProtectedRoute>
-              <CashflowPage />
+              <FeatureGate feature="finance">
+                <CashflowPage />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -420,7 +495,9 @@ export default function App() {
           path="/app/financeiro/dre"
           element={
             <ProtectedRoute>
-              <DrePage />
+              <FeatureGate feature="finance">
+                <DrePage />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -429,7 +506,9 @@ export default function App() {
           path="/app/docs/:type"
           element={
             <ProtectedRoute>
-              <DocsList />
+              <FeatureGate feature="docs">
+                <DocsList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -437,7 +516,9 @@ export default function App() {
           path="/app/docs/:type/novo"
           element={
             <ProtectedRoute>
-              <DocsForm />
+              <FeatureGate feature="docs">
+                <DocsForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -445,7 +526,9 @@ export default function App() {
           path="/app/docs/:type/:id"
           element={
             <ProtectedRoute>
-              <DocsForm />
+              <FeatureGate feature="docs">
+                <DocsForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -453,7 +536,9 @@ export default function App() {
           path="/app/vendedores"
           element={
             <ProtectedRoute>
-              <SalespersonList />
+              <FeatureGate feature="salespersons">
+                <SalespersonList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -461,7 +546,9 @@ export default function App() {
           path="/app/vendedores/novo"
           element={
             <ProtectedRoute>
-              <SalespersonForm />
+              <FeatureGate feature="salespersons">
+                <SalespersonForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -469,7 +556,9 @@ export default function App() {
           path="/app/vendedores/:id"
           element={
             <ProtectedRoute>
-              <SalespersonForm />
+              <FeatureGate feature="salespersons">
+                <SalespersonForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -477,7 +566,9 @@ export default function App() {
           path="/app/categorias"
           element={
             <ProtectedRoute>
-              <CategoryList />
+              <FeatureGate feature="categories">
+                <CategoryList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -485,7 +576,9 @@ export default function App() {
           path="/app/categorias/nova"
           element={
             <ProtectedRoute>
-              <CategoryForm />
+              <FeatureGate feature="categories">
+                <CategoryForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -493,7 +586,9 @@ export default function App() {
           path="/app/categorias/:id"
           element={
             <ProtectedRoute>
-              <CategoryForm />
+              <FeatureGate feature="categories">
+                <CategoryForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -501,7 +596,9 @@ export default function App() {
           path="/app/listas-preco"
           element={
             <ProtectedRoute>
-              <PriceListList />
+              <FeatureGate feature="price_lists">
+                <PriceListList />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -509,7 +606,9 @@ export default function App() {
           path="/app/listas-preco/novo"
           element={
             <ProtectedRoute>
-              <PriceListForm />
+              <FeatureGate feature="price_lists">
+                <PriceListForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />
@@ -517,7 +616,9 @@ export default function App() {
           path="/app/listas-preco/:id"
           element={
             <ProtectedRoute>
-              <PriceListForm />
+              <FeatureGate feature="price_lists">
+                <PriceListForm />
+              </FeatureGate>
             </ProtectedRoute>
           }
         />

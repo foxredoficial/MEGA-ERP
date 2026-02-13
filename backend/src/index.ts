@@ -31,6 +31,7 @@ import searchRouter from "./routes/search.js";
 import { honeypotRouter } from "./security/honeypot.js";
 import { sameOriginGuard } from "./security/sameOrigin.js";
 import { csrfGuard } from "./security/csrf.js";
+import { requireEntitlement } from "./billing/requireEntitlement.js";
 
 const app = express();
 
@@ -122,21 +123,21 @@ app.use("/api/me", meRouter);
 app.use("/api/billing", billingRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/search", searchRouter);
-app.use("/api/products", productsRouter);
-app.use("/api/contacts", contactsRouter);
-app.use("/api/categories", categoriesRouter);
-app.use("/api/price-lists", priceListsRouter);
-app.use("/api/salespersons", salespersonsRouter);
-app.use("/api/cash", cashRouter);
-app.use("/api/financial", financialTitlesRouter);
-app.use("/api/sales-orders", salesOrdersRouter);
-app.use("/api/pdv", pdvSalesRouter);
-app.use("/api/service-orders", serviceOrdersRouter);
+app.use("/api/products", requireEntitlement({ feature: "products" }), productsRouter);
+app.use("/api/contacts", requireEntitlement({ feature: "contacts" }), contactsRouter);
+app.use("/api/categories", requireEntitlement({ feature: "categories" }), categoriesRouter);
+app.use("/api/price-lists", requireEntitlement({ feature: "price_lists" }), priceListsRouter);
+app.use("/api/salespersons", requireEntitlement({ feature: "salespersons" }), salespersonsRouter);
+app.use("/api/cash", requireEntitlement({ feature: "cash" }), cashRouter);
+app.use("/api/financial", requireEntitlement({ feature: "finance" }), financialTitlesRouter);
+app.use("/api/sales-orders", requireEntitlement({ feature: "sales_orders" }), salesOrdersRouter);
+app.use("/api/pdv", requireEntitlement({ feature: "pdv" }), pdvSalesRouter);
+app.use("/api/service-orders", requireEntitlement({ feature: "service_orders" }), serviceOrdersRouter);
 app.use("/api/analytics", analyticsRouter);
-app.use("/api/reports", reportsRouter);
-app.use("/api/docs", bizDocumentsRouter);
-app.use("/api/banks", banksRouter);
-app.use("/api/finance", financeRouter);
+app.use("/api/reports", requireEntitlement({ feature: "reports" }), reportsRouter);
+app.use("/api/docs", requireEntitlement({ feature: "docs" }), bizDocumentsRouter);
+app.use("/api/banks", requireEntitlement({ feature: "banks" }), banksRouter);
+app.use("/api/finance", requireEntitlement({ feature: "finance" }), financeRouter);
 app.use("/api/webhooks", mpWebhooksRouter);
 
 app.use((_req, res) => {

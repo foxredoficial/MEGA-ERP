@@ -23,11 +23,14 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
 import { globalSearch } from "@/lib/api";
+import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { subscriptionHasFeature, type FeatureKey } from "@/lib/entitlements";
 
 // Helper type for Mega Menu structure
 type MenuItem = {
   label: string;
   href: string;
+  feature?: FeatureKey;
 };
 
 type MenuColumn = {
@@ -47,6 +50,10 @@ export function BlingHeader() {
   const profile = useAuthStore((s) => s.profile);
   const session = useAuthStore((s) => s.session);
   const signOut = useAuthStore((s) => s.signOut);
+  const subscription = useSubscriptionStore((s) => s.subscription);
+  const subStatus = useSubscriptionStore((s) => s.status);
+  const loadSubscription = useSubscriptionStore((s) => s.load);
+  const clearSubscription = useSubscriptionStore((s) => s.clear);
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -59,6 +66,14 @@ export function BlingHeader() {
 
   const menuRef = useRef<HTMLDivElement>(null);
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    if (session?.userId) {
+      if (subStatus === "idle") void loadSubscription();
+    } else {
+      clearSubscription();
+    }
+  }, [clearSubscription, loadSubscription, session?.userId, subStatus]);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -160,17 +175,17 @@ export function BlingHeader() {
         {
           title: "Cadastros",
           items: [
-            { label: "Clientes", href: "/app/clientes" },
-            { label: "Fornecedores", href: "/app/fornecedores" },
-            { label: "Catálogo de Serviços", href: "/app/servicos" },
-            { label: "Vendedores", href: "/app/vendedores" },
+            { label: "Clientes", href: "/app/clientes", feature: "contacts" },
+            { label: "Fornecedores", href: "/app/fornecedores", feature: "contacts" },
+            { label: "Catálogo de Serviços", href: "/app/servicos", feature: "services" },
+            { label: "Vendedores", href: "/app/vendedores", feature: "salespersons" },
           ]
         },
         {
           title: "Ferramentas",
           items: [
-            { label: "Categorias de produtos", href: "/app/categorias" },
-            { label: "Listas de preços", href: "/app/listas-preco" },
+            { label: "Categorias de produtos", href: "/app/categorias", feature: "categories" },
+            { label: "Listas de preços", href: "/app/listas-preco", feature: "price_lists" },
           ]
         }
       ],
@@ -183,21 +198,21 @@ export function BlingHeader() {
         {
           title: "Gestão",
           items: [
-            { label: "Pedidos de venda", href: "/app/vendas/pedidos" },
-            { label: "Produtos", href: "/app/produtos" },
-            { label: "Notas fiscais de saída", href: "/app/docs/nfe" },
-            { label: "NFC-e", href: "/app/docs/nfce" },
-            { label: "Frente de caixa", href: "/app/pdv" },
-            { label: "Propostas comerciais", href: "/app/docs/proposal" },
+            { label: "Pedidos de venda", href: "/app/vendas/pedidos", feature: "sales_orders" },
+            { label: "Produtos", href: "/app/produtos", feature: "products" },
+            { label: "Notas fiscais de saída", href: "/app/docs/nfe", feature: "docs" },
+            { label: "NFC-e", href: "/app/docs/nfce", feature: "docs" },
+            { label: "Frente de caixa", href: "/app/pdv", feature: "pdv" },
+            { label: "Propostas comerciais", href: "/app/docs/proposal", feature: "docs" },
           ]
         },
         {
           title: "Serviços",
           items: [
-            { label: "Contratos", href: "/app/docs/contract" },
-            { label: "Ordens de serviço", href: "/app/ordens-servico" },
-            { label: "Notas de serviço", href: "/app/docs/service_invoice" },
-            { label: "Cobranças", href: "/app/financeiro/titulos?kind=ar" },
+            { label: "Contratos", href: "/app/docs/contract", feature: "docs" },
+            { label: "Ordens de serviço", href: "/app/ordens-servico", feature: "service_orders" },
+            { label: "Notas de serviço", href: "/app/docs/service_invoice", feature: "docs" },
+            { label: "Cobranças", href: "/app/financeiro/titulos?kind=ar", feature: "finance" },
           ]
         }
       ],
@@ -210,16 +225,16 @@ export function BlingHeader() {
         {
           title: "Compras",
           items: [
-            { label: "Pedidos de compra", href: "/app/docs/purchase_order" },
-            { label: "Notas fiscais de entrada", href: "/app/docs/incoming_invoice" },
+            { label: "Pedidos de compra", href: "/app/docs/purchase_order", feature: "docs" },
+            { label: "Notas fiscais de entrada", href: "/app/docs/incoming_invoice", feature: "docs" },
           ]
         },
         {
           title: "Estoque",
           items: [
-            { label: "Lançamentos de estoque", href: "/app/estoque/lancamentos" },
-            { label: "Conferência de estoque", href: "/app/estoque/conferencia" },
-            { label: "Ordens de produção", href: "/app/docs/production_order" },
+            { label: "Lançamentos de estoque", href: "/app/estoque/lancamentos", feature: "stock" },
+            { label: "Conferência de estoque", href: "/app/estoque/conferencia", feature: "stock" },
+            { label: "Ordens de produção", href: "/app/docs/production_order", feature: "docs" },
           ]
         }
       ],
@@ -232,15 +247,15 @@ export function BlingHeader() {
         {
           title: "Gestão financeira",
           items: [
-            { label: "Visão geral", href: "/app/financeiro" },
-            { label: "Cadastros financeiros", href: "/app/financeiro/cadastros" },
-            { label: "Caixas e bancos", href: "/app/financeiro/bancos" },
-            { label: "Contas a receber", href: "/app/financeiro/titulos?kind=ar" },
-            { label: "Contas a pagar", href: "/app/financeiro/titulos?kind=ap" },
-            { label: "Controle de caixa", href: "/app/financeiro/caixa" },
-            { label: "Conciliação bancária", href: "/app/financeiro/conciliacao" },
-            { label: "Fluxo de caixa", href: "/app/financeiro/fluxo-caixa" },
-            { label: "DRE", href: "/app/financeiro/dre" },
+            { label: "Visão geral", href: "/app/financeiro", feature: "finance" },
+            { label: "Cadastros financeiros", href: "/app/financeiro/cadastros", feature: "finance" },
+            { label: "Caixas e bancos", href: "/app/financeiro/bancos", feature: "banks" },
+            { label: "Contas a receber", href: "/app/financeiro/titulos?kind=ar", feature: "finance" },
+            { label: "Contas a pagar", href: "/app/financeiro/titulos?kind=ap", feature: "finance" },
+            { label: "Controle de caixa", href: "/app/financeiro/caixa", feature: "cash" },
+            { label: "Conciliação bancária", href: "/app/financeiro/conciliacao", feature: "banks" },
+            { label: "Fluxo de caixa", href: "/app/financeiro/fluxo-caixa", feature: "finance" },
+            { label: "DRE", href: "/app/financeiro/dre", feature: "finance" },
           ]
         }
       ],
@@ -250,13 +265,13 @@ export function BlingHeader() {
       label: "Relatórios",
       icon: BarChart3,
       items: [
-        { label: "Central de relatórios", href: "/app/relatorios" },
-        { label: "Vendas (Pedidos)", href: "/app/relatorios/sales-orders" },
-        { label: "Vendas (PDV)", href: "/app/relatorios/pdv-sales" },
-        { label: "Caixa (Transações)", href: "/app/relatorios/cash-transactions" },
-        { label: "Financeiro (Títulos)", href: "/app/relatorios/financial-titles" },
-        { label: "Estoque (Movimentações)", href: "/app/relatorios/stock-movements" },
-        { label: "Produtos", href: "/app/relatorios/products" },
+        { label: "Central de relatórios", href: "/app/relatorios", feature: "reports" },
+        { label: "Vendas (Pedidos)", href: "/app/relatorios/sales-orders", feature: "reports" },
+        { label: "Vendas (PDV)", href: "/app/relatorios/pdv-sales", feature: "reports" },
+        { label: "Caixa (Transações)", href: "/app/relatorios/cash-transactions", feature: "reports" },
+        { label: "Financeiro (Títulos)", href: "/app/relatorios/financial-titles", feature: "reports" },
+        { label: "Estoque (Movimentações)", href: "/app/relatorios/stock-movements", feature: "reports" },
+        { label: "Produtos", href: "/app/relatorios/products", feature: "reports" },
       ]
     },
   ];
@@ -275,6 +290,29 @@ export function BlingHeader() {
     });
   }
 
+  const isAllowed = (feature?: FeatureKey) => (feature ? subscriptionHasFeature(subscription, feature) : true);
+  const filteredMenus = menus
+    .map((section) => {
+      const next: MenuSection = { ...section };
+      if (next.items) {
+        next.items = next.items.filter((it) => isAllowed((it as any).feature));
+      }
+      if (next.columns) {
+        next.columns = next.columns
+          .map((c) => ({ ...c, items: c.items.filter((it) => isAllowed((it as any).feature)) }))
+          .filter((c) => c.items.length > 0);
+      }
+      if (next.footerLink) {
+        const footerFeature = (() => {
+          if (next.footerLink.href.startsWith("/app/relatorios")) return "reports" as FeatureKey;
+          return undefined;
+        })();
+        if (footerFeature && !isAllowed(footerFeature)) next.footerLink = undefined;
+      }
+      return next;
+    })
+    .filter((s) => (s.items && s.items.length > 0) || (s.columns && s.columns.length > 0));
+
   return (
     <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 shadow-sm fixed top-0 w-full z-50" ref={menuRef}>
       {/* Top Bar */}
@@ -291,7 +329,7 @@ export function BlingHeader() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 flex-1">
-          {menus.map((menu) => (
+          {filteredMenus.map((menu) => (
             <div key={menu.label} className="relative group">
               <button
                 className={cn(

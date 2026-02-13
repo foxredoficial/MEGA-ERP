@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
@@ -51,6 +51,11 @@ export function SeriesChart(props: {
   compareKey?: string;
   valueFormat?: "currency" | "number";
 }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(true);
+  }, []);
+
   const chartData = useMemo(() => {
     return props.data.map((r) => {
       const d = parseBucket(String(r[props.xKey] ?? ""));
@@ -69,8 +74,9 @@ export function SeriesChart(props: {
         {props.actions ? <div className="flex items-center gap-2">{props.actions}</div> : null}
       </div>
 
-      <div className="mt-4 h-[280px]">
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
+      <div className="mt-4 h-[280px] min-w-0">
+        {ready ? (
+          <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={280}>
           <AreaChart data={chartData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
             <XAxis dataKey="__label" tick={{ fontSize: 12 }} stroke="#94A3B8" />
@@ -93,7 +99,8 @@ export function SeriesChart(props: {
               <Area type="monotone" dataKey={props.compareKey} stroke="#16A34A" fill="#22C55E" fillOpacity={0.10} strokeWidth={2} />
             )}
           </AreaChart>
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        ) : null}
       </div>
     </div>
   );

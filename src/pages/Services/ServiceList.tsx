@@ -187,7 +187,14 @@ export function ServiceList() {
           </div>
           <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
           <div className="flex items-center gap-2 pr-2 w-full md:w-auto justify-end">
-             <AdvancedDateFilter label="Data" value={dateFilter} onChange={setDateFilter} />
+             <AdvancedDateFilter
+               label="Data"
+               value={dateFilter}
+               onChange={setDateFilter}
+               showCompare={false}
+               showGranularity={false}
+               allowedGranularities={["day", "week", "month"]}
+             />
              <Button variant="ghost" className="text-slate-500 hover:text-blue-600" onClick={handleExport}>
                <Download className="w-4 h-4 mr-2" />
                <span className="text-sm">Exportar</span>

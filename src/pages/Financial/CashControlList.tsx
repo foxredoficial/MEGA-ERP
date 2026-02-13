@@ -168,7 +168,14 @@ export function CashControlList() {
               Histórico de Caixas
             </h2>
             <div className="flex items-center gap-3">
-              <AdvancedDateFilter label="Data" value={dateFilter} onChange={setDateFilter} />
+              <AdvancedDateFilter
+                label="Data"
+                value={dateFilter}
+                onChange={setDateFilter}
+                showCompare={false}
+                showGranularity={false}
+                allowedGranularities={["day", "week", "month"]}
+              />
               <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../http.js";
 import { listActivePlans } from "../repos/plans.js";
+import { isEntitlementKey } from "../billing/featureKeys.js";
 
 export const publicRouter = Router();
 
@@ -12,7 +13,7 @@ publicRouter.get(
       let features: string[] = [];
       try {
         const parsed = JSON.parse(p.features_json);
-        if (Array.isArray(parsed)) features = parsed.filter((x) => typeof x === "string");
+        if (Array.isArray(parsed)) features = parsed.filter((x) => typeof x === "string" && !isEntitlementKey(x));
       } catch {
         features = [];
       }
@@ -30,4 +31,3 @@ publicRouter.get(
     res.json({ plans: normalized });
   })
 );
-

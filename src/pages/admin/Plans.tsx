@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getAdminPlans, createPlan, updatePlan } from '@/lib/api_admin';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { Check, X, Edit, Plus, Save, Users, Package, FileText, LayoutList, DollarSign, Star, Power, Infinity as InfinityIcon } from 'lucide-react';
+import { Pagination } from '@/components/ui/Pagination';
+import { Check, X, Edit, Plus, Save, Users, Package, FileText, LayoutList, DollarSign, Star, Power, Infinity as InfinityIcon, Search } from 'lucide-react';
 
 type Plan = {
   id: string;
@@ -20,10 +21,36 @@ type Plan = {
   is_active: number;
 };
 
+const PLAN_FEATURES = [
+  { key: 'products', label: 'Produtos', description: 'Cadastro e gestão de produtos' },
+  { key: 'contacts', label: 'Clientes/Fornecedores', description: 'Cadastros de contatos' },
+  { key: 'services', label: 'Serviços', description: 'Catálogo de serviços' },
+  { key: 'salespersons', label: 'Vendedores', description: 'Cadastro de vendedores' },
+  { key: 'categories', label: 'Categorias', description: 'Categorias de produtos' },
+  { key: 'price_lists', label: 'Listas de preços', description: 'Listas e regras de preço' },
+  { key: 'sales_orders', label: 'Pedidos', description: 'Pedidos de venda' },
+  { key: 'docs', label: 'Documentos', description: 'Documentos (NF-e, propostas, contratos...)' },
+  { key: 'pdv', label: 'PDV', description: 'Frente de caixa (PDV)' },
+  { key: 'service_orders', label: 'Ordens de Serviço', description: 'OS e serviços' },
+  { key: 'stock', label: 'Estoque', description: 'Movimentações e conferência' },
+  { key: 'finance', label: 'Financeiro', description: 'Títulos, caixa, fluxo, DRE' },
+  { key: 'banks', label: 'Bancos', description: 'Contas e conciliação bancária' },
+  { key: 'cash', label: 'Caixa', description: 'Controle de caixa' },
+  { key: 'reports', label: 'Relatórios', description: 'Central de relatórios' },
+  { key: 'analytics', label: 'Analytics', description: 'Indicadores e análises' },
+  { key: 'notifications', label: 'Notificações', description: 'Central de notificações' },
+  { key: 'apps', label: 'Atalhos', description: 'Central de atalhos' },
+  { key: 'help', label: 'Ajuda', description: 'Central de ajuda' },
+] as const;
+
 export function Plans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [total, setTotal] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Plan>>({});
   const [isCreating, setIsCreating] = useState(false);
@@ -31,17 +58,30 @@ export function Plans() {
 
   useEffect(() => {
     loadPlans();
-  }, []);
+  }, [page, pageSize, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   const loadPlans = () => {
     setLoading(true);
-    getAdminPlans()
-      .then((data) => {
-        const parsed = data.map(p => ({
-          ...p,
-          features_json: typeof p.features_json === 'string' ? JSON.parse(p.features_json) : p.features_json
-        }));
+    getAdminPlans({ page, pageSize, q: searchTerm.trim() || undefined })
+      .then((r) => {
+        const parsed = r.items.map((p) => {
+          let features: any = p.features_json;
+          if (typeof features === 'string') {
+            try {
+              features = JSON.parse(features);
+            } catch {
+              features = [];
+            }
+          }
+          if (!Array.isArray(features)) features = [];
+          return { ...p, features_json: features } as any;
+        });
         setPlans(parsed as any);
+        setTotal(r.total);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -78,6 +118,17 @@ export function Plans() {
     setNewFeature('');
   };
 
+  const toggleFeature = (featureKey: string, enabled: boolean) => {
+    const current = Array.isArray(editForm.features_json) ? editForm.features_json : [];
+    const next = new Set(current.map((x: any) => String(x)));
+    if (enabled) next.add(featureKey);
+    else next.delete(featureKey);
+    setEditForm({
+      ...editForm,
+      features_json: Array.from(next.values()),
+    });
+  };
+
   const handleRemoveFeature = (index: number) => {
     const currentFeatures = Array.isArray(editForm.features_json) ? editForm.features_json : [];
     setEditForm({
@@ -85,6 +136,15 @@ export function Plans() {
       features_json: currentFeatures.filter((_, i) => i !== index)
     });
   };
+
+  const displayFeatures = useMemo(() => {
+    const current = Array.isArray(editForm.features_json) ? editForm.features_json : [];
+    const keys = new Set(PLAN_FEATURES.map((f) => f.key));
+    return current.filter((x: any) => {
+      const s = String(x).trim().toLowerCase();
+      return !keys.has(s as any) && !s.startsWith('app:') && !s.startsWith('feature:');
+    }) as string[];
+  }, [editForm.features_json]);
 
   const handleSave = async () => {
     try {
@@ -113,6 +173,12 @@ export function Plans() {
       alert(err.message || "Erro ao salvar");
     }
   };
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / Math.max(1, pageSize))), [pageSize, total]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const handleCancel = () => {
     setEditingId(null);
@@ -159,6 +225,18 @@ export function Plans() {
             Novo Plano
           </Button>
         )}
+      </div>
+
+      <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-2 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Buscar por nome/descrição..."
+            className="pl-10 border-none shadow-none focus-visible:ring-0 bg-transparent h-12 text-base"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       <Modal 
@@ -296,6 +374,34 @@ export function Plans() {
           {/* Funcionalidades */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Funcionalidades</h3>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Recursos do SaaS</div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {PLAN_FEATURES.map((f) => {
+                  const current = Array.isArray(editForm.features_json) ? editForm.features_json : [];
+                  const checked = current.includes(f.key);
+                  return (
+                    <label
+                      key={f.key}
+                      className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                        checked={checked}
+                        onChange={(e) => toggleFeature(f.key, e.target.checked)}
+                      />
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-slate-100">{f.label}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{f.description}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <LayoutList className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -314,15 +420,15 @@ export function Plans() {
             </div>
             
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-              {(!editForm.features_json || (Array.isArray(editForm.features_json) && editForm.features_json.length === 0)) ? (
+              {displayFeatures.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-6 text-slate-500">
                   <LayoutList className="mb-2 h-8 w-8 opacity-20" />
                   <p className="text-sm">Nenhuma funcionalidade adicionada ainda.</p>
                 </div>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {Array.isArray(editForm.features_json) && editForm.features_json.map((feature: string, i: number) => (
-                    <div key={i} className="group flex items-center justify-between rounded-md border border-slate-200 bg-white p-2.5 text-sm shadow-sm transition-all hover:border-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-blue-900">
+                  {displayFeatures.map((feature: string, i: number) => (
+                    <div key={`${feature}:${i}`} className="group flex items-center justify-between rounded-md border border-slate-200 bg-white p-2.5 text-sm shadow-sm transition-all hover:border-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-blue-900">
                       <span className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                         <Check className="h-4 w-4 text-green-500" />
                         {feature}
@@ -331,7 +437,11 @@ export function Plans() {
                         type="button" 
                         variant="ghost" 
                         className="h-6 w-6 p-0 text-slate-400 opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
-                        onClick={() => handleRemoveFeature(i)}
+                        onClick={() => {
+                          const current = Array.isArray(editForm.features_json) ? editForm.features_json : [];
+                          const idx = current.findIndex((x) => String(x) === feature);
+                          if (idx >= 0) handleRemoveFeature(idx);
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -472,6 +582,20 @@ export function Plans() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+        <Pagination
+          label="Planos"
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={(n) => {
+            setPageSize(n);
+            setPage(1);
+          }}
+        />
       </div>
     </div>
   );

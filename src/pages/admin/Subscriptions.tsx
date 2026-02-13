@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getAdminSubscriptions } from '@/lib/api_admin';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Search } from 'lucide-react';
 import { Pagination } from '@/components/ui/Pagination';
 
@@ -11,44 +12,38 @@ export function Subscriptions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [total, setTotal] = useState(0);
+  const [status, setStatus] = useState<'all' | 'active' | 'past_due' | 'canceled'>('all');
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
   useEffect(() => {
-    getAdminSubscriptions()
-      .then(setSubscriptions)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    void getAdminSubscriptions({ page, pageSize, q: searchTerm.trim() || undefined, status })
+      .then((r) => {
+        if (cancelled) return;
+        setSubscriptions(r.items);
+        setTotal(r.total);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page, pageSize, searchTerm, status]);
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm]);
-
-  const filteredSubscriptions = useMemo(() => {
-    const q = searchTerm.toLowerCase();
-    return subscriptions.filter(
-      (sub) =>
-        sub.user_name?.toLowerCase().includes(q) ||
-        sub.user_email?.toLowerCase().includes(q) ||
-        sub.plan_name?.toLowerCase().includes(q)
-    );
-  }, [subscriptions, searchTerm]);
-
-  const total = filteredSubscriptions.length;
-  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
-
-  useEffect(() => {
-    if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
-
-  const pagedSubs = useMemo(() => {
-    const safePage = Math.min(Math.max(1, page), totalPages);
-    const start = (safePage - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredSubscriptions.slice(start, end);
-  }, [filteredSubscriptions, page, pageSize, totalPages]);
+  }, [searchTerm, status]);
 
   if (loading) {
     return (
@@ -78,14 +73,24 @@ export function Subscriptions() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-medium">Histórico de Assinaturas</CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-            <Input 
-              placeholder="Buscar assinatura..." 
-              className="pl-9" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex items-center gap-3">
+            <div className="w-48">
+              <Select value={status} onChange={(e) => setStatus(e.target.value as any)}>
+                <option value="all">Status: Todos</option>
+                <option value="active">Status: Ativo</option>
+                <option value="past_due">Status: Em atraso</option>
+                <option value="canceled">Status: Cancelado</option>
+              </Select>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+              <Input 
+                placeholder="Buscar assinatura..." 
+                className="pl-9" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -101,7 +106,7 @@ export function Subscriptions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
-                {pagedSubs.map((sub) => (
+                {subscriptions.map((sub) => (
                   <tr key={sub.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                     <td className="px-6 py-4">
                       <div className="font-medium text-slate-900 dark:text-slate-100">{sub.user_name}</div>
@@ -125,7 +130,7 @@ export function Subscriptions() {
                 ))}
               </tbody>
             </table>
-            {filteredSubscriptions.length === 0 && (
+            {subscriptions.length === 0 && (
               <div className="p-6 text-center text-slate-500">
                 Nenhuma assinatura encontrada.
               </div>

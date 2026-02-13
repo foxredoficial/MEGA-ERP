@@ -11,6 +11,15 @@ const emptyStringToUndefined = (value: unknown) => {
   return trimmed.length === 0 ? undefined : trimmed;
 };
 
+const toBooleanEnv = (value: unknown) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value !== "string") return value;
+  const v = value.trim().toLowerCase();
+  if (v === "true" || v === "1" || v === "yes" || v === "y") return true;
+  if (v === "false" || v === "0" || v === "no" || v === "n") return false;
+  return value;
+};
+
 const schema = z.object({
   PORT: z.coerce.number().default(3000),
   APP_ORIGIN: z.string().url().default("http://127.0.0.1:5173"),
@@ -25,8 +34,11 @@ const schema = z.object({
   MYSQL_DATABASE: z.string().min(1).default("megaerp"),
 
   MP_ACCESS_TOKEN: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
+  MP_PUBLIC_KEY: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   WEBHOOK_BASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
   MP_WEBHOOK_SIGNATURE_SECRET: z.preprocess(emptyStringToUndefined, z.string().min(16).optional()),
+
+  BILLING_ENFORCE_SUBSCRIPTION: z.preprocess(toBooleanEnv, z.boolean().default(false)),
 
   MEGA_NFE_API_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
   MEGA_NFE_API_KEY: z.preprocess(emptyStringToUndefined, z.string().min(16).optional()),

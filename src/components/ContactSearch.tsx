@@ -139,7 +139,7 @@ export function ContactSearch({ onSelect, selectedContactId, className, contactT
                 >
                   <div className="font-medium text-slate-900">{contact.name}</div>
                   <div className="text-slate-500 text-xs flex flex-wrap gap-x-2 gap-y-1">
-                     {contact.cpf_cnpj && <span>Doc: {contact.cpf_cnpj}</span>}
+                     {contact.cpf_cnpj && <span>CPF/CNPJ: {contact.cpf_cnpj}</span>}
                      {contact.phone && <span>Tel: {contact.phone}</span>}
                      {contact.mobile && <span>Cel: {contact.mobile}</span>}
                   </div>

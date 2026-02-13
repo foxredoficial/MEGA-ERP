@@ -115,7 +115,15 @@ export default function CashflowPage() {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,260px)_minmax(0,260px)_minmax(0,120px)] gap-4 items-center">
             <div>
-              <AdvancedDateFilter label="Período" value={period} onChange={setPeriod} showLabelInChip={false} />
+              <AdvancedDateFilter
+                label="Período"
+                value={period}
+                onChange={setPeriod}
+                showLabelInChip={false}
+                showCompare={false}
+                showGranularity={false}
+                allowedGranularities={["day", "week", "month"]}
+              />
             </div>
             <div className="max-w-xs">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Conta bancária</label>

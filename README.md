@@ -16,6 +16,33 @@ Monorepo do **MEGA ERP** (SaaS), com **Frontend** (site + app do cliente + admin
   - Banco “tenant” por usuário (dados do ERP), criado sob demanda.
 - Integrações: **Mercado Pago** (assinaturas + webhook), **Google OAuth**, e **Emissão fiscal** via serviço externo (MEGA NFE).
 
+## Planos, assinaturas e recursos (Entitlements)
+
+O projeto separa:
+
+- **Benefícios do plano (exibição)**: textos/itens livres que aparecem na landing de planos.
+- **Recursos do SaaS (controle de acesso)**: chaves funcionais que determinam o que aparece no menu do cliente e quais endpoints são permitidos.
+
+### Como funciona
+
+- No **Admin → Planos**, você marca os recursos do SaaS por checkbox.
+- No **App do cliente**, o menu e algumas rotas ficam protegidas:
+  - recurso não liberado não aparece no menu;
+  - se tentar acessar por URL, aparece uma tela de bloqueio (“Recurso não disponível no seu plano”).
+- No **Backend**, existe um middleware que pode bloquear APIs por assinatura ativa/feature/limites.
+
+### Chaves de recursos do SaaS
+
+Exemplos (podem evoluir): `products`, `contacts`, `services`, `salespersons`, `categories`, `price_lists`, `sales_orders`, `docs`, `pdv`, `service_orders`, `stock`, `finance`, `banks`, `cash`, `reports`.
+
+### Ativar bloqueio real no backend
+
+Por padrão, o enforcement fica desligado (para facilitar desenvolvimento). Para ativar:
+
+```bash
+BILLING_ENFORCE_SUBSCRIPTION=true
+```
+
 ## Stack
 
 - Frontend: React + TypeScript + Vite + React Router + Zustand + TailwindCSS.
@@ -63,6 +90,7 @@ Copie `backend/.env.example` para `backend/.env` e ajuste:
 - `MYSQL_*`: credenciais do MySQL.
 - `MP_ACCESS_TOKEN`: token do Mercado Pago.
 - `MP_WEBHOOK_SIGNATURE_SECRET`: segredo (opcional) para validar assinatura do webhook.
+- `BILLING_ENFORCE_SUBSCRIPTION`: ativa bloqueio de rotas por assinatura/recursos.
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI`: OAuth Google (opcional).
 - `MEGA_NFE_API_URL` / `MEGA_NFE_API_KEY`: emissão fiscal (opcional, servidor).
 
@@ -135,6 +163,8 @@ O frontend consome as seguintes rotas:
 - `PUT /api/me/profile` → atualiza perfil
 - `GET /api/me/subscription` → assinatura atual (ou `null`)
 - `POST /api/billing/checkout` → retorna `initPoint` do Mercado Pago
+- `POST /api/billing/subscription/sync` → sincroniza status com Mercado Pago (quando configurado)
+- `POST /api/billing/subscription/cancel` → cancela assinatura no Mercado Pago (quando configurado)
 
 Além disso, o backend expõe rotas por domínio (ex.: produtos, contatos, vendas, PDV, financeiro, bancos, estoque, documentos e relatórios) sob o namespace `/api`.
 
@@ -161,3 +191,4 @@ npm run test
 ## Notas
 
 - Existe um guia adicional em `INSTRUCOES.md`, mas ele pode conter referências antigas (ex.: pasta `admin/` separada). O painel admin atualmente está dentro do mesmo frontend na rota `/admin`.
+- Status do Admin e mapeamento do que falta: `docs/admin-system-status.md`.

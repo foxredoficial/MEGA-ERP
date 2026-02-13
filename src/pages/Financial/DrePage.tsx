@@ -90,16 +90,13 @@ export default function DrePage() {
         {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div> : null}
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,200px)_minmax(0,1fr)_minmax(0,220px)_minmax(0,120px)] gap-4 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,280px)_minmax(0,280px)_minmax(0,1fr)_minmax(0,280px)_minmax(0,140px)] gap-5 lg:gap-10 items-end">
             <div className="max-w-xs">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Visão</label>
               <Select value={view} onChange={(e) => setView(e.target.value as any)}>
                 <option value="competence">Competência</option>
                 <option value="cash">Caixa</option>
               </Select>
-            </div>
-            <div className="flex justify-center lg:justify-start">
-              <AdvancedDateFilter label="Período" value={period} onChange={setPeriod} showLabelInChip={false} />
             </div>
             <div className="max-w-xs">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Centro de custo</label>
@@ -114,7 +111,22 @@ export default function DrePage() {
                   ))}
               </Select>
             </div>
-            <div className="flex items-center justify-end">
+            <div className="hidden lg:block" />
+            <div className="max-w-xs lg:justify-self-end">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Período</label>
+              <div className="mt-1">
+                <AdvancedDateFilter
+                  label="Período"
+                  value={period}
+                  onChange={setPeriod}
+                  showLabelInChip={false}
+                  showCompare={false}
+                  showGranularity={false}
+                  allowedGranularities={["day", "week", "month"]}
+                />
+              </div>
+            </div>
+            <div className="flex items-end justify-end lg:pl-4">
               <Button onClick={() => reload()} disabled={loading}>
                 Aplicar
               </Button>

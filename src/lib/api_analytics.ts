@@ -72,3 +72,21 @@ export async function getDashboardAnalytics(args: {
 
   return apiFetch<DashboardAnalytics>(`/api/analytics/dashboard?${params.toString()}`, { method: "GET" });
 }
+
+export type TopProductsItem = { productId: string; name: string; qty: number; total: number };
+
+export async function getTopProducts(args: {
+  start: string;
+  end: string;
+  metric: "total" | "qty";
+  order: "top" | "bottom";
+  limit: number;
+}) {
+  const params = new URLSearchParams();
+  params.set("start", args.start);
+  params.set("end", args.end);
+  params.set("productsMetric", args.metric);
+  params.set("productsOrder", args.order);
+  params.set("productsLimit", String(args.limit));
+  return apiFetch<{ items: TopProductsItem[] }>(`/api/analytics/top-products?${params.toString()}`, { method: "GET" });
+}

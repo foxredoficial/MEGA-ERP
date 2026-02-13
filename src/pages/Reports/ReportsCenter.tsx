@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Pagination } from "@/components/ui/Pagination";
-import { cn, toLocalIsoDate } from "@/lib/utils";
+import { cn, formatCurrency, toLocalIsoDate } from "@/lib/utils";
 import { getReport, listReportDefinitions, type ReportDefinition, type ReportResult } from "@/lib/api_reports";
 import { ReportTable } from "./ReportTable";
 
@@ -27,6 +27,27 @@ function groupReports(defs: ReportDefinition[]) {
     group,
     reports: reports.slice().sort((a, b) => a.title.localeCompare(b.title)),
   }));
+}
+
+function totalsLabel(key: string) {
+  switch (key) {
+    case "amount":
+      return "Valor";
+    case "paid":
+      return "Pago";
+    case "open":
+      return "Em aberto";
+    case "total":
+      return "Total";
+    case "in":
+      return "Entradas";
+    case "out":
+      return "Saídas";
+    case "net":
+      return "Saldo";
+    default:
+      return key;
+  }
 }
 
 export function ReportsCenter() {
@@ -93,6 +114,9 @@ export function ReportsCenter() {
 
   const selectedDef = useMemo(() => defs.find((d) => d.id === selectedId) ?? null, [defs, selectedId]);
   const grouped = useMemo(() => groupReports(defs), [defs]);
+  const supportsStatus = selectedId === "financial-titles";
+  const supportsKind = selectedId === "financial-titles";
+  const supportsQuery = selectedId === "financial-titles";
 
   useEffect(() => {
     let cancelled = false;
@@ -103,9 +127,9 @@ export function ReportsCenter() {
         const r = await getReport(selectedId, {
           start: toIsoDate(filter.range.start),
           end: toIsoDate(filter.range.end),
-          query: query.trim() || undefined,
-          status: status !== "all" ? status : undefined,
-          kind: kind !== "all" ? kind : undefined,
+          query: supportsQuery ? query.trim() || undefined : undefined,
+          status: supportsStatus && status !== "all" ? status : undefined,
+          kind: supportsKind && kind !== "all" ? kind : undefined,
         });
         if (!cancelled) setReport(r);
       } catch (e) {
@@ -124,11 +148,11 @@ export function ReportsCenter() {
     const qs = new URLSearchParams();
     qs.set("start", toIsoDate(filter.range.start));
     qs.set("end", toIsoDate(filter.range.end));
-    if (query.trim()) qs.set("query", query.trim());
-    if (status !== "all") qs.set("status", status);
-    if (kind !== "all") qs.set("kind", kind);
+    if (supportsQuery && query.trim()) qs.set("query", query.trim());
+    if (supportsStatus && status !== "all") qs.set("status", status);
+    if (supportsKind && kind !== "all") qs.set("kind", kind);
     return `/app/relatorios/imprimir/${encodeURIComponent(selectedId)}?${qs.toString()}`;
-  }, [filter.range.end, filter.range.start, kind, query, selectedId, status]);
+  }, [filter.range.end, filter.range.start, kind, query, selectedId, status, supportsKind, supportsQuery, supportsStatus]);
 
   return (
     <BlingLayout>
@@ -188,31 +212,49 @@ export function ReportsCenter() {
                   <div className="text-lg font-bold text-slate-900">{selectedDef?.title ?? "Relatório"}</div>
                   <div className="text-xs text-slate-500 mt-1">Aplique filtros e gere a prévia para imprimir.</div>
                 </div>
-                <AdvancedDateFilter label="Período" value={filter} onChange={setFilter} />
+                <AdvancedDateFilter
+                  label="Período"
+                  value={filter}
+                  onChange={setFilter}
+                  showCompare={false}
+                  showGranularity={false}
+                  allowedGranularities={["day", "week", "month"]}
+                />
               </div>
 
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar (opcional)" />
-                </div>
-                <div>
-                  <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-                    <option value="all">Status: Todos</option>
-                    <option value="open">Status: Em aberto</option>
-                    <option value="partial">Status: Parcial</option>
-                    <option value="paid">Status: Pago</option>
-                    <option value="canceled">Status: Cancelado</option>
-                    <option value="completed">Status: Concluído</option>
-                  </Select>
-                </div>
-                <div>
-                  <Select value={kind} onChange={(e) => setKind(e.target.value as any)}>
-                    <option value="all">Tipo: Todos</option>
-                    <option value="ar">Tipo: A Receber</option>
-                    <option value="ap">Tipo: A Pagar</option>
-                  </Select>
-                </div>
+                {supportsQuery ? (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar (opcional)" />
+                  </div>
+                ) : (
+                  <div className="hidden md:block" />
+                )}
+                {supportsStatus ? (
+                  <div>
+                    <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+                      <option value="all">Status: Todos</option>
+                      <option value="open">Status: Em aberto</option>
+                      <option value="partial">Status: Parcial</option>
+                      <option value="paid">Status: Pago</option>
+                      <option value="canceled">Status: Cancelado</option>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="hidden md:block" />
+                )}
+                {supportsKind ? (
+                  <div>
+                    <Select value={kind} onChange={(e) => setKind(e.target.value as any)}>
+                      <option value="all">Tipo: Todos</option>
+                      <option value="ar">Tipo: A Receber</option>
+                      <option value="ap">Tipo: A Pagar</option>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="hidden md:block" />
+                )}
               </div>
 
               <div className="mt-4 flex items-center justify-between">
@@ -247,7 +289,11 @@ export function ReportsCenter() {
                   {report.totals && (
                     <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 flex items-center justify-between">
                       <span className="font-semibold">Totais</span>
-                      <span className="font-mono text-xs">{Object.entries(report.totals).map(([k, v]) => `${k}: ${v}`).join(" | ")}</span>
+                      <span className="font-mono text-xs">
+                        {Object.entries(report.totals)
+                          .map(([k, v]) => `${totalsLabel(k)}: ${formatCurrency(Number(v))}`)
+                          .join(" | ")}
+                      </span>
                     </div>
                   )}
                   <ReportTable columns={report.columns} rows={pagedRows} />

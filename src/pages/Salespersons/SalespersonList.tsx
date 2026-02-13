@@ -172,7 +172,14 @@ export function SalespersonList() {
           </div>
           <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
           <div className="flex items-center gap-2 pr-2 w-full md:w-auto justify-end">
-            <AdvancedDateFilter label="Data" value={dateFilter} onChange={setDateFilter} />
+            <AdvancedDateFilter
+              label="Data"
+              value={dateFilter}
+              onChange={setDateFilter}
+              showCompare={false}
+              showGranularity={false}
+              allowedGranularities={["day", "week", "month"]}
+            />
             <Select className="h-11" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
               <option value="all">Status: Todos</option>
               <option value="active">Status: Ativo</option>

@@ -94,6 +94,109 @@ router.post("/mercadopago", async (req, res) => {
   }
 });
 
+async function recordMpEvent(req: any, eventKey: string) {
+  const id = randomUUID();
+  const now = new Date();
+  await pool.query("INSERT INTO mp_webhook_events (id, mp_event_key, payload_json, created_at) VALUES (?,?,?,?)", [
+    id,
+    eventKey,
+    JSON.stringify(req.body ?? {}),
+    now,
+  ]);
+}
+
+async function fetchMpResource(resourceUrl: string) {
+  if (!env.MP_ACCESS_TOKEN) throw new Error("MP_ACCESS_TOKEN não configurado");
+  const r = await fetch(resourceUrl, { method: "GET", headers: { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}` } });
+  const raw = await r.text();
+  let data: any = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = null;
+  }
+  if (!r.ok) throw new Error(`Falha ao consultar MercadoPago: ${r.status}`);
+  return data;
+}
+
+router.post("/mercadopago/orders", async (req, res) => {
+  try {
+    if (env.MP_WEBHOOK_SIGNATURE_SECRET) {
+      const signature = typeof req.headers["x-signature"] === "string" ? (req.headers["x-signature"] as string) : null;
+      const requestId = typeof req.headers["x-request-id"] === "string" ? (req.headers["x-request-id"] as string) : null;
+      const dataId = (req.body as any)?.data?.id ?? (req.body as any)?.id;
+      if (!verifyMpSignature(signature, requestId, typeof dataId === "string" ? dataId : null, env.MP_WEBHOOK_SIGNATURE_SECRET)) {
+        void recordSecurityEvent(req, "mp_webhook_signature_invalid");
+        return res.status(401).json({ ok: false });
+      }
+    }
+
+    const eventKey =
+      (req.headers["x-request-id"] as string | undefined) ??
+      createHash("sha256").update(JSON.stringify(req.body ?? {})).digest("hex");
+
+    try {
+      await recordMpEvent(req, eventKey);
+    } catch (e: any) {
+      if (e?.code === "ER_DUP_ENTRY") return res.json({ ok: true, deduped: true });
+      throw e;
+    }
+
+    const resource = (req.body as any)?.resource;
+    if (resource && typeof resource === "string") {
+      try {
+        await fetchMpResource(resource);
+      } catch {
+        void 0;
+      }
+    }
+
+    res.json({ ok: true });
+  } catch {
+    void recordSecurityEvent(req, "mp_webhook_error");
+    res.json({ ok: true });
+  }
+});
+
+router.post("/mercadopago/payments", async (req, res) => {
+  try {
+    if (env.MP_WEBHOOK_SIGNATURE_SECRET) {
+      const signature = typeof req.headers["x-signature"] === "string" ? (req.headers["x-signature"] as string) : null;
+      const requestId = typeof req.headers["x-request-id"] === "string" ? (req.headers["x-request-id"] as string) : null;
+      const dataId = (req.body as any)?.data?.id ?? (req.body as any)?.id;
+      if (!verifyMpSignature(signature, requestId, typeof dataId === "string" ? dataId : null, env.MP_WEBHOOK_SIGNATURE_SECRET)) {
+        void recordSecurityEvent(req, "mp_webhook_signature_invalid");
+        return res.status(401).json({ ok: false });
+      }
+    }
+
+    const eventKey =
+      (req.headers["x-request-id"] as string | undefined) ??
+      createHash("sha256").update(JSON.stringify(req.body ?? {})).digest("hex");
+
+    try {
+      await recordMpEvent(req, eventKey);
+    } catch (e: any) {
+      if (e?.code === "ER_DUP_ENTRY") return res.json({ ok: true, deduped: true });
+      throw e;
+    }
+
+    const resource = (req.body as any)?.resource;
+    if (resource && typeof resource === "string") {
+      try {
+        await fetchMpResource(resource);
+      } catch {
+        void 0;
+      }
+    }
+
+    res.json({ ok: true });
+  } catch {
+    void recordSecurityEvent(req, "mp_webhook_error");
+    res.json({ ok: true });
+  }
+});
+
 function verifyMpSignature(
   signature: string | null,
   requestId: string | null,
