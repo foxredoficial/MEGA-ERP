@@ -326,7 +326,9 @@ CREATE TABLE IF NOT EXISTS pdv_sale_items (
   unit_price DECIMAL(10, 2) NOT NULL,
   discount_per_unit DECIMAL(10, 2) NOT NULL,
   line_total DECIMAL(10, 2) NOT NULL,
-  CONSTRAINT fk_pdv_sale_items_sale FOREIGN KEY (sale_id) REFERENCES pdv_sales(id) ON DELETE CASCADE
+  lot_id CHAR(36) NULL,
+  CONSTRAINT fk_pdv_sale_items_sale FOREIGN KEY (sale_id) REFERENCES pdv_sales(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pdv_sale_items_lot FOREIGN KEY (lot_id) REFERENCES product_lots(id) ON DELETE SET NULL
 );
 CREATE INDEX idx_pdv_sale_items_sale ON pdv_sale_items(sale_id);
 

@@ -19,10 +19,12 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { MoneyInput } from "@/components/ui/MoneyInput";
+import { Select } from "@/components/ui/Select";
 import { ContactSearch } from "@/components/ContactSearch";
 import { ProductSearch } from "@/components/ProductSearch";
 import { formatCurrency, cn } from "@/lib/utils";
 import { addStockMovement, getProduct, type Product } from "@/lib/api_products";
+import { getProductLots, type ProductLot } from "@/lib/api_lots";
 import { 
   getCurrentOpenSession, 
   openCashSession, 
@@ -43,6 +45,9 @@ interface CartItem {
   quantity: number;
   discount: number; // in currency
   total: number;
+  hasLotControl?: boolean;
+  lotId?: string | null;
+  lotCode?: string | null;
 }
 
 interface PaymentMethod {
@@ -67,13 +72,14 @@ export function POS() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [client, setClient] = useState<{ id: string; name: string } | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<string>('money');
-  const [globalDiscount, setGlobalDiscount] = useState<{ type: 'percentage' | 'fixed'; value: number }>({ type: 'fixed', value: 0 });
+  const [globalDiscount, setGlobalDiscount] = useState<{ fixed: number }>({ fixed: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [session, setSession] = useState<CashSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOpenCashModal, setShowOpenCashModal] = useState(false);
   const [openingBalance, setOpeningBalance] = useState<number>(0);
   const [processingSale, setProcessingSale] = useState(false);
+  const [lotsByProduct, setLotsByProduct] = useState<Record<string, ProductLot[]>>({});
 
   useEffect(() => {
     checkSession();
@@ -118,6 +124,16 @@ export function POS() {
     }
   }
 
+  async function loadLotsForProduct(productId: string) {
+    if (lotsByProduct[productId]) return lotsByProduct[productId];
+    const lots = await getProductLots(productId);
+    setLotsByProduct((prev) => (prev[productId] ? prev : { ...prev, [productId]: lots }));
+    return lots;
+  }
+
+  const getAvailableLots = (productId: string) =>
+    (lotsByProduct[productId] ?? []).filter((lot) => lot.is_active && Number(lot.stock ?? 0) > 0);
+
   async function handleFinalizeSale() {
     if (!session) return;
     
@@ -137,20 +153,37 @@ export function POS() {
         unitPrice: i.price,
         discountPerUnit: i.discount,
         lineTotal: i.total,
+        lotId: i.lotId ?? null,
       }));
 
       const products = await Promise.all(
         [...new Set(cart.map((i) => i.productId))].map((pid) => getProduct(pid))
       );
       const byId = new Map(products.map((p) => [p.id, p] as const));
+      const lotProductIds = [...new Set(cart.filter((i) => i.hasLotControl).map((i) => i.productId))];
+      const lotEntries = await Promise.all(
+        lotProductIds.map(async (pid) => [pid, await loadLotsForProduct(pid)] as const)
+      );
+      const lotsResolved = new Map(lotEntries);
       for (const item of cart) {
         const p = byId.get(item.productId);
         if (!p) throw new Error('Produto não encontrado.');
         if (p.has_lot_control) {
-          throw new Error(`O produto "${p.name}" exige controle de lote. Selecione um lote para vender.`);
-        }
-        if (p.stock < item.quantity) {
-          throw new Error(`Estoque insuficiente para: ${p.name}. Saldo atual: ${p.stock}`);
+          if (!item.lotId) {
+            throw new Error(`O produto "${p.name}" exige controle de lote. Selecione um lote para vender.`);
+          }
+          const lots = lotsResolved.get(item.productId) ?? [];
+          const lot = lots.find((l) => l.id === item.lotId);
+          if (!lot || !lot.is_active) {
+            throw new Error(`Lote inválido para o produto "${p.name}".`);
+          }
+          if (Number(lot.stock ?? 0) < item.quantity) {
+            throw new Error(`Estoque insuficiente no lote ${lot.code} para "${p.name}".`);
+          }
+        } else {
+          if (p.stock < item.quantity) {
+            throw new Error(`Estoque insuficiente para: ${p.name}. Saldo atual: ${p.stock}`);
+          }
         }
       }
 
@@ -159,6 +192,7 @@ export function POS() {
           type: 'out',
           quantity: item.quantity,
           reason: `Venda PDV ${saleId}`,
+          lot_id: item.lotId ?? null,
         });
       }
 
@@ -215,7 +249,7 @@ export function POS() {
       // Reset POS
       setCart([]);
       setClient(null);
-      setGlobalDiscount({ type: 'fixed', value: 0 });
+      setGlobalDiscount({ fixed: 0 });
       setSelectedPayment('money');
       
       // Update session info (optional, just to refresh balance if needed)
@@ -232,19 +266,32 @@ export function POS() {
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const itemsDiscount = cart.reduce((acc, item) => acc + (item.discount * item.quantity), 0);
   
-  let totalDiscount = itemsDiscount;
-  if (globalDiscount.type === 'fixed') {
-    totalDiscount += globalDiscount.value;
-  } else {
-    totalDiscount += (subtotal - itemsDiscount) * (globalDiscount.value / 100);
-  }
+  const baseDiscountable = Math.max(0, subtotal - itemsDiscount);
+  const appliedGlobalDiscount = Math.min(globalDiscount.fixed, baseDiscountable);
+  const totalDiscount = itemsDiscount + appliedGlobalDiscount;
   
   const total = Math.max(0, subtotal - totalDiscount);
 
   // Handlers
   const handleAddProduct = (product: Product) => {
     if (product.has_lot_control) {
-      alert(`O produto "${product.name}" exige lote. No PDV, a venda por lote ainda não está habilitada.`);
+      void loadLotsForProduct(product.id);
+      setCart(prev => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          productId: product.id,
+          name: product.name,
+          sku: product.sku,
+          price: product.price,
+          quantity: 1,
+          discount: 0,
+          total: product.price,
+          hasLotControl: true,
+          lotId: null,
+          lotCode: null,
+        },
+      ]);
       return;
     }
     setCart(prev => {
@@ -272,7 +319,15 @@ export function POS() {
   const handleUpdateQuantity = (itemId: string, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.id === itemId) {
-        const newQuantity = Math.max(1, item.quantity + delta);
+        let newQuantity = Math.max(1, item.quantity + delta);
+        if (item.hasLotControl && item.lotId) {
+          const lots = lotsByProduct[item.productId] ?? [];
+          const lot = lots.find((l) => l.id === item.lotId);
+          if (lot) {
+            const maxQty = Math.max(1, Number(lot.stock ?? 0));
+            newQuantity = Math.min(newQuantity, maxQty);
+          }
+        }
         return {
           ...item,
           quantity: newQuantity,
@@ -283,12 +338,38 @@ export function POS() {
     }));
   };
 
+  const handleLotChange = (itemId: string, lotId: string) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id !== itemId) return item;
+        const lots = lotsByProduct[item.productId] ?? [];
+        const lot = lots.find((l) => l.id === lotId);
+        const maxQty = lot ? Math.max(1, Number(lot.stock ?? 0)) : item.quantity;
+        const nextQty = Math.min(item.quantity, maxQty);
+        return {
+          ...item,
+          lotId: lotId || null,
+          lotCode: lot?.code ?? null,
+          quantity: nextQty,
+          total: (item.price * nextQty) - (item.discount * nextQty),
+        };
+      })
+    );
+  };
+
   const handleRemoveItem = (itemId: string) => {
     setCart(prev => prev.filter(item => item.id !== itemId));
   };
 
-  const handleDiscountChange = (value: number, type: 'percentage' | 'fixed') => {
-    setGlobalDiscount({ type, value });
+  const handleFixedDiscountChange = (value: number) => {
+    const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+    setGlobalDiscount({ fixed: Math.min(safeValue, baseDiscountable) });
+  };
+
+  const handlePercentDiscountChange = (value: number) => {
+    const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+    const fixed = baseDiscountable > 0 ? (baseDiscountable * safeValue) / 100 : 0;
+    setGlobalDiscount({ fixed });
   };
 
   const toggleFullscreen = () => {
@@ -358,50 +439,70 @@ export function POS() {
           <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30">
             {cart.length > 0 ? (
               <div className="space-y-2">
-                {cart.map((item) => (
-                  <div key={item.id} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-slate-900 truncate">{item.name}</div>
-                      <div className="text-xs text-slate-500 flex gap-2">
-                        <span>SKU: {item.sku || '-'}</span>
-                        <span>Unit: {formatCurrency(item.price)}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-6">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center border border-slate-200 rounded-md bg-slate-50">
-                        <button 
-                          onClick={() => handleUpdateQuantity(item.id, -1)}
-                          className="p-1 hover:bg-slate-200 text-slate-600 rounded-l-md transition-colors"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-10 text-center text-sm font-medium">{item.quantity}</span>
-                        <button 
-                          onClick={() => handleUpdateQuantity(item.id, 1)}
-                          className="p-1 hover:bg-slate-200 text-slate-600 rounded-r-md transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <div className="text-right w-24">
-                        <div className="font-bold text-slate-900">{formatCurrency(item.total)}</div>
-                        {item.discount > 0 && (
-                          <div className="text-xs text-red-500">Desc: {formatCurrency(item.discount * item.quantity)}</div>
+                {cart.map((item) => {
+                  const availableLots = item.hasLotControl ? getAvailableLots(item.productId) : [];
+                  return (
+                    <div key={item.id} className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-slate-900 truncate">{item.name}</div>
+                        <div className="text-xs text-slate-500 flex gap-2">
+                          <span>SKU: {item.sku || '-'}</span>
+                          <span>Unit: {formatCurrency(item.price)}</span>
+                        </div>
+                        {item.hasLotControl && (
+                          <div className="mt-2 max-w-xs">
+                            <Select
+                              value={item.lotId ?? ""}
+                              onChange={(e) => handleLotChange(item.id, e.target.value)}
+                              disabled={availableLots.length === 0}
+                            >
+                              <option value="">
+                                {availableLots.length === 0 ? "Sem lotes disponíveis" : "Selecione o lote"}
+                              </option>
+                              {availableLots.map((lot) => (
+                                <option key={lot.id} value={lot.id}>
+                                  {lot.code} · {lot.stock}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
                         )}
                       </div>
+                      
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center border border-slate-200 rounded-md bg-slate-50">
+                          <button 
+                            onClick={() => handleUpdateQuantity(item.id, -1)}
+                            className="p-1 hover:bg-slate-200 text-slate-600 rounded-l-md transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-10 text-center text-sm font-medium">{item.quantity}</span>
+                          <button 
+                            onClick={() => handleUpdateQuantity(item.id, 1)}
+                            className="p-1 hover:bg-slate-200 text-slate-600 rounded-r-md transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
 
-                      <button 
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        <div className="text-right w-24">
+                          <div className="font-bold text-slate-900">{formatCurrency(item.total)}</div>
+                          {item.discount > 0 && (
+                            <div className="text-xs text-red-500">Desc: {formatCurrency(item.discount * item.quantity)}</div>
+                          )}
+                        </div>
+
+                        <button 
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-slate-400">
@@ -471,8 +572,8 @@ export function POS() {
                    <MoneyInput
                      className="pl-7"
                      placeholder="Valor fixo"
-                     value={globalDiscount.type === "fixed" ? globalDiscount.value : 0}
-                     onValueChange={(v) => handleDiscountChange(v, "fixed")}
+                    value={globalDiscount.fixed}
+                    onValueChange={(v) => handleFixedDiscountChange(v)}
                      withSymbol={false}
                      emptyAsZero={false}
                    />
@@ -483,8 +584,8 @@ export function POS() {
                      type="number" 
                      className="pr-7" 
                      placeholder="Porcentagem"
-                     value={globalDiscount.type === 'percentage' && globalDiscount.value > 0 ? globalDiscount.value : ''}
-                     onChange={(e) => handleDiscountChange(Number(e.target.value), 'percentage')}
+                    value={baseDiscountable > 0 && globalDiscount.fixed > 0 ? Number(((globalDiscount.fixed / baseDiscountable) * 100).toFixed(2)) : ''}
+                    onChange={(e) => handlePercentDiscountChange(Number(e.target.value))}
                    />
                  </div>
                </div>

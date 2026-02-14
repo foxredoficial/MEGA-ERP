@@ -30,10 +30,15 @@ router.get(
     const [productsRows] = await pool.query<any[]>(
       `SELECT id, name, sku, type
        FROM products
-       WHERE user_id = ? AND (name LIKE ? ESCAPE '\\' OR sku LIKE ? ESCAPE '\\')
+       WHERE user_id = ? AND (
+        name LIKE ? ESCAPE '\\'
+        OR sku LIKE ? ESCAPE '\\'
+        OR gtin LIKE ? ESCAPE '\\'
+        OR gtin_tax LIKE ? ESCAPE '\\'
+       )
        ORDER BY created_at DESC
        LIMIT 8`,
-      [userId, like, like]
+      [userId, like, like, like, like]
     );
 
     const [contactsRows] = await pool.query<any[]>(
@@ -95,4 +100,3 @@ router.get(
 );
 
 export default router;
-

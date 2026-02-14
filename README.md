@@ -6,7 +6,7 @@ Monorepo do **MEGA ERP** (SaaS), com **Frontend** (site + app do cliente + admin
 
 ### Frontend (React)
 - Site público: Landing (`/`), Planos (`/planos`), Auth (`/auth`), Termos (`/termos`) e Privacidade (`/privacidade`).
-- App do cliente: área protegida (`/app`) com módulos de Produtos, Serviços, Contatos, Vendas, PDV, Ordens de Serviço, Financeiro, Estoque, Documentos e Relatórios.
+- App do cliente: área protegida (`/app`) com módulos de Produtos (SKU/GTIN), Serviços, Contatos, Vendas, PDV (venda por lote quando aplicável), Ordens de Serviço, Financeiro, Estoque, Documentos e Relatórios.
 - Admin do SaaS: painel em rota (`/admin`) dentro do mesmo frontend.
 
 ### Backend (API)
@@ -15,6 +15,10 @@ Monorepo do **MEGA ERP** (SaaS), com **Frontend** (site + app do cliente + admin
   - Banco “SaaS” (usuários, planos, assinaturas, tokens, eventos, webhooks).
   - Banco “tenant” por usuário (dados do ERP), criado sob demanda.
 - Integrações: **Mercado Pago** (assinaturas + webhook), **Google OAuth**, e **Emissão fiscal** via serviço externo (MEGA NFE).
+
+## Atualizações recentes
+- PDV: itens da venda podem ser vinculados a lote (`pdv_sale_items.lot_id`) e a baixa de estoque suporta lote.
+- Busca: pesquisa de produtos considera também GTIN (código de barras).
 
 ## Planos, assinaturas e recursos (Entitlements)
 

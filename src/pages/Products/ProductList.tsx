@@ -86,7 +86,12 @@ export function ProductList() {
       const dt = new Date((p.updated_at || p.created_at) as any);
       if (!Number.isNaN(dt.getTime()) && !inRange(dt, dateFilter.range)) return false;
       const term = search.toLowerCase();
-      return p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
+      return (
+        p.name.toLowerCase().includes(term) ||
+        (p.sku && p.sku.toLowerCase().includes(term)) ||
+        (p.gtin && p.gtin.toLowerCase().includes(term)) ||
+        (p.gtin_tax && p.gtin_tax.toLowerCase().includes(term))
+      );
     }),
   [products, search, dateFilter.range]);
 

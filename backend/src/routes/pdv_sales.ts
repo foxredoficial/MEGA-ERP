@@ -23,6 +23,7 @@ router.post("/sales", requireAuth, asyncHandler(async (req, res) => {
     unitPrice: z.number().min(0),
     discountPerUnit: z.number().min(0),
     lineTotal: z.number().min(0),
+    lotId: z.string().uuid().nullable().optional(),
   });
 
   const body = z

@@ -13,6 +13,7 @@ export type PdvSaleItem = {
   unitPrice: number;
   discountPerUnit: number;
   lineTotal: number;
+  lotId?: string | null;
 };
 
 export type PdvSale = {
@@ -54,6 +55,7 @@ function mapItemRow(r: any): PdvSaleItem {
     unitPrice: Number(r.unit_price),
     discountPerUnit: Number(r.discount_per_unit),
     lineTotal: Number(r.line_total),
+    lotId: r.lot_id ?? null,
   };
 }
 
@@ -107,8 +109,8 @@ export async function createPdvSale(
     for (const item of input.items) {
       await conn.query(
         `INSERT INTO pdv_sale_items (
-          id, sale_id, product_id, name, sku, quantity, unit_price, discount_per_unit, line_total
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          id, sale_id, product_id, name, sku, quantity, unit_price, discount_per_unit, line_total, lot_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           item.id || randomUUID(),
           saleId,
@@ -119,6 +121,7 @@ export async function createPdvSale(
           item.unitPrice,
           item.discountPerUnit,
           item.lineTotal,
+          item.lotId ?? null,
         ]
       );
     }
@@ -133,4 +136,3 @@ export async function createPdvSale(
     conn.release();
   }
 }
-

@@ -319,8 +319,36 @@ export function ProductForm() {
     e.preventDefault();
     setSaving(true);
     try {
+      const cartesian = (a: any[]) => a.reduce((a, b) => a.flatMap((d: any) => b.map((e: any) => [d, e].flat())), [[]]);
       if (isEditing && id) {
-        await updateProduct(id, normalizePayload(formData));
+        const normalized = normalizePayload(formData);
+        await updateProduct(id, normalized);
+
+        if (normalized.format === 'variation' && variationsList.length > 0) {
+          const optionsArrays = variationsList.map(v => v.options);
+          const combinations = cartesian(optionsArrays);
+          const existing = await getProductVariations(id);
+          const existingNames = new Set(existing.map((p) => p.name.toLowerCase()));
+          const existingSkus = new Set(existing.map((p) => (p.sku ?? "").toLowerCase()));
+
+          for (const combo of combinations) {
+            const suffix = combo.join(" - ");
+            const varName = `${normalized.name} - ${suffix}`;
+            const varSku = normalized.sku ? `${normalized.sku}-${combo.join("-")}` : null;
+
+            if (existingNames.has(varName.toLowerCase())) continue;
+            if (varSku && existingSkus.has(varSku.toLowerCase())) continue;
+
+            await createProduct({
+              ...normalized,
+              name: varName,
+              sku: varSku,
+              format: 'simple',
+              parent_id: id,
+              stock: 0,
+            });
+          }
+        }
       } else {
         // If we have initial stock, we might want to set it in formData.stock before creating
         // or handle it as a separate movement after creation.
@@ -335,8 +363,6 @@ export function ProductForm() {
         // Handle Variations Creation
         if (formData.format === 'variation' && variationsList.length > 0) {
             const optionsArrays = variationsList.map(v => v.options);
-            // Cartesian product helper
-            const cartesian = (a: any[]) => a.reduce((a, b) => a.flatMap((d: any) => b.map((e: any) => [d, e].flat())), [[]]);
             const combinations = cartesian(optionsArrays);
             
             for (const combo of combinations) {
@@ -483,18 +509,12 @@ export function ProductForm() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
-                    <Select 
-                      value={formData.category_id || ""}
-                      onChange={(e) => handleChange("category_id", e.target.value || null)}
-                    >
-                      <option value="">Sem categoria</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>
-                          {'\u00A0'.repeat((cat.level || 0) * 4)}{cat.name}
-                        </option>
-                      ))}
-                    </Select>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Código de barras</label>
+                    <Input 
+                      value={formData.gtin || ""} 
+                      onChange={(e) => handleChange("gtin", e.target.value)}
+                      placeholder="Ex: 7891234567890"
+                    />
                   </div>
 
                   <div>
@@ -544,6 +564,21 @@ export function ProductForm() {
                   </div>
 
 {/* Type selection removed to enforce separation between Products and Services modules */}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+                    <Select 
+                      value={formData.category_id || ""}
+                      onChange={(e) => handleChange("category_id", e.target.value || null)}
+                    >
+                      <option value="">Sem categoria</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>
+                          {'\u00A0'.repeat((cat.level || 0) * 4)}{cat.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Condição</label>

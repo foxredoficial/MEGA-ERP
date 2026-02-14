@@ -95,6 +95,7 @@ export type StockMovement = {
   type: StockMovementType;
   quantity: number;
   reason: string | null;
+  lot_id?: string | null;
   created_at: string;
   user_name?: string;
 };
@@ -105,7 +106,7 @@ export async function getStockHistory(productId: string) {
 
 export async function addStockMovement(
   productId: string, 
-  data: { type: StockMovementType; quantity: number; reason?: string }
+  data: { type: StockMovementType; quantity: number; reason?: string; lot_id?: string | null }
 ) {
   return apiFetch<{ id: string }>(`/api/products/${productId}/stock`, {
     method: "POST",

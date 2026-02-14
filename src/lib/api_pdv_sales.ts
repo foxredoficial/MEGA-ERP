@@ -11,6 +11,7 @@ export type PdvSaleItem = {
   unitPrice: number;
   discountPerUnit: number;
   lineTotal: number;
+  lotId?: string | null;
 };
 
 export type PdvSale = {
@@ -42,4 +43,3 @@ export async function createPdvSale(input: Omit<PdvSale, "id" | "createdAt">, op
   });
   return data.sale;
 }
-
