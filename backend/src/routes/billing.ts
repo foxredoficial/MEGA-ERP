@@ -6,7 +6,7 @@ import { env } from "../env.js";
 import { findPlanById } from "../repos/plans.js";
 import { createMpOrder } from "../integrations/mercadopago/orders.js";
 import { createMpPayment, getMpPayment } from "../integrations/mercadopago/payments.js";
-import { getSubscriptionByUserId, upsertSubscriptionByMpPreapprovalId } from "../repos/subscriptions.js";
+import { cancelActiveSubscriptionsForUser, createManualSubscription, getSubscriptionByUserId, upsertSubscriptionByMpPreapprovalId } from "../repos/subscriptions.js";
 
 export const billingRouter = Router();
 
@@ -58,6 +58,12 @@ billingRouter.post(
 
     const plan = await findPlanById(body.data.planId);
     if (!plan || !plan.is_active) return sendError(res, 404, "Plano não encontrado.");
+    if (Number(plan.price_cents) <= 0) return sendError(res, 400, "Preço do plano inválido.");
+
+    const existing = await getSubscriptionByUserId(r.auth.userId);
+    if (existing?.status === "active" && existing.plan_id === plan.id) {
+      return sendError(res, 409, "Você já está neste plano.");
+    }
 
     if (!env.MP_ACCESS_TOKEN) return sendError(res, 500, "Mercado Pago não configurado.");
 
@@ -92,7 +98,26 @@ billingRouter.post(
     });
 
     const text = await mpRes.text();
-    if (!mpRes.ok) return sendError(res, 502, "Falha ao criar assinatura no Mercado Pago.", { status: mpRes.status, body: text });
+    if (!mpRes.ok) {
+      let mpBody: any = null;
+      try {
+        mpBody = text ? JSON.parse(text) : null;
+      } catch {
+        mpBody = null;
+      }
+      const mpMessage =
+        typeof mpBody === "object" && mpBody && typeof mpBody.message === "string"
+          ? mpBody.message
+          : typeof mpBody === "object" && mpBody && typeof mpBody.error === "string"
+            ? mpBody.error
+            : null;
+
+      const message = mpMessage ? `Mercado Pago: ${mpMessage}` : "Falha ao criar assinatura no Mercado Pago.";
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[MP] preapproval error", { status: mpRes.status, mpMessage, mpBody: mpBody ?? text });
+      }
+      return sendError(res, 502, message, { status: mpRes.status, mp: mpBody ?? text });
+    }
 
     let data: MpPreapprovalResponse | null = null;
     try {
@@ -165,6 +190,25 @@ billingRouter.post(
       mpPreapprovalId: sub.mp_preapproval_id,
       endedAt: new Date(),
     });
+
+    res.json({ ok: true });
+  })
+);
+
+billingRouter.post(
+  "/activate-free",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const r = req as AuthedRequest;
+    const body = z.object({ planId: z.string().min(1) }).safeParse(req.body);
+    if (!body.success) return sendError(res, 400, "Dados inválidos.", body.error.flatten());
+
+    const plan = await findPlanById(body.data.planId);
+    if (!plan || !plan.is_active) return sendError(res, 404, "Plano não encontrado.");
+    if (Number(plan.price_cents) > 0) return sendError(res, 400, "Este plano não é gratuito.");
+
+    await cancelActiveSubscriptionsForUser(r.auth.userId, new Date());
+    await createManualSubscription({ userId: r.auth.userId, planId: plan.id, status: "active", startedAt: new Date(), endedAt: null });
 
     res.json({ ok: true });
   })

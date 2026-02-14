@@ -50,3 +50,27 @@ export async function upsertSubscriptionByMpPreapprovalId(args: {
     [id, args.userId, args.planId, args.status, args.mpPreapprovalId, args.startedAt ?? now, args.endedAt ?? null, now, now]
   );
 }
+
+export async function createManualSubscription(args: {
+  userId: string;
+  planId: string;
+  status: SubscriptionRow["status"];
+  startedAt?: Date;
+  endedAt?: Date | null;
+}) {
+  const now = new Date();
+  const id = randomUUID();
+  await pool.query(
+    "INSERT INTO subscriptions (id, user_id, plan_id, status, mp_preapproval_id, started_at, ended_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)",
+    [id, args.userId, args.planId, args.status, null, args.startedAt ?? now, args.endedAt ?? null, now, now]
+  );
+  return id;
+}
+
+export async function cancelActiveSubscriptionsForUser(userId: string, endedAt: Date = new Date()) {
+  const now = new Date();
+  await pool.query(
+    "UPDATE subscriptions SET status = 'canceled', ended_at = COALESCE(ended_at, ?), updated_at = ? WHERE user_id = ? AND status = 'active'",
+    [endedAt, now, userId]
+  );
+}

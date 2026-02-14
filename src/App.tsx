@@ -72,7 +72,7 @@ export default function App() {
         <Route 
           path="/planos" 
           element={
-            <PublicRoute>
+            <PublicRoute allowSignedIn>
               <Planos />
             </PublicRoute>
           } 

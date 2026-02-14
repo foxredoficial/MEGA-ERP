@@ -232,6 +232,27 @@ export async function createCheckout(args: { planId: string }): Promise<{ initPo
   });
 }
 
+export async function syncMySubscription(): Promise<{ ok: true; status: string }> {
+  return apiFetch<{ ok: true; status: string }>("/api/billing/subscription/sync", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function cancelMySubscription(): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>("/api/billing/subscription/cancel", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function activateFreePlan(args: { planId: string }): Promise<{ ok: true }> {
+  return apiFetch<{ ok: true }>("/api/billing/activate-free", {
+    method: "POST",
+    body: JSON.stringify(args),
+  });
+}
+
 export * from "./api_products";
 export * from "./api_categories";
 export * from "./api_contacts";

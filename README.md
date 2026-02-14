@@ -31,6 +31,20 @@ O projeto separa:
   - se tentar acessar por URL, aparece uma tela de bloqueio (“Recurso não disponível no seu plano”).
 - No **Backend**, existe um middleware que pode bloquear APIs por assinatura ativa/feature/limites.
 
+### Upgrade / Downgrade de plano
+
+- Usuário logado consegue acessar `/planos` (para trocar de plano).
+- Ao escolher um plano pago, o sistema cria uma assinatura no Mercado Pago e redireciona para o checkout.
+- A troca é considerada concluída quando o Mercado Pago confirma a nova assinatura como `authorized`.
+- Quando uma assinatura nova fica `active`, o webhook cancela automaticamente outras assinaturas `active` do mesmo usuário, garantindo que fique apenas 1 plano ativo.
+
+### Planos grátis (R$ 0,00)
+
+Assinatura recorrente com valor `0` não é criada no Mercado Pago. Para isso existe um fluxo separado:
+
+- Planos com `priceCents = 0` aparecem como **"Ativar grátis"**.
+- O backend ativa a assinatura diretamente no sistema (sem Mercado Pago).
+
 ### Chaves de recursos do SaaS
 
 Exemplos (podem evoluir): `products`, `contacts`, `services`, `salespersons`, `categories`, `price_lists`, `sales_orders`, `docs`, `pdv`, `service_orders`, `stock`, `finance`, `banks`, `cash`, `reports`.
@@ -42,6 +56,16 @@ Por padrão, o enforcement fica desligado (para facilitar desenvolvimento). Para
 ```bash
 BILLING_ENFORCE_SUBSCRIPTION=true
 ```
+
+### Integração Mercado Pago (dev)
+
+- Backend expõe:
+  - `GET /api/health`
+  - `GET /` (metadados simples da API)
+- Webhooks (exemplo com ngrok):
+  - Assinaturas: `https://<ngrok>/api/webhooks/mercadopago`
+  - Pagamentos: `https://<ngrok>/api/webhooks/mercadopago/payments`
+  - Orders: `https://<ngrok>/api/webhooks/mercadopago/orders`
 
 ## Stack
 
@@ -89,6 +113,8 @@ Copie `backend/.env.example` para `backend/.env` e ajuste:
 - `SESSION_JWT_SECRET`: segredo forte para assinar a sessão.
 - `MYSQL_*`: credenciais do MySQL.
 - `MP_ACCESS_TOKEN`: token do Mercado Pago.
+- `MP_PUBLIC_KEY`: chave pública (Bricks / Checkout Transparente).
+- `WEBHOOK_BASE_URL`: URL pública base (ex.: ngrok) para montar `notification_url`.
 - `MP_WEBHOOK_SIGNATURE_SECRET`: segredo (opcional) para validar assinatura do webhook.
 - `BILLING_ENFORCE_SUBSCRIPTION`: ativa bloqueio de rotas por assinatura/recursos.
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI`: OAuth Google (opcional).
@@ -163,6 +189,7 @@ O frontend consome as seguintes rotas:
 - `PUT /api/me/profile` → atualiza perfil
 - `GET /api/me/subscription` → assinatura atual (ou `null`)
 - `POST /api/billing/checkout` → retorna `initPoint` do Mercado Pago
+- `POST /api/billing/activate-free` → ativa plano gratuito sem Mercado Pago
 - `POST /api/billing/subscription/sync` → sincroniza status com Mercado Pago (quando configurado)
 - `POST /api/billing/subscription/cancel` → cancela assinatura no Mercado Pago (quando configurado)
 

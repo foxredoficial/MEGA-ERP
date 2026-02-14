@@ -14,6 +14,8 @@ Configure no ambiente do backend (ex.: `.env` no diretório `backend/`).
 - `WEBHOOK_BASE_URL` (recomendado): URL pública para receber webhooks.
 - `MP_WEBHOOK_SIGNATURE_SECRET` (opcional): segredo para validar assinatura do webhook.
 
+**Importante:** nunca commite tokens/chaves. Use `backend/.env` (já está no `.gitignore`).
+
 ## Endpoints
 
 ### Recorrência (já existente)
@@ -43,8 +45,14 @@ Configure no ambiente do backend (ex.: `.env` no diretório `backend/`).
   - retorna quais variáveis estão configuradas.
   - página: Admin → Configurações → Mercado Pago.
 
+## Ativação (modo desenvolvimento)
+
+1) Preencha `backend/.env` com `MP_ACCESS_TOKEN` e (se for usar Bricks) `MP_PUBLIC_KEY`.
+2) Se for receber webhooks localmente, defina `WEBHOOK_BASE_URL` (ex.: sua URL do ngrok).
+3) Reinicie o backend.
+4) Vá em Admin → Configurações → Mercado Pago e verifique se está como `OK`.
+
 ## Observação
 
 O Checkout Transparente normalmente usa a chave pública no frontend para tokenização/Bricks e chama o backend para criar o pagamento.
 Assim que você inserir as chaves e definir o fluxo desejado no frontend, o backend já está pronto para operar.
-

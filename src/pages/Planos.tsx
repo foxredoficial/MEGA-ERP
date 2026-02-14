@@ -6,7 +6,7 @@ import { PlanCard } from "@/components/PlanCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { usePlanStore } from "@/stores/planStore";
-import { createCheckout, getPublicPlans, type ApiError, type Plan } from "@/lib/api";
+import { activateFreePlan, createCheckout, getMySubscription, getPublicPlans, type ApiError, type Plan } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function Planos() {
@@ -56,9 +56,25 @@ export default function Planos() {
     setSelectedPlanId(planId);
     setError(null);
 
+    const picked = plans.find((p) => p.id === planId) ?? null;
+
     if (authStatus === "signedIn") {
       setBusy(true);
       try {
+        if (picked && picked.priceCents <= 0) {
+          await activateFreePlan({ planId });
+          navigate("/app#plan");
+          return;
+        }
+        const { subscription } = await getMySubscription();
+        if (subscription?.status === "active") {
+          if (subscription.plan.id === planId) {
+            navigate("/app#plan");
+            return;
+          }
+          const ok = window.confirm(`Trocar do plano \"${subscription.plan.name}\" para este plano? A troca será confirmada após o pagamento.`);
+          if (!ok) return;
+        }
         const { initPoint } = await createCheckout({ planId });
         window.location.href = initPoint;
       } catch (e) {
@@ -101,7 +117,13 @@ export default function Planos() {
               plan={p}
               onSelect={onSelect}
               selected={selected === p.id}
-              actionLabel={authStatus === "signedIn" ? "Assinar com Mercado Pago" : "Escolher plano"}
+              actionLabel={
+                authStatus === "signedIn"
+                  ? p.priceCents <= 0
+                    ? "Ativar grátis"
+                    : "Assinar com Mercado Pago"
+                  : "Escolher plano"
+              }
             />
           ))}
         </div>

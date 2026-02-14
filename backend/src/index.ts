@@ -140,6 +140,27 @@ app.use("/api/banks", requireEntitlement({ feature: "banks" }), banksRouter);
 app.use("/api/finance", requireEntitlement({ feature: "finance" }), financeRouter);
 app.use("/api/webhooks", mpWebhooksRouter);
 
+app.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    service: "MEGA ERP API",
+    endpoints: {
+      health: "/api/health",
+      plans: "/api/public/plans",
+      me: "/api/me",
+      webhooks: {
+        subscriptions: "/api/webhooks/mercadopago",
+        payments: "/api/webhooks/mercadopago/payments",
+        orders: "/api/webhooks/mercadopago/orders",
+      },
+    },
+  });
+});
+
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true });
+});
+
 app.use((_req, res) => {
   sendError(res, 404, "Rota não encontrada.");
 });

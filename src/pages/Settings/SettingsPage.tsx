@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { updatePassword, getMySubscription, type ApiError, type Subscription } from "@/lib/api";
+import { cancelMySubscription, syncMySubscription, updatePassword, getMySubscription, type ApiError, type Subscription } from "@/lib/api";
 import { maskCpfCnpj, maskPhone, maskZip, maskNumber } from "@/lib/masks";
 import { formatBRLFromCents } from "@/lib/money";
 import { Link } from "react-router-dom";
@@ -70,6 +70,7 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
 
   // Subscription State
   const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subBusy, setSubBusy] = useState<null | 'sync' | 'cancel'>(null);
 
   // Password State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -101,18 +102,47 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
     }
   }, [profile]);
 
+  const refreshSubscription = async () => {
+    try {
+      const { subscription } = await getMySubscription();
+      setSubscription(subscription);
+    } catch (e) {
+      console.error("Failed to fetch subscription", e);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'subscription') {
-      void (async () => {
-        try {
-          const { subscription } = await getMySubscription();
-          setSubscription(subscription);
-        } catch (e) {
-          console.error("Failed to fetch subscription", e);
-        }
-      })();
+      void refreshSubscription();
     }
   }, [activeTab]);
+
+  const handleSyncSubscription = async () => {
+    setSubBusy('sync');
+    try {
+      await syncMySubscription();
+      await refreshSubscription();
+    } catch (e: any) {
+      alert(e?.message ?? 'Falha ao sincronizar assinatura.');
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!subscription) return;
+    const ok = window.confirm('Deseja cancelar sua assinatura no Mercado Pago?');
+    if (!ok) return;
+    setSubBusy('cancel');
+    try {
+      await cancelMySubscription();
+      await refreshSubscription();
+    } catch (e: any) {
+      alert(e?.message ?? 'Falha ao cancelar assinatura.');
+    } finally {
+      setSubBusy(null);
+    }
+  };
 
   // Handle Save Profile
   const handleSaveProfile = async () => {
@@ -598,11 +628,30 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
                           </div>
                         )}
                       </div>
-                      <Link to="/planos">
-                        <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
-                          Alterar Plano
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSyncSubscription}
+                          disabled={subBusy !== null || !subscription}
+                        >
+                          {subBusy === 'sync' ? 'Sincronizando...' : 'Sincronizar'}
                         </Button>
-                      </Link>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCancelSubscription}
+                          disabled={subBusy !== null || !subscription}
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          {subBusy === 'cancel' ? 'Cancelando...' : 'Cancelar'}
+                        </Button>
+                        <Link to="/planos">
+                          <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+                            Alterar Plano
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                  </div>
               </CardContent>

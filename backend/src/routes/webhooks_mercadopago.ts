@@ -17,6 +17,16 @@ async function fetchPreapproval(id: string) {
   return (await r.json()) as any;
 }
 
+async function cancelPreapproval(id: string) {
+  if (!env.MP_ACCESS_TOKEN) throw new Error("MP_ACCESS_TOKEN não configurado");
+  const r = await fetch(`https://api.mercadopago.com/preapproval/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${env.MP_ACCESS_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "cancelled" }),
+  });
+  if (!r.ok) throw new Error(`Falha ao cancelar preapproval: ${r.status}`);
+}
+
 function parseExternalReference(ref: string | null | undefined) {
   if (!ref) return null;
   const m = ref.match(/user:([a-f0-9\-]{36}):plan:([a-f0-9\-]{36})/i);
@@ -66,7 +76,23 @@ router.post("/mercadopago", async (req, res) => {
       throw e;
     }
 
-    const dataId = (req.body as any)?.data?.id ?? (req.body as any)?.id;
+    const body: any = req.body ?? {};
+    const dataId = body?.data?.id ?? body?.id;
+    const resource = typeof body?.resource === "string" ? body.resource : null;
+    const type = typeof body?.type === "string" ? body.type.toLowerCase() : "";
+    const topic = typeof body?.topic === "string" ? body.topic.toLowerCase() : "";
+
+    const looksLikePreapproval =
+      type.includes("preapproval") ||
+      type.includes("subscription") ||
+      topic.includes("preapproval") ||
+      topic.includes("subscription") ||
+      (resource ? resource.includes("/preapproval") : false);
+
+    if (!looksLikePreapproval) {
+      return res.json({ ok: true });
+    }
+
     if (!dataId || typeof dataId !== "string") return res.json({ ok: true });
 
     const preapproval = await fetchPreapproval(dataId);
@@ -86,6 +112,28 @@ router.post("/mercadopago", async (req, res) => {
       startedAt,
       endedAt,
     });
+
+    if (status === "active") {
+      const [others] = await pool.query<any[]>(
+        "SELECT id, mp_preapproval_id FROM subscriptions WHERE user_id = ? AND status = 'active' AND mp_preapproval_id IS NOT NULL AND mp_preapproval_id <> ?",
+        [ref.userId, mpId]
+      );
+
+      for (const row of others) {
+        const otherId = String(row.id);
+        const otherMpId = String(row.mp_preapproval_id);
+        try {
+          await cancelPreapproval(otherMpId);
+        } catch {
+          void 0;
+        }
+        await pool.query("UPDATE subscriptions SET status = 'canceled', ended_at = COALESCE(ended_at, ?), updated_at = ? WHERE id = ?", [
+          new Date(),
+          new Date(),
+          otherId,
+        ]);
+      }
+    }
 
     res.json({ ok: true });
   } catch (e) {
