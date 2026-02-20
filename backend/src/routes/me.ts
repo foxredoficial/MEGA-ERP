@@ -197,12 +197,22 @@ meRouter.get(
       entitlements = [];
     }
 
+    const now = Date.now();
+    const trialEndsAt =
+      subscription.status === "active" && subscription.ended_at && subscription.ended_at.getTime() > now
+        ? subscription.ended_at
+        : null;
+
     res.json({
       subscription: {
         id: subscription.id,
         status: subscription.status,
         startedAt: subscription.started_at.toISOString(),
         endedAt: subscription.ended_at ? subscription.ended_at.toISOString() : null,
+        trial: {
+          active: Boolean(trialEndsAt),
+          endsAt: trialEndsAt ? trialEndsAt.toISOString() : null,
+        },
         plan: {
           id: plan.id,
           name: plan.name,
@@ -211,6 +221,8 @@ meRouter.get(
           features,
           entitlements,
           isFeatured: Boolean(plan.is_featured),
+          trialEnabled: Boolean(plan.trial_enabled),
+          trialDays: Number(plan.trial_days),
         },
       },
     });
@@ -228,7 +240,7 @@ meRouter.get(
     const prefs = typeof user.preferences === "object" && user.preferences ? user.preferences : {};
     const fiscal = (prefs as any).fiscal;
     const environment = fiscal?.environment === "prod" ? "prod" : "homolog";
-    const serviceConfigured = Boolean(env.MEGA_NFE_API_URL && env.MEGA_NFE_API_KEY);
+    const serviceConfigured = Boolean(env.SISFEC_NFE_API_URL && env.SISFEC_NFE_API_KEY);
 
     res.json({
       enabled: serviceConfigured,

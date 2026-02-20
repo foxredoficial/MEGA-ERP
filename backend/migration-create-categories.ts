@@ -17,7 +17,7 @@ async function run() {
   const connection = await pool.getConnection();
   try {
     // 1. Get all tenant databases
-    const [rows] = await connection.query("SHOW DATABASES LIKE 'megaerp_tenant_%'");
+    const [rows] = await connection.query("SHOW DATABASES LIKE 'SISFECERP_tenant_%'");
     const databases = (rows as any[]).map(row => Object.values(row)[0] as string);
 
     console.log(`Found ${databases.length} tenant databases.`);

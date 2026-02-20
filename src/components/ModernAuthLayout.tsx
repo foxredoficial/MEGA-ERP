@@ -27,7 +27,7 @@ export function ModernAuthLayout({ children, title, subtitle }: ModernAuthLayout
                 <LayoutDashboard className="h-6 w-6" />
               </div>
               <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                MegaERP
+                SISFEC
               </span>
             </div>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -42,7 +42,7 @@ export function ModernAuthLayout({ children, title, subtitle }: ModernAuthLayout
           
           <div className="mt-10 border-t border-slate-100 pt-6 dark:border-slate-800">
             <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-              &copy; {new Date().getFullYear()} MegaERP SaaS. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} SISFEC. Todos os direitos reservados.
             </p>
           </div>
         </div>
@@ -62,15 +62,13 @@ export function ModernAuthLayout({ children, title, subtitle }: ModernAuthLayout
           <div className="mb-12">
             <blockquote className="space-y-6 max-w-lg">
               <div className="text-3xl font-medium leading-relaxed">
-                "O MegaERP transformou completamente a gestão das nossas lojas. O controle de estoque e a emissão fiscal são impecáveis."
+                "O SISFEC transformou completamente a gestão das nossas lojas. O controle de estoque e a emissão fiscal são impecáveis."
               </div>
               <footer className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold border border-white/20 backdrop-blur-sm">
-                  JS
-                </div>
+    
                 <div>
-                  <div className="font-semibold text-lg">João Silva</div>
-                  <div className="text-blue-200">CEO, Silva Varejo</div>
+                  <div className="font-semibold text-lg"></div>
+                  <div className="text-blue-200">CEO, Matheus Silva, Santiago Nunes</div>
                 </div>
               </footer>
             </blockquote>

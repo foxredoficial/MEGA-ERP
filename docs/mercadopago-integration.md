@@ -1,4 +1,4 @@
-# Integração Mercado Pago (SaaS PDV ERP)
+# Integração Mercado Pago (SISFEC ERP ERP)
 
 Este projeto já está preparado para integrar Mercado Pago em dois fluxos:
 

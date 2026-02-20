@@ -6,7 +6,7 @@ type Payload = {
 };
 
 const target = new EventTarget();
-const channelName = "mega-erp-app-events";
+const channelName = "sisfec-erp-app-events";
 
 const bc: BroadcastChannel | null =
   typeof window !== "undefined" && "BroadcastChannel" in window ? new BroadcastChannel(channelName) : null;
@@ -66,4 +66,3 @@ export function onAppEvent(name: AppEventName, handler: (detail: Payload) => voi
   target.addEventListener(name, fn);
   return () => target.removeEventListener(name, fn);
 }
-

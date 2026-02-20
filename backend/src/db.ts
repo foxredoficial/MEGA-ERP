@@ -63,6 +63,29 @@ export async function ensureDatabaseAndSchema() {
     try {
       await conn.query("ALTER TABLE plans ADD COLUMN max_invoices INT NOT NULL DEFAULT 50");
     } catch {}
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN mp_preapproval_plan_id VARCHAR(255) NULL");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN trial_enabled TINYINT(1) NOT NULL DEFAULT 0");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE plans ADD COLUMN trial_days INT NOT NULL DEFAULT 7");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE users ADD COLUMN trial_started_at DATETIME NULL");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE users ADD COLUMN trial_ended_at DATETIME NULL");
+    } catch {}
+    try {
+      await conn.query("ALTER TABLE subscriptions DROP FOREIGN KEY fk_subscriptions_user");
+    } catch {}
+    try {
+      await conn.query(
+        "ALTER TABLE subscriptions ADD CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+      );
+    } catch {}
   } finally {
     await conn.end();
   }

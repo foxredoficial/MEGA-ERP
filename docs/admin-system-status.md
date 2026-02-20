@@ -1,4 +1,4 @@
-# Status do Sistema Admin (SaaS PDV ERP)
+# Status do Sistema Admin (SISFEC ERP ERP)
 
 Atualizado em: 2026-02-13
 

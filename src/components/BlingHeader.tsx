@@ -26,7 +26,7 @@ import { globalSearch } from "@/lib/api";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { subscriptionHasFeature, type FeatureKey } from "@/lib/entitlements";
 
-// Helper type for Mega Menu structure
+// Helper type for menu em grade
 type MenuItem = {
   label: string;
   href: string;
@@ -290,7 +290,9 @@ export function BlingHeader() {
     });
   }
 
-  const isAllowed = (feature?: FeatureKey) => (feature ? subscriptionHasFeature(subscription, feature) : true);
+  const allowAll = session?.role === "admin" || subStatus === "loading" || subStatus === "error";
+  const isAllowed = (feature?: FeatureKey) =>
+    allowAll ? true : feature ? subscriptionHasFeature(subscription, feature) : true;
   const filteredMenus = menus
     .map((section) => {
       const next: MenuSection = { ...section };
@@ -323,7 +325,7 @@ export function BlingHeader() {
             <div className="bg-blue-600 dark:bg-blue-500 text-white p-1 rounded">
               <Box className="w-5 h-5" />
             </div>
-            <span>MEGA ERP</span>
+            <span>SISFEC</span>
           </Link>
         </div>
 
@@ -342,7 +344,7 @@ export function BlingHeader() {
                 <ChevronDown className="w-3 h-3" />
               </button>
 
-              {/* Mega Menu Dropdown */}
+              {/* Menu em grade */}
               {(openMenu === menu.label) && (
                 <div 
                   className={cn(

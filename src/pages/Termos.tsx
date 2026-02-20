@@ -7,7 +7,7 @@ export default function Termos() {
         <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white md:text-4xl">Termos de Uso</h1>
         <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
           <p>
-            Estes Termos de Uso regem o acesso e a utilização do MEGA ERP. Ao criar uma conta ou utilizar a plataforma, você concorda com as condições
+            Estes Termos de Uso regem o acesso e a utilização do SISFEC. Ao criar uma conta ou utilizar a plataforma, você concorda com as condições
             abaixo.
           </p>
 
@@ -38,7 +38,7 @@ export default function Termos() {
           <div className="space-y-2">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">4. Privacidade</h2>
             <p>
-              O tratamento de dados pessoais segue a Política de Privacidade. Ao utilizar o MEGA ERP, você declara estar ciente e de acordo com ela.
+              O tratamento de dados pessoais segue a Política de Privacidade. Ao utilizar o SISFEC, você declara estar ciente e de acordo com ela.
             </p>
           </div>
 

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAdminPlans, createPlan, updatePlan } from '@/lib/api_admin';
+import { getAdminPlans, createPlan, updatePlan, deletePlan } from '@/lib/api_admin';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { Check, X, Edit, Plus, Save, Users, Package, FileText, LayoutList, DollarSign, Star, Power, Infinity as InfinityIcon, Search } from 'lucide-react';
+import { Check, X, Edit, Plus, Save, Users, Package, FileText, LayoutList, DollarSign, Star, Power, Infinity as InfinityIcon, Search, Trash2 } from 'lucide-react';
 
 type Plan = {
   id: string;
@@ -17,6 +18,9 @@ type Plan = {
   max_users: number;
   max_products: number;
   max_invoices: number;
+  mp_preapproval_plan_id?: string | null;
+  trial_enabled: number;
+  trial_days: number;
   is_featured: number;
   is_active: number;
 };
@@ -55,6 +59,19 @@ export function Plans() {
   const [editForm, setEditForm] = useState<Partial<Plan>>({});
   const [isCreating, setIsCreating] = useState(false);
   const [newFeature, setNewFeature] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: "danger" | "warning" | "info" | "success";
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    variant: "info"
+  });
 
   useEffect(() => {
     loadPlans();
@@ -83,7 +100,15 @@ export function Plans() {
         setPlans(parsed as any);
         setTotal(r.total);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        setError(err.message);
+        setAlertState({
+          isOpen: true,
+          title: "Não foi possível carregar os planos",
+          description: err.message || "Tente novamente.",
+          variant: "danger"
+        });
+      })
       .finally(() => setLoading(false));
   };
 
@@ -102,6 +127,9 @@ export function Plans() {
       max_users: -1,
       max_products: -1,
       max_invoices: -1,
+      mp_preapproval_plan_id: '',
+      trial_enabled: 0,
+      trial_days: 7,
       is_featured: 0,
       is_active: 1
     });
@@ -156,6 +184,9 @@ export function Plans() {
         max_users: editForm.max_users,
         max_products: editForm.max_products,
         max_invoices: editForm.max_invoices,
+        mp_preapproval_plan_id: (editForm.mp_preapproval_plan_id ?? '').trim() || undefined,
+        trial_enabled: !!editForm.trial_enabled,
+        trial_days: editForm.trial_days || 7,
         is_featured: !!editForm.is_featured,
         is_active: !!editForm.is_active
       };
@@ -170,7 +201,12 @@ export function Plans() {
       setIsCreating(false);
       loadPlans();
     } catch (err: any) {
-      alert(err.message || "Erro ao salvar");
+      setAlertState({
+        isOpen: true,
+        title: "Erro ao salvar",
+        description: err.message || "Verifique os dados e tente novamente.",
+        variant: "danger"
+      });
     }
   };
 
@@ -192,7 +228,31 @@ export function Plans() {
       await updatePlan(plan.id, { is_active: !plan.is_active });
       setPlans(plans.map(p => p.id === plan.id ? { ...p, is_active: p.is_active ? 0 : 1 } : p));
     } catch (err: any) {
-      alert(err.message);
+      setAlertState({
+        isOpen: true,
+        title: "Falha ao atualizar o plano",
+        description: err.message || "Tente novamente.",
+        variant: "danger"
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deletePlan(deleteTarget.id);
+      setDeleteTarget(null);
+      loadPlans();
+    } catch (err: any) {
+      setAlertState({
+        isOpen: true,
+        title: "Erro ao excluir plano",
+        description: err.message || "Verifique se há assinaturas ativas e tente novamente.",
+        variant: "warning"
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -271,6 +331,39 @@ export function Plans() {
                   />
                   <div className="absolute right-3 top-2.5 text-xs text-slate-400">BRL</div>
                 </div>
+              </div>
+              <div className="col-span-2">
+                <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                  <label className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                      checked={!!editForm.trial_enabled}
+                      onChange={(e) => setEditForm({ ...editForm, trial_enabled: e.target.checked ? 1 : 0 })}
+                    />
+                    Plano de avaliação gratuita
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <label className="text-sm text-slate-600 dark:text-slate-400">Período (dias)</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      className="w-28 bg-white dark:bg-slate-950"
+                      value={editForm.trial_days || 7}
+                      disabled={!editForm.trial_enabled}
+                      onChange={(e) => setEditForm({ ...editForm, trial_days: Math.max(1, parseInt(e.target.value || "1")) })}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="col-span-2 space-y-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">ID do plano Mercado Pago</label>
+                <Input
+                  value={editForm.mp_preapproval_plan_id || ''}
+                  onChange={e => setEditForm({ ...editForm, mp_preapproval_plan_id: e.target.value })}
+                  placeholder="Ex: 2c938084726fca480172750000000000"
+                  className="bg-slate-50 dark:bg-slate-900"
+                />
               </div>
               <div className="col-span-2 space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Descrição</label>
@@ -578,6 +671,13 @@ export function Plans() {
                 >
                   {plan.is_active ? 'Desativar' : 'Ativar'}
                 </Button>
+                <Button
+                  variant="ghost"
+                  className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                  onClick={() => setDeleteTarget(plan)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -597,6 +697,27 @@ export function Plans() {
           }}
         />
       </div>
+
+      <ConfirmationDialog
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Excluir plano"
+        description="Deseja excluir este plano? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="danger"
+        loading={deleting}
+      />
+      <ConfirmationDialog
+        isOpen={alertState.isOpen}
+        onClose={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
+        title={alertState.title}
+        description={alertState.description}
+        confirmText="OK"
+        variant={alertState.variant}
+        showCancel={false}
+      />
     </div>
   );
 }

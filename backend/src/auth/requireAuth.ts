@@ -10,9 +10,17 @@ export type AuthedRequest = Request & {
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const session = await getSessionFromRequest(req);
   if (!session) return sendError(res, 401, "Não autenticado.");
-  // Default to user if role is missing (backward compatibility)
-  (req as AuthedRequest).auth = { ...session, role: (session as any).role || 'user' };
-  next();
+  try {
+    const [rows] = await pool.query<any[]>("SELECT role FROM users WHERE id = ?", [session.userId]);
+    const dbRole = rows[0]?.role;
+    const role = dbRole === "admin" ? "admin" : "user";
+    (req as AuthedRequest).auth = { ...session, role };
+    next();
+  } catch (err) {
+    const role = (session as any).role === "admin" ? "admin" : "user";
+    (req as AuthedRequest).auth = { ...session, role };
+    next();
+  }
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
@@ -35,4 +43,3 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     return sendError(res, 500, "Erro interno ao verificar permissões.");
   }
 }
-

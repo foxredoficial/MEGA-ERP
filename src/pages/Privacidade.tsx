@@ -7,7 +7,7 @@ export default function Privacidade() {
         <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white md:text-4xl">Política de Privacidade</h1>
         <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
           <p>
-            Esta Política descreve como o MEGA ERP coleta, utiliza e protege dados pessoais necessários para fornecer o serviço, incluindo criação de conta,
+            Esta Política descreve como o SISFEC coleta, utiliza e protege dados pessoais necessários para fornecer o serviço, incluindo criação de conta,
             autenticação e gestão de assinatura.
           </p>
 

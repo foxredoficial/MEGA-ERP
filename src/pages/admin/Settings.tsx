@@ -16,20 +16,20 @@ export function Settings() {
 
   useEffect(() => {
     let cancelled = false;
-    setMpLoading(true);
-    void getAdminMercadoPagoConfig()
-      .then((r) => {
+    const load = async () => {
+      setMpLoading(true);
+      try {
+        const r = await getAdminMercadoPagoConfig();
         if (cancelled) return;
         setMpConfig(r.configured);
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
         setMpConfig(null);
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setMpLoading(false);
-      });
+      } finally {
+        if (!cancelled) setMpLoading(false);
+      }
+    };
+    void load();
     return () => {
       cancelled = true;
     };
@@ -155,7 +155,22 @@ export function Settings() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()} disabled={mpLoading}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                setMpLoading(true);
+                try {
+                  const r = await getAdminMercadoPagoConfig();
+                  setMpConfig(r.configured);
+                } catch {
+                  setMpConfig(null);
+                } finally {
+                  setMpLoading(false);
+                }
+              }}
+              disabled={mpLoading}
+            >
               Recarregar status
             </Button>
           </div>

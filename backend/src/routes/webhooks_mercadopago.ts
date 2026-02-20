@@ -114,18 +114,25 @@ router.post("/mercadopago", async (req, res) => {
     });
 
     if (status === "active") {
+      const [currentRows] = await pool.query<any[]>(
+        "SELECT id FROM subscriptions WHERE mp_preapproval_id = ? LIMIT 1",
+        [mpId]
+      );
+      const currentId = String(currentRows?.[0]?.id ?? "");
       const [others] = await pool.query<any[]>(
-        "SELECT id, mp_preapproval_id FROM subscriptions WHERE user_id = ? AND status = 'active' AND mp_preapproval_id IS NOT NULL AND mp_preapproval_id <> ?",
-        [ref.userId, mpId]
+        "SELECT id, mp_preapproval_id FROM subscriptions WHERE user_id = ? AND status = 'active' AND id <> ?",
+        [ref.userId, currentId]
       );
 
       for (const row of others) {
         const otherId = String(row.id);
-        const otherMpId = String(row.mp_preapproval_id);
-        try {
-          await cancelPreapproval(otherMpId);
-        } catch {
-          void 0;
+        const otherMpId = row.mp_preapproval_id ? String(row.mp_preapproval_id) : null;
+        if (otherMpId) {
+          try {
+            await cancelPreapproval(otherMpId);
+          } catch {
+            void 0;
+          }
         }
         await pool.query("UPDATE subscriptions SET status = 'canceled', ended_at = COALESCE(ended_at, ?), updated_at = ? WHERE id = ?", [
           new Date(),

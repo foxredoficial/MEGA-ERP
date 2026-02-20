@@ -143,7 +143,7 @@ app.use("/api/webhooks", mpWebhooksRouter);
 app.get("/", (_req, res) => {
   res.json({
     ok: true,
-    service: "MEGA ERP API",
+    service: "SISFEC API",
     endpoints: {
       health: "/api/health",
       plans: "/api/public/plans",
@@ -177,7 +177,7 @@ async function start() {
   await pingDb();
 
   app.listen(env.PORT, () => {
-    console.log(`MEGA ERP API rodando em http://localhost:${env.PORT}`);
+    console.log(`SISFEC API rodando em http://localhost:${env.PORT}`);
   });
 }
 

@@ -18,6 +18,8 @@ export type AdminUser = {
   company_name: string | null;
   role: 'user' | 'admin';
   created_at: string;
+  subscription_status?: string | null;
+  subscription_plan_name?: string | null;
 };
 
 export type AdminPaged<T> = { items: T[]; page: number; pageSize: number; total: number };
@@ -104,6 +106,9 @@ export type AdminPlan = {
   max_users: number;
   max_products: number;
   max_invoices: number;
+  mp_preapproval_plan_id?: string | null;
+  trial_enabled: number | boolean;
+  trial_days: number;
   is_featured: number | boolean;
   is_active: number | boolean;
 };
@@ -124,6 +129,9 @@ export type CreatePlanData = {
   max_users?: number;
   max_products?: number;
   max_invoices?: number;
+  mp_preapproval_plan_id?: string | null;
+  trial_enabled?: boolean;
+  trial_days?: number;
   is_featured?: boolean;
   is_active?: boolean;
 };
@@ -142,14 +150,23 @@ export async function updatePlan(id: string, data: Partial<CreatePlanData>) {
   });
 }
 
+export async function deletePlan(id: string) {
+  return apiFetch<{ success: true }>(`/api/admin/plans/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export type AdminSubscription = {
   id: string;
+  user_id: string;
+  plan_id: string;
   user_name: string;
   user_email: string;
   plan_name: string;
   status: string;
   started_at: string;
   ended_at: string | null;
+  mp_preapproval_id?: string | null;
 };
 
 export async function getAdminSubscriptions(params?: { page?: number; pageSize?: number; q?: string; status?: string }) {
@@ -159,4 +176,32 @@ export async function getAdminSubscriptions(params?: { page?: number; pageSize?:
   if (params?.q) qs.set("q", params.q);
   if (params?.status) qs.set("status", params.status);
   return apiFetch<AdminPaged<AdminSubscription>>(`/api/admin/subscriptions${qs.toString() ? `?${qs.toString()}` : ""}`);
+}
+
+export async function updateAdminSubscription(id: string, data: { status?: "active" | "canceled" | "past_due"; planId?: string }) {
+  return apiFetch<{ success: true }>(`/api/admin/subscriptions/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function cancelAdminSubscription(id: string) {
+  return apiFetch<{ success: true }>(`/api/admin/subscriptions/${id}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function syncAdminSubscription(id: string) {
+  return apiFetch<{ success: true; status: string }>(`/api/admin/subscriptions/${id}/sync-mp`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function createAdminManualSubscription(data: { userId: string; planId: string; status?: "active" | "canceled" | "past_due" }) {
+  return apiFetch<{ id: string }>(`/api/admin/subscriptions/manual`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }

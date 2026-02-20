@@ -206,7 +206,7 @@ const LAST_NAMES = [
   "Cavalcante",
 ];
 
-const COMPANY_PREFIX = ["Comercial", "Distribuidora", "Atacadão", "Casa", "Center", "Loja", "Importadora", "Auto", "Tech", "Mega"];
+const COMPANY_PREFIX = ["Comercial", "Distribuidora", "Atacadão", "Casa", "Center", "Loja", "Importadora", "Auto", "Tech", "Sisfec"];
 const COMPANY_SUFFIX = ["LTDA", "ME", "EIRELI", "S/A"];
 const COMPANY_NOUNS = ["Acessórios", "Eletrônicos", "Celulares", "Informática", "Variedades", "Serviços", "Assistência", "Bazar", "Utilidades", "Consertos"];
 

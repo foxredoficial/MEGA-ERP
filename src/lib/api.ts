@@ -77,6 +77,8 @@ export type Plan = {
   features: string[];
   entitlements?: string[];
   isFeatured: boolean;
+  trialEnabled?: boolean;
+  trialDays?: number;
 };
 
 export type MeResponse = {
@@ -116,6 +118,10 @@ export type MeResponse = {
   } | null;
 };
 
+export async function getPublicConfig(): Promise<{ mpPublicKey: string | null }> {
+  return apiFetch<{ mpPublicKey: string | null }>("/api/public/config", { method: "GET" });
+}
+
 export type AuthMeResponse =
   | { authenticated: false }
   | ({ authenticated: true } & MeResponse);
@@ -123,6 +129,10 @@ export type AuthMeResponse =
 export type Subscription = {
   id: string;
   status: "active" | "canceled" | "past_due";
+  trial?: {
+    active: boolean;
+    endsAt: string | null;
+  };
   plan: Plan;
   startedAt: string;
   endedAt: string | null;
@@ -227,6 +237,22 @@ export async function getMySubscription(): Promise<{ subscription: Subscription 
 
 export async function createCheckout(args: { planId: string }): Promise<{ initPoint: string }> {
   return apiFetch<{ initPoint: string }>("/api/billing/checkout", {
+    method: "POST",
+    body: JSON.stringify(args),
+  });
+}
+
+export async function createTransparentSubscription(args: {
+  planId: string;
+  token: string;
+  paymentMethodId?: string;
+  issuerId?: string;
+  installments?: number;
+  identificationType?: string;
+  identificationNumber?: string;
+  payerEmail?: string;
+}): Promise<{ ok: true; mpPreapprovalId: string | null }> {
+  return apiFetch<{ ok: true; mpPreapprovalId: string | null }>("/api/billing/checkout-transparent", {
     method: "POST",
     body: JSON.stringify(args),
   });

@@ -15,11 +15,32 @@ export type SubscriptionRow = {
 };
 
 export async function getSubscriptionByUserId(userId: string): Promise<SubscriptionRow | null> {
+  const [activeRows] = await pool.query<(SubscriptionRow & RowDataPacket)[]>(
+    "SELECT id, user_id, plan_id, status, mp_preapproval_id, started_at, ended_at, created_at, updated_at FROM subscriptions WHERE user_id = ? AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+    [userId]
+  );
+  const active = activeRows[0] ?? null;
+  if (active) {
+    if (active.ended_at && active.ended_at.getTime() <= Date.now()) {
+      const now = new Date();
+      await pool.query("UPDATE subscriptions SET status = 'canceled', updated_at = ? WHERE id = ?", [now, active.id]);
+    } else {
+      return active;
+    }
+  }
+
   const [rows] = await pool.query<(SubscriptionRow & RowDataPacket)[]>(
     "SELECT id, user_id, plan_id, status, mp_preapproval_id, started_at, ended_at, created_at, updated_at FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
     [userId]
   );
-  return rows[0] ?? null;
+  const sub = rows[0] ?? null;
+  if (!sub) return null;
+  if (sub.status === "active" && sub.ended_at && sub.ended_at.getTime() <= Date.now()) {
+    const now = new Date();
+    await pool.query("UPDATE subscriptions SET status = 'canceled', updated_at = ? WHERE id = ?", [now, sub.id]);
+    return { ...sub, status: "canceled" };
+  }
+  return sub;
 }
 
 export async function upsertSubscriptionByMpPreapprovalId(args: {
@@ -38,7 +59,7 @@ export async function upsertSubscriptionByMpPreapprovalId(args: {
 
   if (existing[0]) {
     await pool.query(
-      "UPDATE subscriptions SET user_id = ?, plan_id = ?, status = ?, started_at = COALESCE(?, started_at), ended_at = ?, updated_at = ? WHERE id = ?",
+      "UPDATE subscriptions SET user_id = ?, plan_id = ?, status = ?, started_at = COALESCE(started_at, ?), ended_at = ?, updated_at = ? WHERE id = ?",
       [args.userId, args.planId, args.status, args.startedAt ?? null, args.endedAt ?? null, now, existing[0].id]
     );
     return;
@@ -73,4 +94,13 @@ export async function cancelActiveSubscriptionsForUser(userId: string, endedAt: 
     "UPDATE subscriptions SET status = 'canceled', ended_at = COALESCE(ended_at, ?), updated_at = ? WHERE user_id = ? AND status = 'active'",
     [endedAt, now, userId]
   );
+}
+
+export async function cancelSubscriptionById(id: string, endedAt: Date = new Date()) {
+  const now = new Date();
+  await pool.query("UPDATE subscriptions SET status = 'canceled', ended_at = COALESCE(ended_at, ?), updated_at = ? WHERE id = ?", [
+    endedAt,
+    now,
+    id,
+  ]);
 }

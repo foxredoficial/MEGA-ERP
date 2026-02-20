@@ -1,6 +1,6 @@
-# MEGA ERP — SaaS PDV / ERP (Full Stack)
+# SISFEC — SISFEC ERP / ERP (Full Stack)
 
-Monorepo do **MEGA ERP** (SaaS), com **Frontend** (site + app do cliente + admin) e **Backend** (API + MySQL + integrações).
+Monorepo do **SISFEC** (SaaS), com **Frontend** (site + app do cliente + admin) e **Backend** (API + MySQL + integrações).
 
 ## O que existe no projeto
 
@@ -14,7 +14,7 @@ Monorepo do **MEGA ERP** (SaaS), com **Frontend** (site + app do cliente + admin
 - Persistência em **MySQL**, com:
   - Banco “SaaS” (usuários, planos, assinaturas, tokens, eventos, webhooks).
   - Banco “tenant” por usuário (dados do ERP), criado sob demanda.
-- Integrações: **Mercado Pago** (assinaturas + webhook), **Google OAuth**, e **Emissão fiscal** via serviço externo (MEGA NFE).
+- Integrações: **Mercado Pago** (assinaturas + webhook), **Google OAuth**, e **Emissão fiscal** via serviço externo (SISFEC NFE).
 
 ## Atualizações recentes
 - PDV: itens da venda podem ser vinculados a lote (`pdv_sale_items.lot_id`) e a baixa de estoque suporta lote.
@@ -122,17 +122,17 @@ Copie `backend/.env.example` para `backend/.env` e ajuste:
 - `MP_WEBHOOK_SIGNATURE_SECRET`: segredo (opcional) para validar assinatura do webhook.
 - `BILLING_ENFORCE_SUBSCRIPTION`: ativa bloqueio de rotas por assinatura/recursos.
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI`: OAuth Google (opcional).
-- `MEGA_NFE_API_URL` / `MEGA_NFE_API_KEY`: emissão fiscal (opcional, servidor).
+- `SISFEC_NFE_API_URL` / `SISFEC_NFE_API_KEY`: emissão fiscal (opcional, servidor).
 
 ## Banco de dados
 
 ### Banco “SaaS”
 
-- Crie um database (ex.: `megaerp`) e aplique o schema em `backend/schema.sql`.
+- Crie um database (ex.: `SISFECERP`) e aplique o schema em `backend/schema.sql`.
 
 ### Banco “tenant” (por usuário)
 
-- Cada usuário usa um database separado no padrão `megaerp_tenant_<uuid>` (UUID com hífens substituídos por `_`).
+- Cada usuário usa um database separado no padrão `SISFECERP_tenant_<uuid>` (UUID com hífens substituídos por `_`).
 - A criação e aplicação de `backend/tenant_schema.sql` acontece sob demanda quando o tenant é acessado pela primeira vez.
 - Existe um seed para popular dados de demonstração:
 

@@ -11,6 +11,9 @@ export type PlanRow = {
   max_users: number;
   max_products: number;
   max_invoices: number;
+  mp_preapproval_plan_id: string | null;
+  trial_enabled: number;
+  trial_days: number;
   is_featured: number;
   is_active: number;
   created_at: Date;
@@ -26,14 +29,14 @@ export async function listAllPlans(): Promise<PlanRow[]> {
 
 export async function listActivePlans(): Promise<PlanRow[]> {
   const [rows] = await pool.query<(PlanRow & RowDataPacket)[]>(
-    "SELECT id, name, description, price_cents, features_json, max_users, max_products, max_invoices, is_featured, is_active, created_at, updated_at FROM plans WHERE is_active = 1 ORDER BY is_featured DESC, price_cents ASC"
+    "SELECT id, name, description, price_cents, features_json, max_users, max_products, max_invoices, trial_enabled, trial_days, is_featured, is_active, created_at, updated_at FROM plans WHERE is_active = 1 ORDER BY is_featured DESC, price_cents ASC"
   );
   return rows;
 }
 
 export async function findPlanById(id: string): Promise<PlanRow | null> {
   const [rows] = await pool.query<(PlanRow & RowDataPacket)[]>(
-    "SELECT id, name, description, price_cents, features_json, max_users, max_products, max_invoices, is_featured, is_active, created_at, updated_at FROM plans WHERE id = ? LIMIT 1",
+    "SELECT id, name, description, price_cents, features_json, max_users, max_products, max_invoices, mp_preapproval_plan_id, trial_enabled, trial_days, is_featured, is_active, created_at, updated_at FROM plans WHERE id = ? LIMIT 1",
     [id]
   );
   return rows[0] ?? null;
@@ -47,12 +50,15 @@ export async function createPlan(data: {
   max_users: number;
   max_products: number;
   max_invoices: number;
+  mp_preapproval_plan_id?: string | null;
+  trial_enabled: boolean;
+  trial_days: number;
   is_featured: boolean;
   is_active: boolean;
 }): Promise<string> {
   const id = randomUUID();
   await pool.query(
-    "INSERT INTO plans (id, name, description, price_cents, features_json, max_users, max_products, max_invoices, is_featured, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO plans (id, name, description, price_cents, features_json, max_users, max_products, max_invoices, mp_preapproval_plan_id, trial_enabled, trial_days, is_featured, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [
       id,
       data.name,
@@ -62,6 +68,9 @@ export async function createPlan(data: {
       data.max_users || 1,
       data.max_products || 100,
       data.max_invoices || 50,
+      data.mp_preapproval_plan_id || null,
+      data.trial_enabled ? 1 : 0,
+      data.trial_days || 7,
       data.is_featured ? 1 : 0,
       data.is_active ? 1 : 0,
     ]
@@ -77,6 +86,9 @@ export async function updatePlan(id: string, data: {
   max_users?: number;
   max_products?: number;
   max_invoices?: number;
+  mp_preapproval_plan_id?: string | null;
+  trial_enabled?: boolean;
+  trial_days?: number;
   is_featured?: boolean;
   is_active?: boolean;
 }): Promise<void> {
@@ -110,6 +122,18 @@ export async function updatePlan(id: string, data: {
   if (data.max_invoices !== undefined) {
     fields.push("max_invoices = ?");
     values.push(data.max_invoices);
+  }
+  if (data.mp_preapproval_plan_id !== undefined) {
+    fields.push("mp_preapproval_plan_id = ?");
+    values.push(data.mp_preapproval_plan_id || null);
+  }
+  if (data.trial_enabled !== undefined) {
+    fields.push("trial_enabled = ?");
+    values.push(data.trial_enabled ? 1 : 0);
+  }
+  if (data.trial_days !== undefined) {
+    fields.push("trial_days = ?");
+    values.push(data.trial_days);
   }
   if (data.is_featured !== undefined) {
     fields.push("is_featured = ?");

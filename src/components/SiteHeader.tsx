@@ -37,8 +37,8 @@ export function SiteHeader() {
               <Building2 className="h-5 w-5" />
             </span>
             <div className="leading-tight">
-              <div className="text-sm font-semibold">MEGA ERP</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">SaaS PDV • ERP</div>
+              <div className="text-sm font-semibold">SISFEC</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Gestão</div>
             </div>
           </Link>
 

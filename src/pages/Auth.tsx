@@ -21,7 +21,7 @@ export default function Auth() {
   const [params] = useSearchParams();
 
   const mode = getMode(params.get("mode"));
-  const next = params.get("next") ?? "/app";
+  const next = params.get("next") ?? (mode === "signup" ? "/planos" : "/app");
   const oauthError = params.get("oauthError");
   const planIdFromQuery = params.get("planId");
   const resetToken = params.get("token");
@@ -102,7 +102,10 @@ export default function Auth() {
 
       if (mode === "signup") {
         const ok = await signUp({ email, password, fullName, companyName, planId });
-        if (ok) navigate("/app");
+        if (ok) {
+          const nextPlans = `/planos${planId ? `?planId=${encodeURIComponent(planId)}` : ""}`;
+          navigate(nextPlans);
+        }
         return;
       }
 
@@ -147,7 +150,7 @@ export default function Auth() {
     if (mode === "signup") return "Comece seus 7 dias de teste grátis.";
     if (mode === "forgot") return "Enviaremos um link para seu email.";
     if (mode === "reset") return "Defina uma nova senha para sua conta.";
-    return "Bem-vindo de volta ao MegaERP.";
+    return "Bem-vindo de volta.";
   };
 
   return (
@@ -354,7 +357,7 @@ export default function Auth() {
             <span className="text-slate-500 dark:text-slate-400">
               Já tem uma conta?{" "}
               <Link 
-                to={`/auth?mode=login${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`}
+                to={`/auth?mode=login${planId ? `&planId=${encodeURIComponent(planId)}` : ""}${next ? `&next=${encodeURIComponent(next)}` : ""}`}
                 className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
               >
                 Fazer login
@@ -364,7 +367,7 @@ export default function Auth() {
             <span className="text-slate-500 dark:text-slate-400">
               Não tem uma conta?{" "}
               <Link 
-                to={`/auth?mode=signup${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`}
+                to={`/auth?mode=signup${planId ? `&planId=${encodeURIComponent(planId)}` : ""}${next ? `&next=${encodeURIComponent(next)}` : ""}`}
                 className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
               >
                 Teste grátis por 7 dias
@@ -372,7 +375,7 @@ export default function Auth() {
             </span>
           ) : (
             <Link 
-              to={`/auth?mode=login${planId ? `&planId=${encodeURIComponent(planId)}` : ""}`}
+              to={`/auth?mode=login${planId ? `&planId=${encodeURIComponent(planId)}` : ""}${next ? `&next=${encodeURIComponent(next)}` : ""}`}
               className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
             >
               Voltar para o login

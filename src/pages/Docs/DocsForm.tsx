@@ -357,7 +357,7 @@ export function DocsForm() {
 
             {(docType === "nfe" || docType === "nfce") && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                Emissão fiscal é feita pelo MEGA ERP. Verifique Dados da Empresa e Endereço antes de emitir.
+                Emissão fiscal é feita pelo SISFEC. Verifique Dados da Empresa e Endereço antes de emitir.
               </div>
             )}
           </div>

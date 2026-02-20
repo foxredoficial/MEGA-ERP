@@ -256,7 +256,7 @@ async function ensureTenantSchema(tenantId: string, dbName: string) {
 
 export async function createTenantDatabase(tenantId: string) {
   assertUuid(tenantId);
-  const dbName = `megaerp_tenant_${tenantId.replace(/-/g, "_")}`;
+  const dbName = `SISFECERP_tenant_${tenantId.replace(/-/g, "_")}`;
   
   try {
     await saasPool.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
@@ -302,7 +302,7 @@ export async function createTenantDatabase(tenantId: string) {
 
 export async function getTenantPool(tenantId: string): Promise<mysql.Pool> {
   assertUuid(tenantId);
-  const dbName = `megaerp_tenant_${tenantId.replace(/-/g, "_")}`; // Sanitize UUID if needed
+  const dbName = `SISFECERP_tenant_${tenantId.replace(/-/g, "_")}`; // Sanitize UUID if needed
 
   if (tenantPools.has(tenantId)) {
     await ensureTenantSchema(tenantId, dbName);

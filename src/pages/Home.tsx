@@ -53,19 +53,16 @@ export default function Home() {
         <div className="container px-4">
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 flex justify-center">
-              <Badge tone="blue" className="rounded-full px-4 py-1.5 text-sm">
-                Novo: Integração com Mercado Livre 🚀
-              </Badge>
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-              O ERP Completo para <br className="hidden sm:block" />
+              O ERP SISFEC Completo para <br className="hidden sm:block" />
               <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
                 Transformar seu Negócio
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
               Do PDV ao Financeiro, tenha o controle total da sua empresa em uma única plataforma. 
-              Simples, rápido e pensado para o crescimento do empreendedor brasileiro.
+              Simples, rápido e pensado para o crescimento do empreendedor.
             </p>
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
               <Link to="/cadastro">
@@ -99,7 +96,7 @@ export default function Home() {
               <div className="aspect-[16/9] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 relative group">
                 <img 
                   src="/dashboard-preview.png" 
-                  alt="MegaERP Dashboard" 
+                  alt="SISFEC Dashboard" 
                   className="w-full h-full object-cover object-top"
                 />
                 {/* Overlay for better integration */}
@@ -121,7 +118,7 @@ export default function Home() {
               Tudo o que você precisa em um só lugar
             </h2>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
-              Chega de usar várias planilhas e sistemas desconectados. O MEGA ERP centraliza sua operação.
+              Chega de usar várias planilhas e sistemas desconectados. O SISFEC centraliza sua operação.
             </p>
           </div>
 
@@ -153,7 +150,7 @@ export default function Home() {
                 Simplifique sua rotina e foque no crescimento
               </h2>
               <p className="mt-6 text-lg text-slate-600 dark:text-slate-300">
-                Milhares de empreendedores perdem tempo com burocracia. O MEGA ERP automatiza processos manuais para você ganhar tempo.
+                Milhares de empreendedores perdem tempo com burocracia. O SISFEC automatiza processos manuais para você ganhar tempo.
               </p>
               
               <ul className="mt-8 space-y-4">
@@ -205,7 +202,7 @@ export default function Home() {
             Pronto para levar sua empresa para o próximo nível?
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-blue-100">
-            Junte-se a milhares de empreendedores que já transformaram a gestão de seus negócios com o MEGA ERP.
+            Junte-se a milhares de empreendedores que já transformaram a gestão de seus negócios com o SISFEC.
           </p>
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             <Link to="/auth?mode=signup">

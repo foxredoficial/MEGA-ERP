@@ -174,7 +174,7 @@ const FIRST_NAMES_M = ["João", "Pedro", "Lucas", "Mateus", "Guilherme", "Rafael
 const FIRST_NAMES_F = ["Maria", "Ana", "Beatriz", "Camila", "Juliana", "Fernanda", "Carolina", "Mariana", "Aline", "Patrícia", "Larissa", "Letícia", "Jéssica", "Gabriela", "Bruna", "Renata", "Priscila", "Sabrina", "Vanessa", "Débora"];
 const LAST_NAMES = ["Silva", "Santos", "Oliveira", "Souza", "Lima", "Pereira", "Ferreira", "Almeida", "Costa", "Rodrigues", "Martins", "Araújo", "Melo", "Barbosa", "Ribeiro", "Gomes", "Carvalho", "Cardoso", "Teixeira", "Cavalcante"];
 
-const COMPANY_PREFIX = ["Comercial", "Distribuidora", "Atacadão", "Casa", "Center", "Importadora", "Auto", "Tech", "Mega", "Rápido"];
+const COMPANY_PREFIX = ["Comercial", "Distribuidora", "Atacadão", "Casa", "Center", "Importadora", "Auto", "Tech", "Sisfec", "Rápido"];
 const COMPANY_SUFFIX = ["LTDA", "ME", "EIRELI", "S/A"];
 const COMPANY_NOUNS = ["Acessórios", "Eletrônicos", "Celulares", "Informática", "Variedades", "Serviços", "Assistência", "Bazar", "Utilidades", "Consertos"];
 
@@ -328,7 +328,7 @@ async function main() {
   const companyName = args.companyName;
 
   if (args.recreate) {
-    const dbName = `megaerp_tenant_${tenantId.replace(/-/g, "_")}`;
+    const dbName = `SISFECERP_tenant_${tenantId.replace(/-/g, "_")}`;
     await pool.query(`DROP DATABASE IF EXISTS \`${dbName}\``);
     await createTenantDatabase(tenantId);
   }

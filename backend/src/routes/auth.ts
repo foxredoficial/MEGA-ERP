@@ -287,7 +287,6 @@ authRouter.post(
       companyName: body.data.companyName.trim() || null,
       hasPassword: true,
     });
-
     const token = await signSession({ sub: id, email });
     setSessionCookie(res, token);
 

@@ -25,7 +25,10 @@ export function subscriptionHasFeature(subscription: Subscription | null, featur
   if (!subscription) return true;
   if (subscription.status !== "active") return false;
 
-  const raw = subscription.plan.entitlements ?? subscription.plan.features ?? [];
+  const entitlements = subscription.plan.entitlements ?? [];
+  const features = subscription.plan.features ?? [];
+  const raw = entitlements.length > 0 ? entitlements : features;
+  if (raw.length === 0) return true;
   const set = new Set(raw.map((x) => String(x).trim().toLowerCase()));
   return set.has(feature) || set.has(`app:${feature}`) || set.has(`feature:${feature}`);
 }

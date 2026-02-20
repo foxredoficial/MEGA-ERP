@@ -35,9 +35,9 @@ export function AdminSidebar({ className }: SidebarProps) {
       <div className="flex h-16 items-center border-b border-slate-200 px-6 dark:border-slate-800">
         <div className="flex items-center gap-2 font-bold text-xl text-slate-900 dark:text-slate-100">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30">
-            <span className="text-lg">M</span>
+            <span className="text-lg">S</span>
           </div>
-          <span className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">MEGA Admin</span>
+          <span className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">SISFEC Admin</span>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export function AdminSidebar({ className }: SidebarProps) {
         <Link to="/app" className="mb-2 block">
            <Button variant="outline" className="w-full justify-start" size="sm">
              <ChevronLeft className="mr-2 h-4 w-4" />
-             Voltar ao SaaS
+             Voltar
            </Button>
         </Link>
         <Button 

@@ -1,4 +1,4 @@
-# Plano do Sistema Admin (SaaS PDV ERP)
+# Plano do Sistema Admin (SISFEC ERP ERP)
 
 Este documento define o que precisa existir no **Sistema Admin** (backoffice do SaaS) para gerenciar **usuários**, **contas/tenants**, **planos**, **assinaturas**, **cobrança** e **observabilidade**.
 

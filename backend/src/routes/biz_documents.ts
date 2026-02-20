@@ -5,7 +5,7 @@ import { asyncHandler } from "../http.js";
 import { findUserById } from "../repos/users.js";
 import { cancelBizDocument, createBizDocument, getBizDocument, listBizDocuments, updateBizDocument, type BizDocumentType } from "../repos/biz_documents.js";
 import { getContact } from "../repos/contacts.js";
-import { issueWithMegaNfe } from "../nfe/megaNfeClient.js";
+import { issueWithSisfecNfe } from "../nfe/megaNfeClient.js";
 import { env } from "../env.js";
 
 const router = Router();
@@ -122,10 +122,10 @@ router.post("/:id/issue", requireAuth, asyncHandler(async (req, res) => {
   const prefs = typeof user.preferences === "object" && user.preferences ? user.preferences : {};
   const fiscal = (prefs as any).fiscal;
   const environment =
-    fiscal?.environment === "prod" ? "prod" : fiscal?.environment === "homolog" ? "homolog" : env.MEGA_NFE_DEFAULT_ENV ?? "homolog";
+    fiscal?.environment === "prod" ? "prod" : fiscal?.environment === "homolog" ? "homolog" : env.SISFEC_NFE_DEFAULT_ENV ?? "homolog";
 
   try {
-    const issued = await issueWithMegaNfe({
+    const issued = await issueWithSisfecNfe({
       kind: doc.type,
       environment,
       document: {

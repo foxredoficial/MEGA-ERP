@@ -71,6 +71,9 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
   // Subscription State
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [subBusy, setSubBusy] = useState<null | 'sync' | 'cancel'>(null);
+  const trialEndMs = subscription?.trial?.endsAt ? new Date(subscription.trial.endsAt).getTime() : null;
+  const trialDaysLeft = trialEndMs && trialEndMs > Date.now() ? Math.ceil((trialEndMs - Date.now()) / 86400000) : null;
+  const showTrial = Boolean(subscription?.status === "active" && subscription?.trial?.active && trialDaysLeft);
 
   // Password State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -569,7 +572,7 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
             <Card>
               <CardHeader>
                 <CardTitle>Fiscal (NFe / NFC-e)</CardTitle>
-                <CardDescription>Emissão fiscal é feita pelo serviço do MEGA ERP. Aqui você define apenas o ambiente.</CardDescription>
+                <CardDescription>Emissão fiscal é feita pelo serviço do SISFEC. Aqui você define apenas o ambiente.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -613,11 +616,16 @@ export function SettingsPage({ defaultTab = "company" }: { defaultTab?: Settings
                     <div className="flex justify-between items-center flex-wrap gap-4">
                       <div>
                         <div className="text-2xl font-bold text-slate-900 dark:text-slate-50">
-                          {subscription?.plan.name || "Nenhum plano ativo"}
+                          {showTrial ? "Teste grátis" : subscription?.plan.name || "Nenhum plano ativo"}
                         </div>
                         <div className="text-slate-500 dark:text-slate-400 mt-1">
-                          {subscription ? formatBRLFromCents(subscription.plan.priceCents) : "R$ 0,00"} / mês
+                          {showTrial ? "Acesso liberado durante o período de teste" : subscription ? `${formatBRLFromCents(subscription.plan.priceCents)} / mês` : "R$ 0,00 / mês"}
                         </div>
+                        {showTrial && (
+                          <div className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                            Teste grátis termina em {new Date(trialEndMs as number).toLocaleDateString()} ({trialDaysLeft} {trialDaysLeft === 1 ? "dia" : "dias"} restantes)
+                          </div>
+                        )}
                         {subscription?.plan.features && (
                           <div className="mt-4 flex flex-wrap gap-2">
                             {subscription.plan.features.map((feature, idx) => (

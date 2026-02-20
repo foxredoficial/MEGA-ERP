@@ -140,7 +140,21 @@ export function Users() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge tone="green" className="bg-green-100 text-green-700">Ativo</Badge>
+                      {user.subscription_status === 'active' && (
+                        <Badge tone="green" className="bg-green-100 text-green-700">Ativo</Badge>
+                      )}
+                      {user.subscription_status === 'past_due' && (
+                        <Badge tone="slate" className="bg-amber-100 text-amber-700">Em atraso</Badge>
+                      )}
+                      {user.subscription_status === 'canceled' && (
+                        <Badge tone="slate" className="bg-slate-100 text-slate-600">Cancelado</Badge>
+                      )}
+                      {!user.subscription_status && (
+                        <Badge tone="slate" className="bg-slate-100 text-slate-600">Sem assinatura</Badge>
+                      )}
+                      {user.subscription_plan_name && (
+                        <div className="mt-1 text-xs text-slate-500">{user.subscription_plan_name}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <Badge tone={user.role === 'admin' ? 'blue' : 'slate'}>

@@ -31,13 +31,16 @@ export type UserRow = {
   website: string | null;
   role: 'user' | 'admin';
   preferences: any | null;
+  trial_started_at: Date | null;
+  trial_ended_at: Date | null;
 };
 
 const SELECT_FIELDS = `
   id, email, password_hash, google_id, has_password, full_name, company_name, 
   document, phone, address_zip, address_street, address_number, address_neighborhood, 
   address_city, address_state, address_complement, created_at, updated_at,
-  person_type, ie, im, cnae, tax_regime, mobile, email_billing, website, role, preferences
+  person_type, ie, im, cnae, tax_regime, mobile, email_billing, website, role, preferences,
+  trial_started_at, trial_ended_at
 `;
 
 export async function findUserByEmail(email: string): Promise<UserRow | null> {
@@ -183,4 +186,14 @@ export async function updateUserPassword(id: string, passwordHash: string) {
 export async function updateUserPreferences(id: string, preferences: any) {
   const now = new Date();
   await pool.query("UPDATE users SET preferences = ?, updated_at = ? WHERE id = ?", [JSON.stringify(preferences), now, id]);
+}
+
+export async function updateUserTrial(id: string, trialStartedAt: Date | null, trialEndedAt: Date | null) {
+  const now = new Date();
+  await pool.query("UPDATE users SET trial_started_at = ?, trial_ended_at = ?, updated_at = ? WHERE id = ?", [
+    trialStartedAt,
+    trialEndedAt,
+    now,
+    id,
+  ]);
 }

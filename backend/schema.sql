@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS users (
   has_password TINYINT(1) NOT NULL DEFAULT 1,
   role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
   preferences JSON NULL,
+  trial_started_at DATETIME NULL,
+  trial_ended_at DATETIME NULL,
 
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL
@@ -41,6 +43,9 @@ CREATE TABLE IF NOT EXISTS plans (
   max_users INT NOT NULL DEFAULT 1,
   max_products INT NOT NULL DEFAULT 100,
   max_invoices INT NOT NULL DEFAULT 50,
+  mp_preapproval_plan_id VARCHAR(255) NULL,
+  trial_enabled TINYINT(1) NOT NULL DEFAULT 0,
+  trial_days INT NOT NULL DEFAULT 7,
   is_featured TINYINT(1) NOT NULL DEFAULT 0,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL,
@@ -57,7 +62,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   ended_at DATETIME NULL,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
-  CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_subscriptions_plan FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 

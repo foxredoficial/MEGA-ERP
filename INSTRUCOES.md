@@ -1,4 +1,4 @@
-# Guia de Inicialização do MEGA ERP
+# Guia de Inicialização do SISFEC
 
 Este guia descreve o passo a passo para configurar e rodar todo o ecossistema do projeto (Backend, Frontend do Cliente e Painel Administrativo).
 
@@ -67,7 +67,7 @@ O Backend é o coração do sistema. Ele deve ser o primeiro a ser iniciado.
     ```bash
     npm run dev
     ```
-    ✅ **Sucesso:** Você verá `MEGA ERP API rodando em http://localhost:3000`.
+    ✅ **Sucesso:** Você verá `SISFEC API rodando em http://localhost:3000`.
 
 ---
 
@@ -75,7 +75,7 @@ O Backend é o coração do sistema. Ele deve ser o primeiro a ser iniciado.
 
 Este é o site principal e o sistema que os clientes finais usarão.
 
-1.  Abra um **segundo terminal** na raiz do projeto (`SaaS PDV ERP`):
+1.  Abra um **segundo terminal** na raiz do projeto (`SISFEC ERP ERP`):
     ```bash
     # Se estiver na pasta backend, volte um nível: cd ..
     ```
@@ -91,29 +91,6 @@ Este é o site principal e o sistema que os clientes finais usarão.
     ```
     ✅ **Sucesso:** O sistema estará acessível em `http://localhost:5173`.
 
----
-
-### 🛡️ Passo 3: Painel Administrativo (Admin)
-
-Este é o painel para você (dono do SaaS) gerenciar planos, usuários e assinaturas.
-
-1.  Abra um **terceiro terminal** e navegue até a pasta `admin`:
-    ```bash
-    cd admin
-    ```
-
-2.  Instale as dependências:
-    ```bash
-    npm install
-    ```
-
-3.  Inicie o servidor de desenvolvimento:
-    ```bash
-    npm run dev
-    ```
-    ✅ **Sucesso:** O painel admin abrirá em `http://localhost:5175` (ou porta próxima disponível).
-
----
 
 ## 🔗 Resumo de Acesso
 

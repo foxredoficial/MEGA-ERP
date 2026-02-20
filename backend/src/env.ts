@@ -23,7 +23,7 @@ const toBooleanEnv = (value: unknown) => {
 const schema = z.object({
   PORT: z.coerce.number().default(3000),
   APP_ORIGIN: z.string().url().default("http://127.0.0.1:5173"),
-  SESSION_COOKIE_NAME: z.string().min(1).default("megaerp_session"),
+  SESSION_COOKIE_NAME: z.string().min(1).default("sisfec_session"),
   SESSION_JWT_SECRET: isProd ? z.string().min(32) : z.string().min(32).default("dev-session-secret-change-me-32-chars-0001"),
   PASSWORD_RESET_SECRET: z.preprocess(emptyStringToUndefined, z.string().min(16).optional()),
 
@@ -31,7 +31,7 @@ const schema = z.object({
   MYSQL_PORT: z.coerce.number().default(3306),
   MYSQL_USER: z.string().min(1).default("root"),
   MYSQL_PASSWORD: z.string().default(""),
-  MYSQL_DATABASE: z.string().min(1).default("megaerp"),
+  MYSQL_DATABASE: z.string().min(1).default("SISFECERP"),
 
   MP_ACCESS_TOKEN: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   MP_PUBLIC_KEY: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
@@ -40,9 +40,9 @@ const schema = z.object({
 
   BILLING_ENFORCE_SUBSCRIPTION: z.preprocess(toBooleanEnv, z.boolean().default(false)),
 
-  MEGA_NFE_API_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
-  MEGA_NFE_API_KEY: z.preprocess(emptyStringToUndefined, z.string().min(16).optional()),
-  MEGA_NFE_DEFAULT_ENV: z.preprocess(emptyStringToUndefined, z.enum(["homolog", "prod"]).optional()),
+  SISFEC_NFE_API_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  SISFEC_NFE_API_KEY: z.preprocess(emptyStringToUndefined, z.string().min(16).optional()),
+  SISFEC_NFE_DEFAULT_ENV: z.preprocess(emptyStringToUndefined, z.enum(["homolog", "prod"]).optional()),
 
   GOOGLE_CLIENT_ID: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),
   GOOGLE_CLIENT_SECRET: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()),

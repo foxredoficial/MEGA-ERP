@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Banknote, Boxes, CreditCard, FileText, ShoppingCart, TrendingDown, TrendingUp, Wallet, X } from "lucide-react";
+import { Banknote, Boxes, CreditCard, FileText, Lock, ShoppingCart, TrendingDown, TrendingUp, Wallet, X } from "lucide-react";
 import { subDays } from "date-fns";
 import { AdvancedDateFilter } from "@/components/filters/AdvancedDateFilter";
 import { computeCompare, computePreset, formatRangeLabel, suggestedGranularity, type DateFilterValue } from "@/components/filters/dateRange";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { formatCurrency, toLocalIsoDate } from "@/lib/utils";
+import { Modal } from "@/components/ui/Modal";
+import { formatCurrency, toLocalIsoDate, cn } from "@/lib/utils";
 import { getDashboardAnalytics, getTopProducts, type AnalyticsGranularity, type DashboardAnalytics, type TopProductsItem } from "@/lib/api_analytics";
 import { DashboardKpiCard } from "./DashboardKpiCard";
 import { SeriesChart } from "./charts/SeriesChart";
 import { onAppEvent } from "@/lib/appEvents";
+import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { subscriptionHasFeature, type FeatureKey } from "@/lib/entitlements";
+import { useAuthStore } from "@/stores/authStore";
 
 type DashboardModule = "overview" | "sales" | "stock" | "finance";
 
@@ -29,6 +33,7 @@ function normalizeDashboardGranularity(g: DateFilterValue["granularity"]): Analy
 export function DashboardView() {
   const aliveRef = useRef(true);
   const [module, setModule] = useState<DashboardModule>("overview");
+  const [lockedTab, setLockedTab] = useState<{ label: string } | null>(null);
   const [filter, setFilter] = useState<DateFilterValue>(() => {
     const range = computePreset("this_month");
     return {
@@ -68,6 +73,33 @@ export function DashboardView() {
   const kpiReqRef = useRef<Record<string, number>>({});
 
   const compareRange = useMemo(() => toCompareRange(filter), [filter]);
+  const subStatus = useSubscriptionStore((s) => s.status);
+  const subscription = useSubscriptionStore((s) => s.subscription);
+  const loadSubscription = useSubscriptionStore((s) => s.load);
+  const role = useAuthStore((s) => s.session?.role);
+  const trialEndMs = subscription?.trial?.endsAt ? new Date(subscription.trial.endsAt).getTime() : null;
+  const trialDaysLeft = trialEndMs && trialEndMs > Date.now() ? Math.ceil((trialEndMs - Date.now()) / 86400000) : null;
+  const showTrial = Boolean(subscription?.status === "active" && subscription?.trial?.active && trialDaysLeft);
+
+  useEffect(() => {
+    if (subStatus === "idle") void loadSubscription();
+  }, [loadSubscription, subStatus]);
+
+  const allowAll = role === "admin" || subStatus === "loading" || subStatus === "error";
+  const featureAllowed = useCallback(
+    (feature: FeatureKey) => (allowAll ? true : subscriptionHasFeature(subscription, feature)),
+    [allowAll, subscription]
+  );
+  const salesAllowed = allowAll || subscriptionHasFeature(subscription, "sales_orders") || subscriptionHasFeature(subscription, "pdv");
+  const moduleTabs = useMemo(
+    () => [
+      { id: "overview" as const, label: "Visão geral", allowed: true },
+      { id: "sales" as const, label: "Vendas", allowed: salesAllowed },
+      { id: "stock" as const, label: "Estoque", allowed: featureAllowed("stock") },
+      { id: "finance" as const, label: "Financeiro", allowed: featureAllowed("finance") },
+    ],
+    [featureAllowed, salesAllowed]
+  );
 
   useEffect(() => {
     aliveRef.current = true;
@@ -351,7 +383,6 @@ export function DashboardView() {
           </Link>
         </div>
       </div>
-
       {kpiMenu ? (
         <div
           className="fixed inset-0 z-50"
@@ -413,32 +444,73 @@ export function DashboardView() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          className={module === "overview" ? "rounded-full bg-slate-900 px-4 py-2 text-sm text-white" : "rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"}
-          onClick={() => setModule("overview")}
-        >
-          Visão geral
-        </button>
-        <button
-          className={module === "sales" ? "rounded-full bg-slate-900 px-4 py-2 text-sm text-white" : "rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"}
-          onClick={() => setModule("sales")}
-        >
-          Vendas
-        </button>
-        <button
-          className={module === "stock" ? "rounded-full bg-slate-900 px-4 py-2 text-sm text-white" : "rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"}
-          onClick={() => setModule("stock")}
-        >
-          Estoque
-        </button>
-        <button
-          className={module === "finance" ? "rounded-full bg-slate-900 px-4 py-2 text-sm text-white" : "rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"}
-          onClick={() => setModule("finance")}
-        >
-          Financeiro
-        </button>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          {moduleTabs.map((tab) => {
+            const active = module === tab.id;
+            const locked = !tab.allowed;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : locked
+                      ? "border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                )}
+                onClick={() => {
+                  if (locked) {
+                    setLockedTab({ label: tab.label });
+                    return;
+                  }
+                  setModule(tab.id);
+                }}
+              >
+                <span className="inline-flex items-center gap-2">
+                  {locked ? <Lock className="h-4 w-4" /> : null}
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        {showTrial && (
+          <div className="w-full md:w-auto md:min-w-[280px] rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="font-semibold">Teste grátis ativo</div>
+            <div>
+              Termina em {new Date(trialEndMs as number).toLocaleDateString()} ({trialDaysLeft}{" "}
+              {trialDaysLeft === 1 ? "dia" : "dias"} restantes)
+            </div>
+          </div>
+        )}
       </div>
+
+      <Modal isOpen={!!lockedTab} onClose={() => setLockedTab(null)} title="Recurso não disponível">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+            <Lock className="h-6 w-6" />
+          </div>
+          <div className="flex-1">
+            <div className="text-base font-semibold text-slate-900">
+              {lockedTab ? `${lockedTab.label} não está disponível no seu plano` : "Recurso não disponível no seu plano"}
+            </div>
+            <div className="mt-2 text-sm text-slate-600">
+              Atualize seu plano para liberar este recurso e acessar todos os dashboards disponíveis.
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <Link to="/app#plan">
+                <Button className="bg-blue-600 hover:bg-blue-700">Ver meu plano</Button>
+              </Link>
+              <Link to="/planos">
+                <Button variant="outline">Ver planos</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
