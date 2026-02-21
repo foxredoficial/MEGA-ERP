@@ -7,7 +7,7 @@ const isProd = process.env.NODE_ENV === "production";
 
 const emptyStringToUndefined = (value: unknown) => {
   if (typeof value !== "string") return value;
-  const trimmed = value.trim();
+  const trimmed = value.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
   return trimmed.length === 0 ? undefined : trimmed;
 };
 
